@@ -1,65 +1,218 @@
-import Image from "next/image";
+import Link from "next/link";
+import { Header } from "@/components/layout/header";
+import { Footer } from "@/components/layout/footer";
 
-export default function Home() {
+export default function HomePage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <Header />
+
+      <main className="flex-1">
+        {/* Hero */}
+        <section className="bg-[#FBFAF8] overflow-hidden">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-20 pb-16 md:pt-28 md:pb-20 text-center">
+            <p className="text-primary text-sm font-medium tracking-wide uppercase mb-4">
+              Nutrition &middot; Neuroatypie &middot; Mouvement
+            </p>
+            <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-semibold leading-[1.05] tracking-tight text-foreground max-w-[720px] mx-auto">
+              Un accompagnement qui vous ressemble.
+            </h1>
+            <p className="text-[17px] md:text-[21px] font-normal leading-[1.4] text-muted-foreground mt-4 max-w-[540px] mx-auto">
+              Suivi nutritionnel et sportif personnalisé, conçu pour les femmes neuroatypiques.
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <Link
+                href="/suivi-nutritionnel"
+                className="inline-flex items-center justify-center h-11 px-6 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors"
+              >
+                Découvrir
+              </Link>
+              <Link
+                href="/#methode"
+                className="inline-flex items-center text-primary text-sm font-normal hover:underline"
+              >
+                En savoir plus &rsaquo;
+              </Link>
+            </div>
+          </div>
+
+          {/* Gradient decorative band */}
+          <div className="h-[280px] md:h-[380px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-[200px] h-[200px] md:w-[280px] md:h-[280px] rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/20 blur-[1px]" />
+            </div>
+          </div>
+        </section>
+
+        {/* Features - Apple style tiles */}
+        <section id="methode" className="bg-white">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
+            <div className="text-center mb-16">
+              <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-foreground">
+                Votre cerveau fonctionne{" "}
+                <br className="hidden md:block" />
+                différemment. Votre suivi aussi.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Card 1 */}
+              <div className="bg-[#f5f5f7] rounded-[28px] p-10 md:p-12 flex flex-col justify-between min-h-[400px]">
+                <div>
+                  <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-3">
+                    Nutrition
+                  </p>
+                  <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
+                    Des plans alimentaires sans restriction, basés sur la science.
+                  </h3>
+                </div>
+                <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
+                  Calcul métabolique personnalisé, recettes équilibrées et organisation des repas adaptée à votre rythme cognitif.
+                </p>
+              </div>
+
+              {/* Card 2 */}
+              <div className="bg-[#f5f5f7] rounded-[28px] p-10 md:p-12 flex flex-col justify-between min-h-[400px]">
+                <div>
+                  <p className="text-secondary text-sm font-medium uppercase tracking-wide mb-3">
+                    Mouvement
+                  </p>
+                  <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
+                    Du sport qui s&apos;adapte à vous, pas l&apos;inverse.
+                  </h3>
+                </div>
+                <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
+                  Musculation, cardio, marche, yoga. Un programme progressif qui respecte votre énergie et vos envies du moment.
+                </p>
+              </div>
+
+              {/* Card 3 - Full width */}
+              <div className="md:col-span-2 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[28px] p-10 md:p-12 flex flex-col md:flex-row md:items-center gap-8 min-h-[300px]">
+                <div className="md:flex-1">
+                  <p className="text-accent text-sm font-medium uppercase tracking-wide mb-3">
+                    Neuroatypie
+                  </p>
+                  <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
+                    TDAH, TSA, HPI, DYS.{" "}
+                    <br className="hidden md:block" />
+                    Chaque profil est unique.
+                  </h3>
+                  <p className="text-[15px] text-muted-foreground leading-relaxed mt-4">
+                    Les méthodes classiques ne tiennent pas compte de vos spécificités neurologiques. Mon approche est conçue autour de votre fonctionnement, pas contre lui.
+                  </p>
+                </div>
+                <div className="md:flex-shrink-0 w-[160px] h-[160px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 mx-auto md:mx-0" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* About */}
+        <section id="a-propos" className="bg-[#FBFAF8]">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
+            <div className="max-w-[660px] mx-auto text-center">
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-4">
+                À propos
+              </p>
+              <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-foreground mb-6">
+                Quand on force un arbre à se comporter comme une pierre, il perd ses racines.
+              </h2>
+              <div className="space-y-5 text-[17px] text-muted-foreground leading-[1.47]">
+                <p>
+                  Je suis professionnelle de santé et nutrition, moi-même diagnostiquée neuroatypique. J&apos;ai transformé mes propres difficultés en expertise.
+                </p>
+                <p>
+                  Mon approche est basée sur la science, l&apos;écoute et le respect de votre rythme. Pas de restriction, pas de culpabilité. Juste un chemin adapté à qui vous êtes.
+                </p>
+              </div>
+              <div className="flex items-center justify-center gap-8 mt-10">
+                <div>
+                  <p className="text-[40px] font-semibold tracking-tight text-primary">100+</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Femmes accompagnées</p>
+                </div>
+                <div className="w-px h-12 bg-black/[0.06]" />
+                <div>
+                  <p className="text-[40px] font-semibold tracking-tight text-secondary">Certifiée</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Professionnelle de santé</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* How it works */}
+        <section className="bg-white">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
+            <div className="text-center mb-16">
+              <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-foreground">
+                Trois étapes. C&apos;est tout.
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+              {[
+                {
+                  num: "1",
+                  title: "Bilan personnalisé",
+                  desc: "Un questionnaire détaillé pour comprendre votre profil, vos habitudes et vos objectifs.",
+                },
+                {
+                  num: "2",
+                  title: "Consultation individuelle",
+                  desc: "Un échange en visio pour affiner votre programme et répondre à toutes vos questions.",
+                },
+                {
+                  num: "3",
+                  title: "Votre espace personnalisé",
+                  desc: "Tableau de bord avec programme alimentaire, sportif, suivi quotidien et ressources.",
+                },
+              ].map((step) => (
+                <div key={step.num} className="text-center">
+                  <div className="w-14 h-14 rounded-full bg-[#f5f5f7] flex items-center justify-center mx-auto mb-5">
+                    <span className="text-[21px] font-semibold text-primary">{step.num}</span>
+                  </div>
+                  <h3 className="text-[19px] font-semibold tracking-tight text-foreground mb-2">
+                    {step.title}
+                  </h3>
+                  <p className="text-[15px] text-muted-foreground leading-relaxed">
+                    {step.desc}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA */}
+        <section id="contact" className="bg-[#1d1d1f]">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28 text-center">
+            <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-white">
+              Prête à commencer ?
+            </h2>
+            <p className="text-[17px] text-white/60 mt-4 max-w-[480px] mx-auto">
+              Rejoignez les femmes qui ont choisi un accompagnement adapté à leur fonctionnement.
+            </p>
+            <div className="flex items-center justify-center gap-4 mt-8">
+              <Link
+                href="/suivi-nutritionnel"
+                className="inline-flex items-center justify-center h-11 px-6 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors"
+              >
+                Découvrir l&apos;accompagnement
+              </Link>
+              <a
+                href="https://www.instagram.com/so_masav"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-white/60 text-sm font-normal hover:text-white transition-colors"
+              >
+                Instagram &rsaquo;
+              </a>
+            </div>
+          </div>
+        </section>
       </main>
-    </div>
+
+      <Footer />
+    </>
   );
 }

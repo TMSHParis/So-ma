@@ -1,0 +1,261 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum MealType {
+  PETIT_DEJEUNER
+  DEJEUNER
+  DINER
+  COLLATION
+}
+
+enum SportType {
+  MUSCULATION
+  CARDIO
+  MARCHE
+  COURSE
+  YOGA
+  NATATION
+  VELO
+  AUTRE
+}
+
+enum CyclePhase {
+  MENSTRUATION
+  FOLLICULAIRE
+  OVULATION
+  LUTEALE
+}
+
+enum FlowIntensity {
+  LEGER
+  MOYEN
+  ABONDANT
+}
+
+enum PaymentProvider {
+  STRIPE
+  PAYPAL
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+/// Objectif énergétique : déficit, maintien ou surplus (voir maintenanceCalories + caloricDeltaKcal).
+enum EnergyBalance {
+  DEFICIT
+  MAINTENANCE
+  SURPLUS
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  firstName    String   @map("first_name")
+  lastName     String   @map("last_name")
+  role         Role     @default(CLIENT)
+  avatarUrl    String?  @map("avatar_url")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  client       Client?
+  mealPlans    MealPlan[]    @relation("CreatedMealPlans")
+  workoutPlans WorkoutPlan[] @relation("CreatedWorkoutPlans")
+  resources    Resource[]
+
+  @@map("users")
+}
+
+model Client {
+  id              String    @id @default(cuid())
+  userId          String    @unique @map("user_id")
+  phone           String?
+  birthDate       DateTime? @map("birth_date")
+  height          Float?
+  weight          Float?
+  goalCalories    Int?      @map("goal_calories")
+  goalProtein     Int?      @map("goal_protein")
+  goalCarbs       Int?      @map("goal_carbs")
+  goalFat         Int?      @map("goal_fat")
+  goalFiber       Int?      @map("goal_fiber")
+  /// Apport calorique de maintien (TDEE ou valeur fixée avec la coach).
+  maintenanceCalories Int? @map("maintenance_calories")
+  energyBalance   EnergyBalance? @map("energy_balance")
+  /// Ex : -300 avec deficit, +250 avec surplus (0 si maintien).
+  caloricDeltaKcal Int      @default(0) @map("caloric_delta_kcal")
+  notes           String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodEntries     FoodEntry[]
+  sportEntries    SportEntry[]
+  cycleEntries    CycleEntry[]
+  mealPlans       MealPlan[]
+  workoutPlans    WorkoutPlan[]
+  bilanResponses  BilanResponse[]
+
+  @@map("clients")
+}
+
+model BilanToken {
+  id        String    @id @default(cuid())
+  token     String    @unique @default(cuid())
+  email     String?
+  name      String?
+  used      Boolean   @default(false)
+  expiresAt DateTime  @map("expires_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  response  BilanResponse?
+
+  @@map("bilan_tokens")
+}
+
+model BilanResponse {
+  id          String   @id @default(cuid())
+  tokenId     String   @unique @map("token_id")
+  clientId    String?  @map("client_id")
+  data        Json
+  submittedAt DateTime @default(now()) @map("submitted_at")
+
+  token       BilanToken @relation(fields: [tokenId], references: [id], onDelete: Cascade)
+  client      Client?    @relation(fields: [clientId], references: [id])
+
+  @@map("bilan_responses")
+}
+
+model FoodEntry {
+  id        String   @id @default(cuid())
+  clientId  String   @map("client_id")
+  date      DateTime @db.Date
+  mealType  MealType @map("meal_type")
+  foodName  String   @map("food_name")
+  quantity  Float
+  unit      String   @default("g")
+  calories  Float    @default(0)
+  protein   Float    @default(0)
+  carbs     Float    @default(0)
+  fat       Float    @default(0)
+  fiber     Float    @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@map("food_entries")
+}
+
+model SportEntry {
+  id        String    @id @default(cuid())
+  clientId  String    @map("client_id")
+  date      DateTime  @db.Date
+  sportType SportType @map("sport_type")
+  duration  Int?
+  calories  Float?
+  steps     Int?
+  distance  Float?
+  details   Json?
+  notes     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  client    Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@map("sport_entries")
+}
+
+model CycleEntry {
+  id            String         @id @default(cuid())
+  clientId      String         @map("client_id")
+  date          DateTime       @db.Date
+  phase         CyclePhase
+  flowIntensity FlowIntensity? @map("flow_intensity")
+  symptoms      String[]
+  notes         String?
+  createdAt     DateTime       @default(now()) @map("created_at")
+
+  client        Client         @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@map("cycle_entries")
+}
+
+model MealPlan {
+  id          String   @id @default(cuid())
+  clientId    String   @map("client_id")
+  title       String
+  description String?
+  content     Json
+  createdById String   @map("created_by_id")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("CreatedMealPlans", fields: [createdById], references: [id])
+
+  @@map("meal_plans")
+}
+
+model WorkoutPlan {
+  id          String   @id @default(cuid())
+  clientId    String   @map("client_id")
+  title       String
+  description String?
+  content     Json
+  createdById String   @map("created_by_id")
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation("CreatedWorkoutPlans", fields: [createdById], references: [id])
+
+  @@map("workout_plans")
+}
+
+model Resource {
+  id        String   @id @default(cuid())
+  title     String
+  category  String
+  content   String?
+  fileUrl   String?  @map("file_url")
+  createdBy String   @map("created_by")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  author    User     @relation(fields: [createdBy], references: [id])
+
+  @@map("resources")
+}
+
+model Payment {
+  id            String          @id @default(cuid())
+  email         String
+  name          String?
+  amount        Float
+  currency      String          @default("EUR")
+  provider      PaymentProvider
+  providerId    String?         @map("provider_id")
+  status        PaymentStatus   @default(PENDING)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
+
+  @@map("payments")
+}
