@@ -1,20 +1,74 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, FileText, CreditCard, TrendingUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function AdminDashboardPage() {
-  // TODO: Fetch real data from DB
-  const stats = {
-    clients: 12,
-    formulaires: 8,
-    paiements: 15,
-    revenus: 1935,
-  };
+export default async function AdminDashboardPage() {
+  const session = await auth();
+  if (!session?.user || (session.user as { role: string }).role !== "ADMIN") {
+    redirect("/connexion");
+  }
+
+  const [clientCount, formulaireCount, formulairesRecents, paiementCount, revenus] =
+    await Promise.all([
+      prisma.user.count({ where: { role: "CLIENT" } }),
+      prisma.bilanResponse.count(),
+      prisma.bilanResponse.findMany({
+        take: 5,
+        orderBy: { submittedAt: "desc" },
+        include: { token: true },
+      }),
+      prisma.payment.count({ where: { status: "COMPLETED" } }),
+      prisma.payment.aggregate({
+        where: { status: "COMPLETED" },
+        _sum: { amount: true },
+      }),
+    ]);
+
+  const totalRevenus = revenus._sum.amount || 0;
+
+  const stats = [
+    {
+      label: "Clientes",
+      value: clientCount,
+      icon: Users,
+      color: "text-primary",
+      bg: "bg-primary/10",
+      href: "/admin/clients",
+    },
+    {
+      label: "Formulaires reçus",
+      value: formulaireCount,
+      icon: FileText,
+      color: "text-secondary-foreground",
+      bg: "bg-secondary/20",
+      href: "/admin/formulaires",
+    },
+    {
+      label: "Paiements",
+      value: paiementCount,
+      icon: CreditCard,
+      color: "text-accent-foreground",
+      bg: "bg-accent/20",
+      href: "/admin/paiements",
+    },
+    {
+      label: "Revenus",
+      value: `${totalRevenus} €`,
+      icon: TrendingUp,
+      color: "text-green-600",
+      bg: "bg-green-50",
+      href: "/admin/paiements",
+    },
+  ];
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
           Dashboard administrateur
         </h1>
         <p className="text-muted-foreground mt-1">
@@ -23,44 +77,13 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          {
-            label: "Clientes",
-            value: stats.clients,
-            icon: Users,
-            color: "text-primary",
-            bg: "bg-primary/10",
-            href: "/admin/clients",
-          },
-          {
-            label: "Formulaires reçus",
-            value: stats.formulaires,
-            icon: FileText,
-            color: "text-secondary-foreground",
-            bg: "bg-secondary/20",
-            href: "/admin/formulaires",
-          },
-          {
-            label: "Paiements",
-            value: stats.paiements,
-            icon: CreditCard,
-            color: "text-accent-foreground",
-            bg: "bg-accent/20",
-            href: "/admin/paiements",
-          },
-          {
-            label: "Revenus",
-            value: `${stats.revenus} \u20ac`,
-            icon: TrendingUp,
-            color: "text-green-600",
-            bg: "bg-green-50",
-            href: "/admin/paiements",
-          },
-        ].map((stat) => (
+        {stats.map((stat) => (
           <Link key={stat.label} href={stat.href}>
             <Card className="border-warm-border hover:shadow-md transition-shadow h-full">
               <CardContent className="pt-5 pb-5">
-                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-3`}>
+                <div
+                  className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-3`}
+                >
                   <stat.icon className={`h-5 w-5 ${stat.color}`} />
                 </div>
                 <p className="text-2xl font-bold text-foreground">
@@ -103,9 +126,37 @@ export default function AdminDashboardPage() {
             <CardTitle className="text-base">Derniers formulaires reçus</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center py-6">
-              Les formulaires reçus apparaîtront ici.
-            </p>
+            {formulairesRecents.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-6">
+                Aucun formulaire reçu pour le moment.
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {formulairesRecents.map((r) => {
+                  const data = r.data as Record<string, unknown>;
+                  const name =
+                    [data?.prenom, data?.nom].filter(Boolean).join(" ") ||
+                    r.token.name ||
+                    "Anonyme";
+                  return (
+                    <div
+                      key={r.id}
+                      className="flex items-center justify-between p-2 rounded-lg bg-muted/30"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">{name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(r.submittedAt).toLocaleDateString("fr-FR")}
+                        </p>
+                      </div>
+                      <Badge variant="secondary" className="text-xs">
+                        Reçu
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

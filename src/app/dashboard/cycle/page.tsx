@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,16 +14,16 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Calendar, Plus, Droplets, Moon, Sun, Flower2 } from "lucide-react";
+import { Calendar, Plus, Trash2, Droplets, Moon, Sun, Flower2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-type CycleDay = {
+type CycleEntry = {
   id: string;
   date: string;
   phase: string;
-  phaseLabel: string;
-  flowIntensity?: string;
+  flowIntensity: string | null;
   symptoms: string[];
-  notes: string;
+  notes: string | null;
 };
 
 const phases = [
@@ -50,7 +50,7 @@ const phases = [
   },
   {
     value: "LUTEALE",
-    label: "Phase luteale",
+    label: "Phase lutéale",
     icon: Moon,
     color: "bg-purple-100 text-purple-700",
     desc: "Énergie descendante. Privilégiez le repos et le confort.",
@@ -65,56 +65,124 @@ const symptomsList = [
   "Irritabilité",
   "Fringales",
   "Douleurs mammaires",
-  "Acne",
+  "Acné",
   "Insomnie",
   "Anxiété",
   "Nausées",
   "Douleurs lombaires",
 ];
 
+function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Paris",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
 export default function CyclePage() {
-  const [entries, setEntries] = useState<CycleDay[]>([]);
+  const [entries, setEntries] = useState<CycleEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [phase, setPhase] = useState("");
   const [flowIntensity, setFlowIntensity] = useState("");
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
 
+  const fetchEntries = useCallback(async () => {
+    try {
+      const res = await fetch("/api/client/cycle-entries?range=month");
+      if (res.ok) {
+        const data = await res.json();
+        setEntries(data.entries || []);
+      }
+    } catch {
+      toast.error("Erreur lors du chargement");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchEntries();
+  }, [fetchEntries]);
+
   function toggleSymptom(symptom: string) {
     setSymptoms((prev) =>
-      prev.includes(symptom) ? prev.filter((s) => s !== symptom) : [...prev, symptom]
+      prev.includes(symptom)
+        ? prev.filter((s) => s !== symptom)
+        : [...prev, symptom]
     );
   }
 
-  function addEntry() {
+  async function addEntry() {
     if (!phase) return;
-    const phaseInfo = phases.find((p) => p.value === phase);
-    const entry: CycleDay = {
-      id: Date.now().toString(),
-      date: new Date().toISOString().split("T")[0],
-      phase,
-      phaseLabel: phaseInfo?.label || "",
-      flowIntensity: phase === "MENSTRUATION" ? flowIntensity : undefined,
-      symptoms,
-      notes,
-    };
-    setEntries((prev) => [entry, ...prev]);
-    setShowForm(false);
-    setPhase("");
-    setFlowIntensity("");
-    setSymptoms([]);
-    setNotes("");
+    setSaving(true);
+    try {
+      const res = await fetch("/api/client/cycle-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: todayISO(),
+          phase,
+          flowIntensity: phase === "MENSTRUATION" ? flowIntensity || null : null,
+          symptoms,
+          notes: notes || null,
+        }),
+      });
+      if (res.ok) {
+        toast.success("Enregistré !");
+        setShowForm(false);
+        setPhase("");
+        setFlowIntensity("");
+        setSymptoms([]);
+        setNotes("");
+        fetchEntries();
+      } else {
+        const err = await res.json();
+        toast.error(err.message || "Erreur");
+      }
+    } catch {
+      toast.error("Erreur de connexion");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  const currentPhase = entries[0]
-    ? phases.find((p) => p.value === entries[0].phase)
+  async function deleteEntry(id: string) {
+    try {
+      const res = await fetch(`/api/client/cycle-entries?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Supprimé");
+        setEntries((prev) => prev.filter((e) => e.id !== id));
+      }
+    } catch {
+      toast.error("Erreur");
+    }
+  }
+
+  const latestEntry = entries[0];
+  const currentPhase = latestEntry
+    ? phases.find((p) => p.value === latestEntry.phase)
     : null;
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Suivi du cycle menstruel
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -132,7 +200,7 @@ export default function CyclePage() {
 
       {/* Current phase info */}
       {currentPhase && (
-        <Card className={`border-warm-border mb-8 overflow-hidden`}>
+        <Card className="border-warm-border mb-8 overflow-hidden">
           <div className={`${currentPhase.color} px-6 py-4`}>
             <div className="flex items-center gap-3">
               <currentPhase.icon className="h-6 w-6" />
@@ -145,7 +213,7 @@ export default function CyclePage() {
         </Card>
       )}
 
-      {/* Phase cards info */}
+      {/* Phase cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
         {phases.map((p) => (
           <Card key={p.value} className="border-warm-border">
@@ -177,7 +245,10 @@ export default function CyclePage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label>Phase actuelle</Label>
-              <Select value={phase} onValueChange={(v) => v !== null && setPhase(v)}>
+              <Select
+                value={phase}
+                onValueChange={(v) => v !== null && setPhase(v)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionnez la phase" />
                 </SelectTrigger>
@@ -194,7 +265,10 @@ export default function CyclePage() {
             {phase === "MENSTRUATION" && (
               <div className="space-y-2">
                 <Label>Intensité du flux</Label>
-                <Select value={flowIntensity} onValueChange={(v) => v !== null && setFlowIntensity(v)}>
+                <Select
+                  value={flowIntensity}
+                  onValueChange={(v) => v !== null && setFlowIntensity(v)}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionnez" />
                   </SelectTrigger>
@@ -234,9 +308,10 @@ export default function CyclePage() {
 
             <Button
               onClick={addEntry}
+              disabled={saving || !phase}
               className="bg-accent hover:bg-accent/90 text-accent-foreground"
             >
-              Enregistrer
+              {saving ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </CardContent>
         </Card>
@@ -263,7 +338,7 @@ export default function CyclePage() {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <Badge className={phaseInfo?.color}>
-                        {entry.phaseLabel}
+                        {phaseInfo?.label}
                       </Badge>
                       {entry.flowIntensity && (
                         <Badge variant="outline" className="text-xs">
@@ -271,18 +346,24 @@ export default function CyclePage() {
                         </Badge>
                       )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(entry.date).toLocaleDateString("fr-FR")}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(entry.date).toLocaleDateString("fr-FR")}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteEntry(entry.id)}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
                   </div>
                   {entry.symptoms.length > 0 && (
                     <div className="flex flex-wrap gap-1 mb-2">
                       {entry.symptoms.map((s) => (
-                        <Badge
-                          key={s}
-                          variant="secondary"
-                          className="text-xs"
-                        >
+                        <Badge key={s} variant="secondary" className="text-xs">
                           {s}
                         </Badge>
                       ))}

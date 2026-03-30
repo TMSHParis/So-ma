@@ -37,6 +37,9 @@ export async function GET() {
     caloricDeltaKcal: c.caloricDeltaKcal,
     weight: c.weight,
     height: c.height,
+    waistCm: c.waistCm,
+    hipCm: c.hipCm,
+    thighCm: c.thighCm,
     birthDate: c.birthDate?.toISOString() ?? null,
   });
 }
@@ -57,6 +60,9 @@ export async function PATCH(request: NextRequest) {
     caloricDeltaKcal,
     weight,
     height,
+    waistCm,
+    hipCm,
+    thighCm,
   } = body as Record<string, unknown>;
 
   const nextMaintenance =
@@ -100,6 +106,18 @@ export async function PATCH(request: NextRequest) {
     data.height =
       height === null || height === "" || !Number.isFinite(h) ? null : h;
   }
+  if (waistCm !== undefined) {
+    const v = Number(waistCm);
+    data.waistCm = waistCm === null || waistCm === "" || !Number.isFinite(v) ? null : v;
+  }
+  if (hipCm !== undefined) {
+    const v = Number(hipCm);
+    data.hipCm = hipCm === null || hipCm === "" || !Number.isFinite(v) ? null : v;
+  }
+  if (thighCm !== undefined) {
+    const v = Number(thighCm);
+    data.thighCm = thighCm === null || thighCm === "" || !Number.isFinite(v) ? null : v;
+  }
 
   if (touchedEnergy && nextMaintenance != null) {
     const computedGoal = syncGoalCaloriesFromMaintenance(
@@ -129,5 +147,8 @@ export async function PATCH(request: NextRequest) {
     caloricDeltaKcal: updated.caloricDeltaKcal,
     weight: updated.weight,
     height: updated.height,
+    waistCm: updated.waistCm,
+    hipCm: updated.hipCm,
+    thighCm: updated.thighCm,
   });
 }

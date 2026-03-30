@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "clients" ADD COLUMN     "hip_cm" DOUBLE PRECISION,
+ADD COLUMN     "thigh_cm" DOUBLE PRECISION,
+ADD COLUMN     "waist_cm" DOUBLE PRECISION;

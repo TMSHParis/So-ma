@@ -1,16 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -21,16 +20,49 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Mail, Eye } from "lucide-react";
+import { Plus, Mail, Users, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+type ClientRow = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  createdAt: string;
+  client: {
+    id: string;
+    phone: string | null;
+    goalCalories: number | null;
+  } | null;
+};
+
 export default function ClientsPage() {
+  const [clients, setClients] = useState<ClientRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/clients");
+      if (res.ok) {
+        const data = await res.json();
+        setClients(data);
+      }
+    } catch {
+      toast.error("Erreur lors du chargement des clientes");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchClients();
+  }, [fetchClients]);
 
   async function handleCreateClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -48,8 +80,13 @@ export default function ClientsPage() {
       });
 
       if (res.ok) {
-        toast.success("Compte cliente créé ! Un e-mail avec les identifiants a été envoyé.");
+        const result = await res.json();
+        toast.success(
+          `Compte créé ! Mot de passe temporaire : ${result.temporaryPassword}`,
+          { duration: 15000 }
+        );
         setDialogOpen(false);
+        fetchClients();
       } else {
         const error = await res.json();
         toast.error(error.message || "Erreur lors de la création");
@@ -57,24 +94,15 @@ export default function ClientsPage() {
     } catch {
       toast.error("Erreur de connexion");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   }
-
-  // TODO: Fetch real clients from DB
-  const clients: {
-    id: string;
-    name: string;
-    email: string;
-    createdAt: string;
-    status: string;
-  }[] = [];
 
   return (
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Gestion des clientes
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -82,10 +110,13 @@ export default function ClientsPage() {
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouvelle cliente
-          </DialogTrigger>
+          <Button
+            onClick={() => setDialogOpen(true)}
+            className="bg-primary hover:bg-primary/90 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle cliente
+          </Button>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Créer un compte cliente</DialogTitle>
@@ -110,16 +141,16 @@ export default function ClientsPage() {
                 <Input id="phone" name="phone" type="tel" />
               </div>
               <p className="text-xs text-muted-foreground">
-                Un mot de passe sera généré automatiquement et envoyé par e-mail à
-                la cliente avec ses identifiants de connexion.
+                Un mot de passe sera généré automatiquement et affiché après la
+                création. Transmettez-le à la cliente par email ou message.
               </p>
               <Button
                 type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-white"
-                disabled={loading}
+                disabled={saving}
               >
                 <Mail className="h-4 w-4 mr-2" />
-                {loading ? "Création…" : "Créer et envoyer les identifiants"}
+                {saving ? "Création..." : "Créer le compte"}
               </Button>
             </form>
           </DialogContent>
@@ -128,8 +159,13 @@ export default function ClientsPage() {
 
       <Card className="border-warm-border">
         <CardContent className="p-0">
-          {clients.length === 0 ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : clients.length === 0 ? (
             <div className="text-center py-12">
+              <Users className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
               <p className="text-muted-foreground">
                 Aucune cliente pour le moment.
               </p>
@@ -144,26 +180,36 @@ export default function ClientsPage() {
                 <TableRow>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>Date d&apos;inscription</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead className="w-12" />
+                  <TableHead>Téléphone</TableHead>
+                  <TableHead>Objectif kcal</TableHead>
+                  <TableHead>Inscription</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {clients.map((client) => (
                   <TableRow key={client.id}>
                     <TableCell className="font-medium">
-                      {client.name}
+                      {client.firstName} {client.lastName}
                     </TableCell>
-                    <TableCell>{client.email}</TableCell>
-                    <TableCell>{client.createdAt}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{client.status}</Badge>
+                    <TableCell className="text-muted-foreground">
+                      {client.email}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {client.client?.phone || "—"}
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      {client.client?.goalCalories ? (
+                        <Badge variant="secondary">
+                          {client.client.goalCalories} kcal
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          Non défini
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-xs text-muted-foreground">
+                      {new Date(client.createdAt).toLocaleDateString("fr-FR")}
                     </TableCell>
                   </TableRow>
                 ))}

@@ -1,117 +1,112 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Utensils, Clock, Flame } from "lucide-react";
+import { Utensils, Loader2 } from "lucide-react";
+
+type MealPlan = {
+  id: string;
+  title: string;
+  description: string | null;
+  content: { text?: string } | string;
+  createdAt: string;
+};
 
 export default function ProgrammeAlimentairePage() {
-  // TODO: Fetch real data from DB
-  const mealPlan = {
-    title: "Programme nutritionnel personnalisé",
-    description: "Adapté à votre profil et vos objectifs.",
-    meals: [
-      {
-        name: "Petit-déjeuner",
-        time: "7h30 - 8h30",
-        items: [
-          "Porridge d'avoine (50g) avec fruits frais",
-          "1 cuillère de beurre de cacahuète",
-          "1 poignée d'amandes",
-          "Thé vert ou café",
-        ],
-        calories: 450,
-      },
-      {
-        name: "Déjeuner",
-        time: "12h - 13h",
-        items: [
-          "Poulet grillé (150g) ou tofu (200g)",
-          "Riz complet (80g cru) ou patate douce",
-          "Légumes de saison en abondance",
-          "1 cuillère d'huile d'olive",
-        ],
-        calories: 550,
-      },
-      {
-        name: "Collation",
-        time: "16h",
-        items: [
-          "1 fruit de saison",
-          "1 yaourt nature ou végétal",
-          "Quelques noix ou graines",
-        ],
-        calories: 200,
-      },
-      {
-        name: "Dîner",
-        time: "19h - 20h",
-        items: [
-          "Poisson (150g) ou oeufs (2-3)",
-          "Quinoa ou pâtes complètes (60g cru)",
-          "Salade verte + crudités",
-          "1 cuillère d'huile de colza",
-        ],
-        calories: 500,
-      },
-    ],
-  };
+  const [plans, setPlans] = useState<MealPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/client/meal-plans")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setPlans(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-8">
-        <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
           Programme alimentaire
         </h1>
-        <p className="text-muted-foreground mt-1">{mealPlan.description}</p>
+        <p className="text-muted-foreground mt-1">
+          Votre plan de repas personnalisé.
+        </p>
       </div>
 
-      <div className="space-y-4">
-        {mealPlan.meals.map((meal) => (
-          <Card key={meal.name} className="border-warm-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-                    <Utensils className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">{meal.name}</CardTitle>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                      <Clock className="h-3 w-3" />
-                      {meal.time}
+      {plans.length === 0 ? (
+        <Card className="border-warm-border">
+          <CardContent className="py-12 text-center">
+            <Utensils className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              Votre programme alimentaire n&apos;a pas encore été créé.
+            </p>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Il sera disponible après votre consultation avec So Ma.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {plans.map((plan) => {
+            const text =
+              typeof plan.content === "string"
+                ? plan.content
+                : typeof plan.content === "object" && plan.content !== null && "text" in plan.content
+                  ? (plan.content as { text: string }).text
+                  : JSON.stringify(plan.content, null, 2);
+
+            return (
+              <Card key={plan.id} className="border-warm-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <Utensils className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{plan.title}</CardTitle>
+                        {plan.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {plan.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
+                    </Badge>
                   </div>
-                </div>
-                <Badge variant="secondary" className="text-xs">
-                  <Flame className="h-3 w-3 mr-1" />
-                  {meal.calories} kcal
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2">
-                {meal.items.map((item) => (
-                  <li
-                    key={item}
-                    className="flex items-start gap-2 text-sm text-muted-foreground"
-                  >
-                    <span className="w-1.5 h-1.5 bg-primary/40 rounded-full mt-1.5 flex-shrink-0" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
+                </CardHeader>
+                <CardContent>
+                  <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed bg-muted/30 rounded-lg p-4">
+                    {text}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          <Card className="border-warm-border bg-primary/5">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Ce programme est indicatif et doit être adapté selon vos envies et
+                disponibilités. L&apos;important est de respecter les grandes lignes
+                tout en gardant du plaisir.
+              </p>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <Card className="border-warm-border mt-6 bg-primary/5">
-        <CardContent className="pt-4 pb-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Ce programme est indicatif et doit être adapté selon vos envies et
-            disponibilités. L&apos;important est de respecter les grandes lignes
-            tout en gardant du plaisir.
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }

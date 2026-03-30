@@ -21,6 +21,9 @@ type Profile = {
   caloricDeltaKcal: number;
   weight: number | null;
   height: number | null;
+  waistCm: number | null;
+  hipCm: number | null;
+  thighCm: number | null;
 };
 
 const MODES: {
@@ -60,6 +63,9 @@ export default function ObjectifsPage() {
   const [goalFiber, setGoalFiber] = useState("25");
   const [weight, setWeight] = useState("");
   const [height, setHeight] = useState("");
+  const [waistCm, setWaistCm] = useState("");
+  const [hipCm, setHipCm] = useState("");
+  const [thighCm, setThighCm] = useState("");
   /** Si vous ne renseignez pas le maintien, cette cible en kcal est enregistrée. */
   const [targetCaloriesFallback, setTargetCaloriesFallback] = useState("1800");
 
@@ -108,6 +114,9 @@ export default function ObjectifsPage() {
         if (data.goalFiber != null) setGoalFiber(String(data.goalFiber));
         if (data.weight != null) setWeight(String(data.weight));
         if (data.height != null) setHeight(String(data.height));
+        if (data.waistCm != null) setWaistCm(String(data.waistCm));
+        if (data.hipCm != null) setHipCm(String(data.hipCm));
+        if (data.thighCm != null) setThighCm(String(data.thighCm));
       } catch {
         toast.error("Impossible de charger vos objectifs");
       } finally {
@@ -147,18 +156,21 @@ export default function ObjectifsPage() {
           parseInt(targetCaloriesFallback, 10) || 1800;
       }
 
-      const wStr = weight.trim();
-      const hStr = height.trim();
-      const wNum = wStr === "" ? null : Number.parseFloat(wStr);
-      const hNum = hStr === "" ? null : Number.parseFloat(hStr);
+      const parseOpt = (s: string) => {
+        const v = Number.parseFloat(s.trim());
+        return s.trim() === "" || !Number.isFinite(v) ? null : v;
+      };
 
       const res = await fetch("/api/client/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...body,
-          weight: wNum != null && Number.isFinite(wNum) ? wNum : null,
-          height: hNum != null && Number.isFinite(hNum) ? hNum : null,
+          weight: parseOpt(weight),
+          height: parseOpt(height),
+          waistCm: parseOpt(waistCm),
+          hipCm: parseOpt(hipCm),
+          thighCm: parseOpt(thighCm),
         }),
       });
       if (!res.ok) throw new Error();
@@ -355,8 +367,8 @@ export default function ObjectifsPage() {
               <CardTitle className="text-base">Référentiel (optionnel)</CardTitle>
             </div>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 gap-4 max-w-md">
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>Poids (kg)</Label>
                 <Input
@@ -376,6 +388,41 @@ export default function ObjectifsPage() {
                   onChange={(e) => setHeight(e.target.value)}
                   placeholder="—"
                 />
+              </div>
+            </div>
+            <div className="border-t border-warm-border pt-4">
+              <p className="text-sm font-medium text-foreground mb-3">Mensurations</p>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label>Tour de taille (cm)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={waistCm}
+                    onChange={(e) => setWaistCm(e.target.value)}
+                    placeholder="—"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tour de hanches (cm)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={hipCm}
+                    onChange={(e) => setHipCm(e.target.value)}
+                    placeholder="—"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Tour de cuisse (cm)</Label>
+                  <Input
+                    type="number"
+                    step="0.5"
+                    value={thighCm}
+                    onChange={(e) => setThighCm(e.target.value)}
+                    placeholder="—"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

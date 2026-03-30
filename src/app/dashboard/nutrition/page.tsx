@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
 import { Button } from "@/components/ui/button";
@@ -25,13 +25,14 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Plus,
-  Search,
   Trash2,
   Flame,
   Beef,
   Wheat,
   Droplets,
   Leaf,
+  Loader2,
+  Search,
 } from "lucide-react";
 
 type FoodItem = {
@@ -46,15 +47,16 @@ type FoodItem = {
   fiber: number;
 };
 
-type OpenFoodFactsProduct = {
-  code: string;
-  product_name: string;
-  nutriments: {
-    "energy-kcal_100g"?: number;
-    proteins_100g?: number;
-    carbohydrates_100g?: number;
-    fat_100g?: number;
-    fiber_100g?: number;
+type SearchResult = {
+  id: string;
+  name: string;
+  source: "local" | "openfoodfacts";
+  per100g: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+    fiber: number;
   };
 };
 
@@ -88,13 +90,14 @@ export default function NutritionPage() {
   });
   const [ready, setReady] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<OpenFoodFactsProduct[]>(
-    []
-  );
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState("PETIT_DEJEUNER");
   const [quantity, setQuantity] = useState("100");
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Debounce ref
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const refreshData = useCallback(async () => {
     try {
@@ -155,41 +158,51 @@ export default function NutritionPage() {
     refreshData();
   }, [refreshData]);
 
-  async function searchFood() {
-    if (!searchQuery.trim()) return;
-    setSearching(true);
-    try {
-      const res = await fetch(
-        `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(searchQuery)}&search_simple=1&action=process&json=1&page_size=10&fields=code,product_name,nutriments`
-      );
-      const data = await res.json();
-      setSearchResults(data.products || []);
-    } finally {
-      setSearching(false);
-    }
-  }
+  // Recherche auto avec debounce 300ms
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
 
-  async function addFood(product: OpenFoodFactsProduct) {
+    if (searchQuery.trim().length < 2) {
+      setSearchResults([]);
+      setSearching(false);
+      return;
+    }
+
+    setSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `/api/food-search?q=${encodeURIComponent(searchQuery.trim())}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(data.results || []);
+        }
+      } catch {
+        // silently fail
+      } finally {
+        setSearching(false);
+      }
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [searchQuery]);
+
+  async function addFood(result: SearchResult) {
     const qty = parseFloat(quantity) || 100;
     const ratio = qty / 100;
-    const item: FoodItem = {
-      id: `${product.code}-${Date.now()}`,
-      name: product.product_name || "Aliment inconnu",
+
+    const item = {
+      name: result.name,
       quantity: qty,
       unit: "g",
-      calories: Math.round(
-        (product.nutriments["energy-kcal_100g"] || 0) * ratio
-      ),
-      protein: Math.round(
-        (product.nutriments.proteins_100g || 0) * ratio * 10
-      ) / 10,
-      carbs: Math.round(
-        (product.nutriments.carbohydrates_100g || 0) * ratio * 10
-      ) / 10,
-      fat: Math.round((product.nutriments.fat_100g || 0) * ratio * 10) / 10,
-      fiber: Math.round(
-        (product.nutriments.fiber_100g || 0) * ratio * 10
-      ) / 10,
+      calories: Math.round(result.per100g.calories * ratio),
+      protein: Math.round(result.per100g.protein * ratio * 10) / 10,
+      carbs: Math.round(result.per100g.carbs * ratio * 10) / 10,
+      fat: Math.round(result.per100g.fat * ratio * 10) / 10,
+      fiber: Math.round(result.per100g.fiber * ratio * 10) / 10,
     };
 
     try {
@@ -211,15 +224,18 @@ export default function NutritionPage() {
       });
       if (!res.ok) throw new Error();
       const row = await res.json();
-      const saved: FoodItem = { ...item, id: row.id };
       setMeals((prev) => ({
         ...prev,
-        [selectedMealType]: [...prev[selectedMealType], saved],
+        [selectedMealType]: [
+          ...prev[selectedMealType],
+          { ...item, id: row.id },
+        ],
       }));
       setDialogOpen(false);
       setSearchQuery("");
       setSearchResults([]);
       setQuantity("100");
+      toast.success(`${item.name} ajouté`);
     } catch {
       toast.error("Enregistrement impossible");
     }
@@ -241,7 +257,6 @@ export default function NutritionPage() {
     }
   }
 
-  // Calculate totals
   const allFoods = Object.values(meals).flat();
   const totals = allFoods.reduce(
     (acc, f) => ({
@@ -267,17 +282,23 @@ export default function NutritionPage() {
     <div>
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Suivi alimentaire
           </h1>
           <p className="text-muted-foreground mt-1">
             Enregistrez vos repas et suivez vos macros.
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) {
+            setSearchQuery("");
+            setSearchResults([]);
+          }
+        }}>
           <DialogTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-white">
-              <Plus className="h-4 w-4 mr-2" />
-              Ajouter un aliment
+            <Plus className="h-4 w-4 mr-2" />
+            Ajouter un aliment
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
@@ -305,21 +326,22 @@ export default function NutritionPage() {
 
               <div className="space-y-2">
                 <Label>Rechercher un aliment</Label>
-                <div className="flex gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Ex: pomme, riz, poulet..."
-                    onKeyDown={(e) => e.key === "Enter" && searchFood()}
+                    placeholder="Tapez : poulet, riz, pomme de terre, pome de ter..."
+                    className="pl-9"
+                    autoFocus
                   />
-                  <Button
-                    variant="outline"
-                    onClick={searchFood}
-                    disabled={searching}
-                  >
-                    <Search className="h-4 w-4" />
-                  </Button>
+                  {searching && (
+                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  La recherche tolère les fautes d&apos;orthographe et les accents manquants.
+                </p>
               </div>
 
               <div className="space-y-2">
@@ -331,47 +353,46 @@ export default function NutritionPage() {
                 />
               </div>
 
-              {searching && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Recherche en cours...
-                </p>
+              {searchResults.length > 0 && (
+                <div className="max-h-64 overflow-y-auto space-y-1.5">
+                  {searchResults.map((result) => {
+                    const qty = parseFloat(quantity) || 100;
+                    const ratio = qty / 100;
+                    return (
+                      <button
+                        key={result.id}
+                        onClick={() => addFood(result)}
+                        className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
+                      >
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-foreground truncate pr-2">
+                            {result.name}
+                          </p>
+                          {result.source === "local" && (
+                            <Badge variant="secondary" className="text-[10px] flex-shrink-0">
+                              Générique
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                          <span className="font-medium text-foreground/70">
+                            {Math.round(result.per100g.calories * ratio)} kcal
+                          </span>
+                          <span>P: {Math.round(result.per100g.protein * ratio * 10) / 10}g</span>
+                          <span>G: {Math.round(result.per100g.carbs * ratio * 10) / 10}g</span>
+                          <span>L: {Math.round(result.per100g.fat * ratio * 10) / 10}g</span>
+                          <span>F: {Math.round(result.per100g.fiber * ratio * 10) / 10}g</span>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               )}
 
-              {searchResults.length > 0 && (
-                <div className="max-h-60 overflow-y-auto space-y-2">
-                  {searchResults.map((product) => (
-                    <button
-                      key={product.code}
-                      onClick={() => addFood(product)}
-                      className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
-                    >
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {product.product_name || "Sans nom"}
-                      </p>
-                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                        <span>
-                          {Math.round(
-                            product.nutriments["energy-kcal_100g"] || 0
-                          )}{" "}
-                          kcal
-                        </span>
-                        <span>
-                          P: {Math.round(product.nutriments.proteins_100g || 0)}g
-                        </span>
-                        <span>
-                          G:{" "}
-                          {Math.round(
-                            product.nutriments.carbohydrates_100g || 0
-                          )}
-                          g
-                        </span>
-                        <span>
-                          L: {Math.round(product.nutriments.fat_100g || 0)}g
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
+              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Aucun résultat pour &quot;{searchQuery}&quot;
+                </p>
               )}
             </div>
           </DialogContent>

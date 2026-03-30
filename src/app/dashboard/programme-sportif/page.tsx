@@ -1,126 +1,112 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dumbbell, Timer, Calendar } from "lucide-react";
+import { Dumbbell, Loader2 } from "lucide-react";
+
+type WorkoutPlan = {
+  id: string;
+  title: string;
+  description: string | null;
+  content: { text?: string } | string;
+  createdAt: string;
+};
 
 export default function ProgrammeSportifPage() {
-  // TODO: Fetch real data from DB
-  const workoutPlan = {
-    title: "Programme sportif personnalisé",
-    frequency: "3 séances par semaine",
-    weeks: [
-      {
-        day: "Lundi",
-        type: "Haut du corps",
-        exercises: [
-          { name: "Développé couché", sets: 3, reps: "10-12", rest: "90s" },
-          { name: "Rowing haltère", sets: 3, reps: "10-12", rest: "90s" },
-          { name: "Développé épaules", sets: 3, reps: "10-12", rest: "60s" },
-          { name: "Curl biceps", sets: 2, reps: "12-15", rest: "60s" },
-          { name: "Dips ou extensions triceps", sets: 2, reps: "12-15", rest: "60s" },
-        ],
-        duration: 45,
-      },
-      {
-        day: "Mercredi",
-        type: "Bas du corps",
-        exercises: [
-          { name: "Squat", sets: 3, reps: "10-12", rest: "90s" },
-          { name: "Fentes marchées", sets: 3, reps: "12 par jambe", rest: "60s" },
-          { name: "Hip thrust", sets: 3, reps: "12-15", rest: "90s" },
-          { name: "Leg curl", sets: 3, reps: "12-15", rest: "60s" },
-          { name: "Mollets debout", sets: 3, reps: "15-20", rest: "45s" },
-        ],
-        duration: 50,
-      },
-      {
-        day: "Vendredi",
-        type: "Full body",
-        exercises: [
-          { name: "Deadlift roumain", sets: 3, reps: "10-12", rest: "90s" },
-          { name: "Pompes ou développé incliné", sets: 3, reps: "10-12", rest: "60s" },
-          { name: "Goblet squat", sets: 3, reps: "12-15", rest: "60s" },
-          { name: "Tirage vertical", sets: 3, reps: "10-12", rest: "60s" },
-          { name: "Planche", sets: 3, reps: "30-45s", rest: "45s" },
-        ],
-        duration: 45,
-      },
-    ],
-  };
+  const [plans, setPlans] = useState<WorkoutPlan[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/client/workout-plans")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data) => setPlans(data))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div>
       <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
-            Programme sportif
-          </h1>
-          <Badge variant="secondary">
-            <Calendar className="h-3 w-3 mr-1" />
-            {workoutPlan.frequency}
-          </Badge>
-        </div>
-        <p className="text-muted-foreground">
-          Programme adapté à votre niveau et vos objectifs. Échauffez-vous
-          toujours 5-10 minutes avant chaque séance.
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+          Programme sportif
+        </h1>
+        <p className="text-muted-foreground mt-1">
+          Votre planning d&apos;entraînement personnalisé.
         </p>
       </div>
 
-      <div className="space-y-6">
-        {workoutPlan.weeks.map((day) => (
-          <Card key={day.day} className="border-warm-border">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center">
-                    <Dumbbell className="h-5 w-5 text-secondary-foreground" />
-                  </div>
-                  <div>
-                    <CardTitle className="text-base">
-                      {day.day} - {day.type}
-                    </CardTitle>
-                    <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
-                      <Timer className="h-3 w-3" />
-                      ~{day.duration} min
+      {plans.length === 0 ? (
+        <Card className="border-warm-border">
+          <CardContent className="py-12 text-center">
+            <Dumbbell className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">
+              Votre programme sportif n&apos;a pas encore été créé.
+            </p>
+            <p className="text-sm text-muted-foreground/60 mt-1">
+              Il sera disponible après votre consultation avec So Ma.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-6">
+          {plans.map((plan) => {
+            const text =
+              typeof plan.content === "string"
+                ? plan.content
+                : typeof plan.content === "object" && plan.content !== null && "text" in plan.content
+                  ? (plan.content as { text: string }).text
+                  : JSON.stringify(plan.content, null, 2);
+
+            return (
+              <Card key={plan.id} className="border-warm-border">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-secondary/20 rounded-xl flex items-center justify-center">
+                        <Dumbbell className="h-5 w-5 text-secondary-foreground" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base">{plan.title}</CardTitle>
+                        {plan.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {plan.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
+                    <Badge variant="secondary" className="text-xs">
+                      {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
+                    </Badge>
                   </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {day.exercises.map((ex, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {ex.name}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <span>
-                        {ex.sets} x {ex.reps}
-                      </span>
-                      <span>Repos: {ex.rest}</span>
-                    </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed bg-muted/30 rounded-lg p-4">
+                    {text}
                   </div>
-                ))}
-              </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+
+          <Card className="border-warm-border bg-secondary/5">
+            <CardContent className="pt-4 pb-4">
+              <p className="text-sm text-muted-foreground text-center">
+                Adaptez les charges à votre niveau. En complément, visez 7 000 à
+                10 000 pas par jour. Échauffez-vous toujours 5-10 minutes avant
+                chaque séance.
+              </p>
             </CardContent>
           </Card>
-        ))}
-      </div>
-
-      <Card className="border-warm-border mt-6 bg-secondary/5">
-        <CardContent className="pt-4 pb-4">
-          <p className="text-sm text-muted-foreground text-center">
-            Adaptez les charges à votre niveau. Les dernières répétitions doivent
-            être difficiles mais réalisables avec une bonne forme. En
-            complément, visez 7 000 à 10 000 pas par jour.
-          </p>
-        </CardContent>
-      </Card>
+        </div>
+      )}
     </div>
   );
 }

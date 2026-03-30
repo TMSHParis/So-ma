@@ -98,6 +98,9 @@ model Client {
   energyBalance   EnergyBalance? @map("energy_balance")
   /// Ex : -300 avec deficit, +250 avec surplus (0 si maintien).
   caloricDeltaKcal Int      @default(0) @map("caloric_delta_kcal")
+  waistCm         Float?   @map("waist_cm")
+  hipCm           Float?   @map("hip_cm")
+  thighCm         Float?   @map("thigh_cm")
   notes           String?
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")

@@ -12,6 +12,7 @@ import {
   FileText,
   ClipboardList,
   CreditCard,
+  Lightbulb,
   LogOut,
   Menu,
   Shield,
@@ -23,6 +24,7 @@ const sidebarLinks = [
   { href: "/admin/clients", label: "Clientes", icon: Users },
   { href: "/admin/formulaires", label: "Formulaires", icon: FileText },
   { href: "/admin/programmes", label: "Programmes", icon: ClipboardList },
+  { href: "/admin/ressources", label: "Ressources", icon: Lightbulb },
   { href: "/admin/paiements", label: "Paiements", icon: CreditCard },
 ];
 
