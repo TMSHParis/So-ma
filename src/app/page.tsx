@@ -3,13 +3,19 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { CloudsIllustration } from "@/components/illustrations/clouds";
 import { OliveTreeIllustration } from "@/components/illustrations/olive-tree";
+import { RootsLeft, RootsRight } from "@/components/illustrations/roots-vine";
+import { FooterTree } from "@/components/illustrations/footer-tree";
 
 export default function HomePage() {
   return (
-    <>
+    <div className="relative">
+      {/* Racines grimpantes sur les côtés - visibles uniquement sur desktop */}
+      <RootsLeft className="hidden lg:block fixed left-0 top-0 w-[80px] h-screen z-0 pointer-events-none" />
+      <RootsRight className="hidden lg:block fixed right-0 top-0 w-[80px] h-screen z-0 pointer-events-none" />
+
       <Header />
 
-      <main className="flex-1">
+      <main className="flex-1 relative z-10">
         {/* Hero */}
         <section className="bg-[#FBFAF8] overflow-hidden">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-20 pb-16 md:pt-28 md:pb-20 text-center">
@@ -221,7 +227,13 @@ export default function HomePage() {
         </section>
       </main>
 
-      <Footer />
-    </>
+      {/* Olivier qui pousse depuis le footer */}
+      <div className="relative">
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[260px] h-[350px] md:w-[340px] md:h-[420px] pointer-events-none z-0 translate-y-[20px]">
+          <FooterTree className="w-full h-full" />
+        </div>
+        <Footer />
+      </div>
+    </div>
   );
 }
