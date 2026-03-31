@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AnimatedClouds } from "@/components/illustrations/clouds";
@@ -43,13 +43,7 @@ export default function HomePage() {
             <AnimatedClouds />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-[180px] h-[180px] md:w-[220px] md:h-[220px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 flex items-center justify-center">
-                <Image
-                  src="/logo-soma.webp"
-                  alt="So-ma"
-                  width={180}
-                  height={58}
-                  className="h-12 md:h-16 w-auto"
-                />
+                <img src="/logo-soma.png" alt="So-ma" className="h-12 md:h-16 w-auto" />
               </div>
             </div>
           </div>

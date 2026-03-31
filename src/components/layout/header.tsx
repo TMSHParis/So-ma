@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
@@ -21,14 +21,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04]">
       <nav className="max-w-[980px] mx-auto flex items-center justify-between h-11 px-4 lg:px-0">
         <Link href="/" className="flex items-center">
-          <Image
-            src="/logo-soma.webp"
-            alt="So-ma"
-            width={130}
-            height={42}
-            className="h-8 w-auto"
-            priority
-          />
+          <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto" />
         </Link>
 
         {/* Desktop */}

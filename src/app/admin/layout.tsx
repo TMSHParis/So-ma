@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
+
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -35,13 +35,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       <div className="p-6 border-b border-warm-border">
         <Link href="/admin" className="flex items-center gap-2">
           <div>
-            <Image
-              src="/logo-soma.webp"
-              alt="So-ma"
-              width={120}
-              height={38}
-              className="h-8 w-auto"
-            />
+            <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto" />
             <p className="text-xs text-muted-foreground mt-1">Administration</p>
           </div>
         </Link>
