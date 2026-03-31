@@ -46,7 +46,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       <div className="p-6 border-b border-warm-border">
         <Link href="/dashboard">
           <Image
-            src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+            src="/logo-soma.webp"
             alt="So-ma"
             width={120}
             height={38}
@@ -116,7 +116,7 @@ export default function DashboardLayout({
         <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
           <Link href="/dashboard">
             <Image
-              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              src="/logo-soma.webp"
               alt="So-ma"
               width={100}
               height={32}

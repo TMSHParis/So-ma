@@ -14,7 +14,7 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pb-5 text-xs">
           <div>
             <Image
-              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              src="/logo-soma.webp"
               alt="So-ma"
               width={90}
               height={29}

@@ -36,7 +36,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
         <Link href="/admin" className="flex items-center gap-2">
           <div>
             <Image
-              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              src="/logo-soma.webp"
               alt="So-ma"
               width={120}
               height={38}

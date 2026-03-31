@@ -22,11 +22,11 @@ export function Header() {
       <nav className="max-w-[980px] mx-auto flex items-center justify-between h-11 px-4 lg:px-0">
         <Link href="/" className="flex items-center">
           <Image
-            src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+            src="/logo-soma.webp"
             alt="So-ma"
-            width={100}
-            height={32}
-            className="h-7 w-auto"
+            width={130}
+            height={42}
+            className="h-8 w-auto"
             priority
           />
         </Link>

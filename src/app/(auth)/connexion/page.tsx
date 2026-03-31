@@ -49,7 +49,7 @@ export default function ConnexionPage() {
         <div className="text-center mb-10">
           <Link href="/">
             <Image
-              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              src="/logo-soma.webp"
               alt="So-ma"
               width={145}
               height={46}
