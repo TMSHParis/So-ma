@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "So Ma | Nutrition & Bien-être pour femmes neuroatypiques",
+  title: "So-ma | Nutrition & Bien-être pour femmes neuroatypiques",
   description:
     "Accompagnement personnalisé en nutrition et sport pour femmes neuroatypiques. Programmes adaptés TDAH, TSA, HPI/HPE, DYS.",
 };

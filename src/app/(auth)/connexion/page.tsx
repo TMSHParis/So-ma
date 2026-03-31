@@ -48,7 +48,7 @@ export default function ConnexionPage() {
         <div className="text-center mb-10">
           <Link href="/">
             <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
-              So Ma
+              So-ma
             </h1>
           </Link>
         </div>

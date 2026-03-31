@@ -51,7 +51,7 @@ export default function ProgrammeAlimentairePage() {
               Votre programme alimentaire n&apos;a pas encore été créé.
             </p>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Il sera disponible après votre consultation avec So Ma.
+              Il sera disponible après votre consultation avec So-ma.
             </p>
           </CardContent>
         </Card>

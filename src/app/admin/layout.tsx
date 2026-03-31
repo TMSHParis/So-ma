@@ -36,7 +36,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
           <Shield className="h-5 w-5 text-primary" />
           <div>
             <h1 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-foreground">
-              So Ma
+              So-ma
             </h1>
             <p className="text-xs text-muted-foreground">Administration</p>
           </div>

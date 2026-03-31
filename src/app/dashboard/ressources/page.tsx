@@ -62,7 +62,7 @@ export default function RessourcesPage() {
               Aucune ressource disponible pour le moment.
             </p>
             <p className="text-sm text-muted-foreground/60 mt-1">
-              Les ressources seront ajoutées par So Ma au fur et à mesure.
+              Les ressources seront ajoutées par So-ma au fur et à mesure.
             </p>
           </CardContent>
         </Card>

@@ -20,7 +20,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04]">
       <nav className="max-w-[980px] mx-auto flex items-center justify-between h-11 px-4 lg:px-0">
         <Link href="/" className="text-[17px] font-semibold tracking-tight text-foreground">
-          So Ma
+          So-ma
         </Link>
 
         {/* Desktop */}

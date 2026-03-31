@@ -45,7 +45,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       <div className="p-6 border-b border-warm-border">
         <Link href="/dashboard">
           <h1 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-foreground">
-            So Ma
+            So-ma
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             Mon espace bien-être
@@ -111,7 +111,7 @@ export default function DashboardLayout({
         <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
           <Link href="/dashboard">
             <span className="font-[family-name:var(--font-playfair)] text-xl font-bold">
-              So Ma
+              So-ma
             </span>
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>

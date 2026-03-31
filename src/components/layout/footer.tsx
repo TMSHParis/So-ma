@@ -12,7 +12,7 @@ export function Footer() {
         {/* Mini links */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pb-5 text-xs">
           <div>
-            <h4 className="font-semibold text-foreground mb-2.5">So Ma</h4>
+            <h4 className="font-semibold text-foreground mb-2.5">So-ma</h4>
             <ul className="space-y-1.5 text-muted-foreground">
               <li><Link href="/" className="hover:text-foreground transition-colors">Accueil</Link></li>
               <li><Link href="/suivi-nutritionnel" className="hover:text-foreground transition-colors">Accompagnement</Link></li>
@@ -56,7 +56,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-black/[0.06] pt-4 flex flex-col md:flex-row justify-between gap-2 text-xs text-muted-foreground">
-          <p>Copyright &copy; {new Date().getFullYear()} So Ma. Tous droits réservés.</p>
+          <p>Copyright &copy; {new Date().getFullYear()} So-ma. Tous droits réservés.</p>
           <p>Professionnelle de santé et nutrition</p>
         </div>
       </div>
