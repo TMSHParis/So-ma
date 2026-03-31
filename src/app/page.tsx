@@ -38,7 +38,7 @@ export default function HomePage() {
           </div>
 
           {/* Animated clouds band */}
-          <div className="h-[320px] md:h-[420px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative overflow-hidden">
+          <div className="h-[140px] md:h-[180px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative overflow-hidden">
             <AnimatedClouds />
           </div>
         </section>

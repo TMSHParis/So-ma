@@ -92,24 +92,30 @@
 }
 
 @keyframes cloud-drift-1 {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(30px); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(50px) translateY(-8px); }
+  50% { transform: translateX(80px) translateY(4px); }
+  75% { transform: translateX(30px) translateY(-6px); }
+  100% { transform: translateX(0) translateY(0); }
 }
 @keyframes cloud-drift-2 {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-25px); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(-40px) translateY(6px); }
+  50% { transform: translateX(-70px) translateY(-5px); }
+  75% { transform: translateX(-25px) translateY(8px); }
+  100% { transform: translateX(0) translateY(0); }
 }
 @keyframes cloud-drift-3 {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(20px); }
-  100% { transform: translateX(0); }
+  0% { transform: translateX(0) translateY(0); }
+  25% { transform: translateX(35px) translateY(7px); }
+  50% { transform: translateX(60px) translateY(-4px); }
+  75% { transform: translateX(20px) translateY(5px); }
+  100% { transform: translateX(0) translateY(0); }
 }
 
-.cloud-1 { animation: cloud-drift-1 25s ease-in-out infinite; }
-.cloud-2 { animation: cloud-drift-2 30s ease-in-out infinite; }
-.cloud-3 { animation: cloud-drift-3 35s ease-in-out infinite; }
+.cloud-1 { animation: cloud-drift-1 14s ease-in-out infinite; }
+.cloud-2 { animation: cloud-drift-2 18s ease-in-out infinite; }
+.cloud-3 { animation: cloud-drift-3 16s ease-in-out infinite; }
 
 @layer base {
   * {

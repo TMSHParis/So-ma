@@ -74,23 +74,23 @@ export function AnimatedClouds() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {/* Large cloud - left */}
-      <div className="cloud-1 absolute top-[10%] left-[2%] w-[180px] h-[110px] md:w-[240px] md:h-[140px]">
+      <div className="cloud-1 absolute -top-[5%] left-[2%] w-[140px] h-[85px] md:w-[200px] md:h-[120px]">
         <Cloud1 className="w-full h-full" />
       </div>
       {/* Medium cloud - right */}
-      <div className="cloud-2 absolute top-[5%] right-[5%] w-[150px] h-[85px] md:w-[200px] md:h-[110px]">
+      <div className="cloud-2 absolute -top-[8%] right-[5%] w-[120px] h-[68px] md:w-[170px] md:h-[95px]">
         <Cloud3 className="w-full h-full" />
       </div>
       {/* White cloud - center */}
-      <div className="cloud-3 absolute top-[45%] left-[25%] w-[140px] h-[80px] md:w-[190px] md:h-[105px]">
+      <div className="cloud-3 absolute top-[20%] left-[28%] w-[110px] h-[62px] md:w-[155px] md:h-[85px]">
         <Cloud2 className="w-full h-full" />
       </div>
       {/* Small cloud - upper right */}
-      <div className="cloud-1 absolute top-[25%] right-[25%] w-[100px] h-[58px] md:w-[130px] md:h-[75px]">
+      <div className="cloud-1 absolute top-[5%] right-[28%] w-[80px] h-[46px] md:w-[110px] md:h-[62px]">
         <CloudSmall className="w-full h-full" />
       </div>
-      {/* Tiny cloud - far left bottom */}
-      <div className="cloud-2 absolute top-[60%] left-[12%] w-[90px] h-[52px] md:w-[110px] md:h-[65px] opacity-70">
+      {/* Tiny cloud - far left */}
+      <div className="cloud-2 absolute top-[35%] left-[15%] w-[70px] h-[40px] md:w-[95px] md:h-[55px] opacity-70">
         <CloudSmall className="w-full h-full" />
       </div>
     </div>
