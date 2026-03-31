@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -33,12 +34,15 @@ function SidebarContent({ pathname }: { pathname: string }) {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-warm-border">
         <Link href="/admin" className="flex items-center gap-2">
-          <Shield className="h-5 w-5 text-primary" />
           <div>
-            <h1 className="font-[family-name:var(--font-playfair)] text-xl font-bold text-foreground">
-              So-ma
-            </h1>
-            <p className="text-xs text-muted-foreground">Administration</p>
+            <Image
+              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              alt="So-ma"
+              width={120}
+              height={38}
+              className="h-8 w-auto"
+            />
+            <p className="text-xs text-muted-foreground mt-1">Administration</p>
           </div>
         </Link>
       </div>

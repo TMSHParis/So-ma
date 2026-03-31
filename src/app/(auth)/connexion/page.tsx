@@ -4,6 +4,7 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ConnexionPage() {
   const router = useRouter();
@@ -47,9 +48,13 @@ export default function ConnexionPage() {
       <div className="w-full max-w-[340px]">
         <div className="text-center mb-10">
           <Link href="/">
-            <h1 className="text-[28px] font-semibold tracking-tight text-foreground">
-              So-ma
-            </h1>
+            <Image
+              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              alt="So-ma"
+              width={145}
+              height={46}
+              className="h-10 w-auto mx-auto"
+            />
           </Link>
         </div>
 

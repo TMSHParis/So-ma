@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
@@ -12,7 +13,13 @@ export function Footer() {
         {/* Mini links */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 pb-5 text-xs">
           <div>
-            <h4 className="font-semibold text-foreground mb-2.5">So-ma</h4>
+            <Image
+              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              alt="So-ma"
+              width={90}
+              height={29}
+              className="h-6 w-auto mb-2.5"
+            />
             <ul className="space-y-1.5 text-muted-foreground">
               <li><Link href="/" className="hover:text-foreground transition-colors">Accueil</Link></li>
               <li><Link href="/suivi-nutritionnel" className="hover:text-foreground transition-colors">Accompagnement</Link></li>

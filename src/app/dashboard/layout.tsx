@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
@@ -44,10 +45,14 @@ function SidebarContent({ pathname }: { pathname: string }) {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-warm-border">
         <Link href="/dashboard">
-          <h1 className="font-[family-name:var(--font-playfair)] text-2xl font-bold text-foreground">
-            So-ma
-          </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <Image
+            src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+            alt="So-ma"
+            width={120}
+            height={38}
+            className="h-8 w-auto"
+          />
+          <p className="text-xs text-muted-foreground mt-1">
             Mon espace bien-être
           </p>
         </Link>
@@ -110,9 +115,13 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
           <Link href="/dashboard">
-            <span className="font-[family-name:var(--font-playfair)] text-xl font-bold">
-              So-ma
-            </span>
+            <Image
+              src="https://so-ma.fr/wp-content/uploads/2025/04/logoSOMAmiseajourKamal-290x93.webp"
+              alt="So-ma"
+              width={100}
+              height={32}
+              className="h-7 w-auto"
+            />
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger className="inline-flex items-center justify-center rounded-lg h-8 w-8 hover:bg-muted transition-colors">
