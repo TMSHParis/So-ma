@@ -43,7 +43,7 @@ export default function HomePage() {
             <AnimatedClouds />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-[180px] h-[180px] md:w-[220px] md:h-[220px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 flex items-center justify-center">
-                <img src="/logo-soma.png" alt="So-ma" className="h-12 md:h-16 w-auto invert brightness-200" />
+                <img src="/logo-soma.png" alt="So-ma" className="h-12 md:h-16 w-auto brightness-0 invert" />
               </div>
             </div>
           </div>
