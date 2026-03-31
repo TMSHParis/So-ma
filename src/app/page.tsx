@@ -1,21 +1,13 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { CloudsIllustration } from "@/components/illustrations/clouds";
-import { OliveTreeIllustration } from "@/components/illustrations/olive-tree";
-import { RootsLeft, RootsRight } from "@/components/illustrations/roots-vine";
-import { FooterTree } from "@/components/illustrations/footer-tree";
 
 export default function HomePage() {
   return (
-    <div className="relative">
-      {/* Racines grimpantes sur les côtés - visibles uniquement sur desktop */}
-      <RootsLeft className="hidden lg:block fixed left-0 top-0 w-[80px] h-screen z-0 pointer-events-none" />
-      <RootsRight className="hidden lg:block fixed right-0 top-0 w-[80px] h-screen z-0 pointer-events-none" />
-
+    <>
       <Header />
 
-      <main className="flex-1 relative z-10">
+      <main className="flex-1">
         {/* Hero */}
         <section className="bg-[#FBFAF8] overflow-hidden">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-20 pb-16 md:pt-28 md:pb-20 text-center">
@@ -44,14 +36,10 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Illustrated decorative band */}
-          <div className="h-[320px] md:h-[420px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative overflow-hidden">
-            {/* Nuages en arrière-plan */}
-            <CloudsIllustration className="absolute inset-x-0 top-0 w-full h-[200px] md:h-[260px]" />
-
-            {/* Olivier centré */}
-            <div className="absolute inset-0 flex items-end justify-center">
-              <OliveTreeIllustration className="w-[220px] h-[280px] md:w-[300px] md:h-[380px] translate-y-[30px]" />
+          {/* Gradient decorative band */}
+          <div className="h-[280px] md:h-[380px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative">
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-[200px] h-[200px] md:w-[280px] md:h-[280px] rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/20 blur-[1px]" />
             </div>
           </div>
         </section>
@@ -113,18 +101,15 @@ export default function HomePage() {
                     Les méthodes classiques ne tiennent pas compte de vos spécificités neurologiques. Mon approche est conçue autour de votre fonctionnement, pas contre lui.
                   </p>
                 </div>
-                <div className="md:flex-shrink-0 w-[160px] h-[200px] mx-auto md:mx-0">
-                  <OliveTreeIllustration className="w-full h-full" />
-                </div>
+                <div className="md:flex-shrink-0 w-[160px] h-[160px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 mx-auto md:mx-0" />
               </div>
             </div>
           </div>
         </section>
 
         {/* About */}
-        <section id="a-propos" className="bg-[#FBFAF8] relative overflow-hidden">
-          <CloudsIllustration className="absolute inset-x-0 top-8 w-full h-[180px] opacity-60 pointer-events-none" />
-          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28 relative">
+        <section id="a-propos" className="bg-[#FBFAF8]">
+          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="max-w-[660px] mx-auto text-center">
               <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-4">
                 À propos
@@ -227,13 +212,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      {/* Olivier qui pousse depuis le footer */}
-      <div className="relative">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[260px] h-[350px] md:w-[340px] md:h-[420px] pointer-events-none z-0 translate-y-[20px]">
-          <FooterTree className="w-full h-full" />
-        </div>
-        <Footer />
-      </div>
-    </div>
+      <Footer />
+    </>
   );
 }
