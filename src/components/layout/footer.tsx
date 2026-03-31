@@ -23,6 +23,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-muted-foreground">
               <li><Link href="/" className="hover:text-foreground transition-colors">Accueil</Link></li>
               <li><Link href="/suivi-nutritionnel" className="hover:text-foreground transition-colors">Accompagnement</Link></li>
+              <li><Link href="#" className="hover:text-foreground transition-colors">CGV &amp; Mentions légales</Link></li>
             </ul>
           </div>
           <div>
@@ -44,8 +45,8 @@ export function Footer() {
             <h4 className="font-semibold text-foreground mb-2.5">Contact</h4>
             <ul className="space-y-1.5 text-muted-foreground">
               <li>
-                <a href="mailto:contact@so-ma.fr" className="hover:text-foreground transition-colors">
-                  contact@so-ma.fr
+                <a href="mailto:so.ma.service.client@proton.me" className="hover:text-foreground transition-colors">
+                  so.ma.service.client@proton.me
                 </a>
               </li>
               <li>
@@ -64,7 +65,7 @@ export function Footer() {
 
         <div className="border-t border-black/[0.06] pt-4 flex flex-col md:flex-row justify-between gap-2 text-xs text-muted-foreground">
           <p>Copyright &copy; {new Date().getFullYear()} So-ma. Tous droits réservés.</p>
-          <p>Professionnelle de santé et nutrition</p>
+          <p>Conseillère en nutrition</p>
         </div>
       </div>
     </footer>
