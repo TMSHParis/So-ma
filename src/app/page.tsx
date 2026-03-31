@@ -36,10 +36,26 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Gradient decorative band */}
-          <div className="h-[280px] md:h-[380px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative">
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-[200px] h-[200px] md:w-[280px] md:h-[280px] rounded-full bg-gradient-to-br from-primary/20 via-secondary/15 to-accent/20 blur-[1px]" />
+          {/* Animated clouds band */}
+          <div className="h-[280px] md:h-[380px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative overflow-hidden">
+            {/* Cloud 1 - large, left */}
+            <div className="cloud-1 absolute top-[30%] left-[8%] w-[180px] h-[60px] md:w-[260px] md:h-[80px]">
+              <div className="absolute inset-0 bg-white/[0.25] rounded-full blur-[2px]" />
+              <div className="absolute -top-[20px] left-[25%] w-[55%] h-[50px] md:h-[60px] bg-white/[0.20] rounded-full blur-[2px]" />
+            </div>
+            {/* Cloud 2 - medium, right */}
+            <div className="cloud-2 absolute top-[18%] right-[10%] w-[140px] h-[48px] md:w-[200px] md:h-[64px]">
+              <div className="absolute inset-0 bg-white/[0.22] rounded-full blur-[2px]" />
+              <div className="absolute -top-[16px] left-[30%] w-[50%] h-[40px] md:h-[50px] bg-white/[0.18] rounded-full blur-[2px]" />
+            </div>
+            {/* Cloud 3 - small, center */}
+            <div className="cloud-3 absolute top-[50%] left-[35%] w-[120px] h-[40px] md:w-[160px] md:h-[52px]">
+              <div className="absolute inset-0 bg-white/[0.20] rounded-full blur-[2px]" />
+              <div className="absolute -top-[12px] left-[28%] w-[48%] h-[32px] md:h-[40px] bg-white/[0.16] rounded-full blur-[2px]" />
+            </div>
+            {/* Cloud 4 - tiny, upper center-right */}
+            <div className="cloud-1 absolute top-[12%] right-[35%] w-[90px] h-[30px] md:w-[120px] md:h-[40px] opacity-70">
+              <div className="absolute inset-0 bg-white/[0.18] rounded-full blur-[2px]" />
             </div>
           </div>
         </section>
