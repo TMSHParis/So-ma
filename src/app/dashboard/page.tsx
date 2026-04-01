@@ -109,7 +109,7 @@ export default async function DashboardPage() {
             Voici le résumé de votre journée ({iso}).
           </p>
         </div>
-        <p className="text-sm text-muted-foreground italic text-right whitespace-nowrap mt-1">
+        <p className="text-2xl md:text-3xl font-bold text-foreground text-right" dir="rtl">
           السلام عليكم ورحمة الله
         </p>
       </div>
