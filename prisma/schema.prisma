@@ -101,19 +101,67 @@ model Client {
   waistCm         Float?   @map("waist_cm")
   hipCm           Float?   @map("hip_cm")
   thighCm         Float?   @map("thigh_cm")
+  buttCm          Float?   @map("butt_cm")
+  /// Sexe pour le calcul Black et al. (F ou M)
+  sex             String?
+  /// Eau quotidienne en litres
+  goalWaterL      Float?   @map("goal_water_l")
+  /// Objectif de pas quotidien
+  goalSteps       Int?     @map("goal_steps")
+  /// Nombre de séances par semaine
+  sessionsPerWeek Int?     @map("sessions_per_week")
+  /// Types de séances (JSON array de SportType)
+  sessionTypes    String[] @map("session_types")
+  /// Poids de départ (première pesée)
+  startWeight     Float?   @map("start_weight")
+  /// Poids objectif
+  goalWeight      Float?   @map("goal_weight")
   notes           String?
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 
-  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  foodEntries     FoodEntry[]
-  sportEntries    SportEntry[]
-  cycleEntries    CycleEntry[]
-  mealPlans       MealPlan[]
-  workoutPlans    WorkoutPlan[]
-  bilanResponses  BilanResponse[]
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  foodEntries       FoodEntry[]
+  sportEntries      SportEntry[]
+  cycleEntries      CycleEntry[]
+  mealPlans         MealPlan[]
+  workoutPlans      WorkoutPlan[]
+  bilanResponses    BilanResponse[]
+  weightEntries     WeightEntry[]
+  measurementEntries MeasurementEntry[]
 
   @@map("clients")
+}
+
+/// Pesée hebdomadaire
+model WeightEntry {
+  id        String   @id @default(cuid())
+  clientId  String   @map("client_id")
+  date      DateTime @db.Date
+  weight    Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date])
+  @@index([clientId, date])
+  @@map("weight_entries")
+}
+
+/// Mensurations mensuelles
+model MeasurementEntry {
+  id        String   @id @default(cuid())
+  clientId  String   @map("client_id")
+  date      DateTime @db.Date
+  waistCm   Float?   @map("waist_cm")
+  hipCm     Float?   @map("hip_cm")
+  buttCm    Float?   @map("butt_cm")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId, date])
+  @@map("measurement_entries")
 }
 
 model BilanToken {

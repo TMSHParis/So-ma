@@ -1,14 +1,34 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import type { EnergyBalance } from "@/generated/prisma/client";
-import { Flame, Target, Scale } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  Flame,
+  Droplets,
+  Footprints,
+  Dumbbell,
+  Target,
+  Scale,
+  TrendingDown,
+  TrendingUp,
+  Minus,
+  Ruler,
+  Loader2,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  ReferenceLine,
+} from "recharts";
 
 type Profile = {
   goalCalories: number | null;
@@ -16,425 +36,417 @@ type Profile = {
   goalCarbs: number | null;
   goalFat: number | null;
   goalFiber: number | null;
-  maintenanceCalories: number | null;
-  energyBalance: EnergyBalance | null;
-  caloricDeltaKcal: number;
+  energyBalance: string | null;
+  goalWaterL: number | null;
+  goalSteps: number | null;
+  sessionsPerWeek: number | null;
+  sessionTypes: string[];
+  startWeight: number | null;
+  goalWeight: number | null;
   weight: number | null;
-  height: number | null;
-  waistCm: number | null;
-  hipCm: number | null;
-  thighCm: number | null;
 };
 
-const MODES: {
-  value: EnergyBalance;
-  label: string;
-  hint: string;
-}[] = [
-  {
-    value: "MAINTENANCE",
-    label: "Maintien",
-    hint: "Stabiliser votre poids avec un apport proche du métabolisme.",
-  },
-  {
-    value: "DEFICIT",
-    label: "Déficit calorique",
-    hint: "Moins de calories que le maintien pour une perte de masse graduelle.",
-  },
-  {
-    value: "SURPLUS",
-    label: "Surplus",
-    hint: "Plus de calories que le maintien pour gagner en masse ou en force.",
-  },
-];
+type WeightEntry = { date: string; weight: number };
+type MeasurementEntry = {
+  id: string;
+  date: string;
+  waistCm: number | null;
+  hipCm: number | null;
+  buttCm: number | null;
+};
+
+const BALANCE_LABELS: Record<string, { label: string; icon: typeof TrendingDown; color: string }> = {
+  DEFICIT: { label: "Déficit", icon: TrendingDown, color: "text-blue-600" },
+  MAINTENANCE: { label: "Maintien", icon: Minus, color: "text-secondary" },
+  SURPLUS: { label: "Prise de masse", icon: TrendingUp, color: "text-amber-600" },
+};
+
+const SESSION_LABELS: Record<string, string> = {
+  MUSCULATION: "Musculation",
+  CARDIO: "Cardio",
+  MARCHE: "Marche",
+  COURSE: "Course",
+  YOGA: "Yoga",
+  NATATION: "Natation",
+  VELO: "Vélo",
+  AUTRE: "Autre",
+};
 
 export default function ObjectifsPage() {
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([]);
+  const [measurements, setMeasurements] = useState<MeasurementEntry[]>([]);
+  const [weeklyAvg, setWeeklyAvg] = useState({ calories: 0, burned: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 });
 
-  const [maintenance, setMaintenance] = useState("");
-  const [mode, setMode] = useState<EnergyBalance>("MAINTENANCE");
-  const [deficitKcal, setDeficitKcal] = useState("300");
-  const [surplusKcal, setSurplusKcal] = useState("250");
+  // Pesée form
+  const [newWeight, setNewWeight] = useState("");
+  const [savingWeight, setSavingWeight] = useState(false);
 
-  const [goalProtein, setGoalProtein] = useState("120");
-  const [goalCarbs, setGoalCarbs] = useState("200");
-  const [goalFat, setGoalFat] = useState("60");
-  const [goalFiber, setGoalFiber] = useState("25");
-  const [weight, setWeight] = useState("");
-  const [height, setHeight] = useState("");
-  const [waistCm, setWaistCm] = useState("");
-  const [hipCm, setHipCm] = useState("");
-  const [thighCm, setThighCm] = useState("");
-  /** Si vous ne renseignez pas le maintien, cette cible en kcal est enregistrée. */
-  const [targetCaloriesFallback, setTargetCaloriesFallback] = useState("1800");
-
-  const previewGoal = useMemo(() => {
-    const m = parseInt(maintenance, 10);
-    if (Number.isNaN(m)) return null;
-    if (mode === "MAINTENANCE") return m;
-    if (mode === "DEFICIT") {
-      const d = parseInt(deficitKcal, 10) || 0;
-      return m - d;
-    }
-    const s = parseInt(surplusKcal, 10) || 0;
-    return m + s;
-  }, [maintenance, mode, deficitKcal, surplusKcal]);
+  // Mensuration form
+  const [mWaist, setMWaist] = useState("");
+  const [mHip, setMHip] = useState("");
+  const [mButt, setMButt] = useState("");
+  const [savingMeasurement, setSavingMeasurement] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch("/api/client/profile");
-        if (!res.ok) throw new Error();
-        const data = (await res.json()) as Profile;
-        if (cancelled) return;
-        if (data.maintenanceCalories != null) {
-          setMaintenance(String(data.maintenanceCalories));
-        } else {
-          setMaintenance("");
-        }
-        if (data.goalCalories != null) {
-          setTargetCaloriesFallback(String(data.goalCalories));
-        }
-        setMode(data.energyBalance ?? "MAINTENANCE");
-        if (data.energyBalance === "DEFICIT") {
-          setDeficitKcal(
-            data.caloricDeltaKcal < 0
-              ? String(Math.abs(data.caloricDeltaKcal))
-              : "300"
-          );
-        }
-        if (data.energyBalance === "SURPLUS" && data.caloricDeltaKcal > 0) {
-          setSurplusKcal(String(data.caloricDeltaKcal));
-        }
-        if (data.goalProtein != null) setGoalProtein(String(data.goalProtein));
-        if (data.goalCarbs != null) setGoalCarbs(String(data.goalCarbs));
-        if (data.goalFat != null) setGoalFat(String(data.goalFat));
-        if (data.goalFiber != null) setGoalFiber(String(data.goalFiber));
-        if (data.weight != null) setWeight(String(data.weight));
-        if (data.height != null) setHeight(String(data.height));
-        if (data.waistCm != null) setWaistCm(String(data.waistCm));
-        if (data.hipCm != null) setHipCm(String(data.hipCm));
-        if (data.thighCm != null) setThighCm(String(data.thighCm));
-      } catch {
-        toast.error("Impossible de charger vos objectifs");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    Promise.all([
+      fetch("/api/client/profile").then((r) => r.ok ? r.json() : null),
+      fetch("/api/client/weight-entries").then((r) => r.ok ? r.json() : []),
+      fetch("/api/client/measurement-entries").then((r) => r.ok ? r.json() : []),
+      fetch("/api/client/food-entries").then((r) => r.ok ? r.json() : { entries: [] }),
+      fetch("/api/client/sport-entries").then((r) => r.ok ? r.json() : { entries: [] }),
+    ]).then(([prof, weights, measures, food, sport]) => {
+      setProfile(prof);
+      setWeightEntries(weights);
+      setMeasurements(measures);
+
+      // Calcul moyennes semaine (7 derniers jours)
+      const now = new Date();
+      const weekAgo = new Date(now);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+
+      const foodEntries = (food.entries || food || []).filter(
+        (e: { date: string }) => new Date(e.date) >= weekAgo
+      );
+      const sportEntries = (sport.entries || sport || []).filter(
+        (e: { date: string }) => new Date(e.date) >= weekAgo
+      );
+
+      const days = 7;
+      const totalCal = foodEntries.reduce((a: number, e: { calories: number }) => a + (e.calories || 0), 0);
+      const totalP = foodEntries.reduce((a: number, e: { protein: number }) => a + (e.protein || 0), 0);
+      const totalC = foodEntries.reduce((a: number, e: { carbs: number }) => a + (e.carbs || 0), 0);
+      const totalF = foodEntries.reduce((a: number, e: { fat: number }) => a + (e.fat || 0), 0);
+      const totalFi = foodEntries.reduce((a: number, e: { fiber: number }) => a + (e.fiber || 0), 0);
+      const totalBurned = sportEntries.reduce((a: number, e: { calories: number }) => a + (e.calories || 0), 0);
+
+      setWeeklyAvg({
+        calories: Math.round(totalCal / days),
+        burned: Math.round(totalBurned / days),
+        protein: Math.round(totalP / days),
+        carbs: Math.round(totalC / days),
+        fat: Math.round(totalF / days),
+        fiber: Math.round(totalFi / days),
+      });
+
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
-  async function handleSave() {
-    setSaving(true);
+  async function handleWeighIn() {
+    if (!newWeight.trim()) return;
+    setSavingWeight(true);
     try {
-      const maintRaw = maintenance.trim();
-      const maint =
-        maintRaw === "" ? null : parseInt(maintRaw, 10);
-      let delta = 0;
-      if (mode === "DEFICIT")
-        delta = -(parseInt(deficitKcal, 10) || 0);
-      else if (mode === "SURPLUS") delta = parseInt(surplusKcal, 10) || 0;
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/client/weight-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: today, weight: Number(newWeight) }),
+      });
+      if (!res.ok) throw new Error();
+      const entry = await res.json();
+      setWeightEntries((prev) => {
+        const filtered = prev.filter((e) => e.date !== entry.date);
+        return [...filtered, entry].sort((a, b) => a.date.localeCompare(b.date));
+      });
+      setNewWeight("");
+      toast.success("Pesée enregistrée");
+    } catch {
+      toast.error("Erreur lors de l'enregistrement");
+    } finally {
+      setSavingWeight(false);
+    }
+  }
 
-      const body: Record<string, unknown> = {
-        energyBalance: mode,
-        caloricDeltaKcal: delta,
-        goalProtein: parseInt(goalProtein, 10) || 0,
-        goalCarbs: parseInt(goalCarbs, 10) || 0,
-        goalFat: parseInt(goalFat, 10) || 0,
-        goalFiber: parseInt(goalFiber, 10) || 0,
-      };
-
-      if (maint != null && !Number.isNaN(maint)) {
-        body.maintenanceCalories = maint;
-      } else {
-        body.maintenanceCalories = null;
-        body.goalCalories =
-          parseInt(targetCaloriesFallback, 10) || 1800;
-      }
-
-      const parseOpt = (s: string) => {
-        const v = Number.parseFloat(s.trim());
-        return s.trim() === "" || !Number.isFinite(v) ? null : v;
-      };
-
-      const res = await fetch("/api/client/profile", {
-        method: "PATCH",
+  async function handleMeasurement() {
+    if (!mWaist && !mHip && !mButt) return;
+    setSavingMeasurement(true);
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const res = await fetch("/api/client/measurement-entries", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...body,
-          weight: parseOpt(weight),
-          height: parseOpt(height),
-          waistCm: parseOpt(waistCm),
-          hipCm: parseOpt(hipCm),
-          thighCm: parseOpt(thighCm),
+          date: today,
+          waistCm: mWaist ? Number(mWaist) : null,
+          hipCm: mHip ? Number(mHip) : null,
+          buttCm: mButt ? Number(mButt) : null,
         }),
       });
       if (!res.ok) throw new Error();
-      const updated = await res.json();
-      toast.success("Objectifs enregistrés");
-      if (updated.goalCalories != null) {
-        setTargetCaloriesFallback(String(updated.goalCalories));
-      }
-      if (updated.maintenanceCalories != null) {
-        setMaintenance(String(updated.maintenanceCalories));
-      }
+      const entry = await res.json();
+      setMeasurements((prev) => [entry, ...prev]);
+      setMWaist("");
+      setMHip("");
+      setMButt("");
+      toast.success("Mensurations enregistrées");
     } catch {
-      toast.error("Enregistrement impossible");
+      toast.error("Erreur lors de l'enregistrement");
     } finally {
-      setSaving(false);
+      setSavingMeasurement(false);
     }
   }
 
   if (loading) {
     return (
-      <div className="animate-pulse space-y-4">
-        <div className="h-8 bg-muted rounded w-1/3" />
-        <div className="h-48 bg-muted rounded" />
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
   }
 
+  if (!profile) return null;
+
+  const balance = profile.energyBalance ?? "MAINTENANCE";
+  const balanceInfo = BALANCE_LABELS[balance] ?? BALANCE_LABELS.MAINTENANCE;
+  const BalanceIcon = balanceInfo.icon;
+
+  const waterGlasses = profile.goalWaterL ? Math.round(profile.goalWaterL * 4) : null;
+
+  const chartData = weightEntries.map((e) => ({
+    date: new Date(e.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "short" }),
+    poids: e.weight,
+  }));
+
   return (
     <div>
+      {/* Titre avec objectif */}
       <div className="mb-8">
-        <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
-          Mes objectifs
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Équilibre énergétique et macros quotidiens — alignés avec votre
-          accompagnement.
-        </p>
+        <div className="flex items-center gap-3">
+          <BalanceIcon className={`h-7 w-7 ${balanceInfo.color}`} />
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+            {balanceInfo.label}
+          </h1>
+        </div>
+        {profile.startWeight && profile.goalWeight && (
+          <p className="text-muted-foreground mt-1">
+            Objectif : {profile.startWeight} kg → {profile.goalWeight} kg
+            ({balance === "DEFICIT" ? "-" : "+"}{Math.abs(profile.goalWeight - profile.startWeight).toFixed(1)} kg)
+          </p>
+        )}
       </div>
 
-      <div className="space-y-8">
-        <Card className="border-warm-border">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-primary" />
-              <CardTitle className="text-base">Équilibre énergétique</CardTitle>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {MODES.map((m) => (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => setMode(m.value)}
-                  className={cn(
-                    "text-left rounded-xl border p-4 transition-colors",
-                    mode === m.value
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                      : "border-warm-border hover:bg-muted/50"
-                  )}
-                >
-                  <p className="font-medium text-sm">{m.label}</p>
-                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
-                    {m.hint}
-                  </p>
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="target-fallback">
-                  Cible calories (kcal / jour) — si vous laissez le maintien vide
-                </Label>
-                <Input
-                  id="target-fallback"
-                  type="number"
-                  min={0}
-                  value={targetCaloriesFallback}
-                  onChange={(e) => setTargetCaloriesFallback(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="maintenance">
-                  Apport calorique de maintien (kcal)
-                </Label>
-                <Input
-                  id="maintenance"
-                  type="number"
-                  min={0}
-                  placeholder="Ex. 2 000"
-                  value={maintenance}
-                  onChange={(e) => setMaintenance(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Souvent votre TDEE ou la valeur fixée avec votre coach. Si vous
-                  ne le connaissez pas, vous pouvez ne renseigner qu’une cible en
-                  kcal ci-dessous : utilisez alors « Maintien » et la même valeur.
-                </p>
-              </div>
-
-              {mode === "DEFICIT" && (
-                <div className="space-y-2">
-                  <Label htmlFor="deficit">Réduction vis-à-vis du maintien (kcal / jour)</Label>
-                  <Input
-                    id="deficit"
-                    type="number"
-                    min={0}
-                    value={deficitKcal}
-                    onChange={(e) => setDeficitKcal(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Ex. 300 kcal de moins par jour que le maintien.
-                  </p>
-                </div>
-              )}
-
-              {mode === "SURPLUS" && (
-                <div className="space-y-2">
-                  <Label htmlFor="surplus">Surplus vis-à-vis du maintien (kcal / jour)</Label>
-                  <Input
-                    id="surplus"
-                    type="number"
-                    min={0}
-                    value={surplusKcal}
-                    onChange={(e) => setSurplusKcal(e.target.value)}
-                  />
-                </div>
-              )}
-            </div>
-
-            {previewGoal != null && (
-              <p className="text-sm rounded-lg bg-muted/60 px-3 py-2">
-                <span className="font-medium">Objectif calorique calculé :</span>{" "}
-                {previewGoal} kcal / jour
+      <div className="space-y-6">
+        {/* Objectif calorique */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card className="border-warm-border">
+            <CardContent className="pt-4 pb-4 text-center">
+              <Flame className="h-5 w-5 text-primary mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">{profile.goalCalories ?? "—"}</p>
+              <p className="text-xs text-muted-foreground">kcal / jour</p>
+            </CardContent>
+          </Card>
+          <Card className="border-warm-border">
+            <CardContent className="pt-4 pb-4 text-center">
+              <Droplets className="h-5 w-5 text-blue-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">
+                {profile.goalWaterL ? `${profile.goalWaterL}L` : "—"}
               </p>
-            )}
-          </CardContent>
-        </Card>
+              <p className="text-xs text-muted-foreground">
+                {waterGlasses ? `${waterGlasses} verres` : "eau / jour"}
+              </p>
+            </CardContent>
+          </Card>
+          <Card className="border-warm-border">
+            <CardContent className="pt-4 pb-4 text-center">
+              <Footprints className="h-5 w-5 text-green-600 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">
+                {profile.goalSteps ? profile.goalSteps.toLocaleString("fr-FR") : "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">pas / jour</p>
+            </CardContent>
+          </Card>
+          <Card className="border-warm-border">
+            <CardContent className="pt-4 pb-4 text-center">
+              <Dumbbell className="h-5 w-5 text-purple-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold text-foreground">
+                {profile.sessionsPerWeek ?? "—"}
+              </p>
+              <p className="text-xs text-muted-foreground">séances / sem.</p>
+            </CardContent>
+          </Card>
+        </div>
 
+        {/* Types de séances */}
+        {profile.sessionTypes.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {profile.sessionTypes.map((t) => (
+              <span key={t} className="px-3 py-1 text-xs font-medium rounded-full bg-primary/10 text-primary">
+                {SESSION_LABELS[t] ?? t}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Macros & Fibres */}
         <Card className="border-warm-border">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-secondary-foreground" />
-              <CardTitle className="text-base">Macronutriments & fibres</CardTitle>
+              <Target className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Macros & fibres (objectif / jour)</CardTitle>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-2">
-                <Label>Protéines (g)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={goalProtein}
-                  onChange={(e) => setGoalProtein(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Glucides (g)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={goalCarbs}
-                  onChange={(e) => setGoalCarbs(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Lipides (g)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={goalFat}
-                  onChange={(e) => setGoalFat(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Fibres (g)</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={goalFiber}
-                  onChange={(e) => setGoalFiber(e.target.value)}
-                />
-              </div>
+              {[
+                { label: "Protéines", value: profile.goalProtein, color: "text-red-500" },
+                { label: "Glucides", value: profile.goalCarbs, color: "text-amber-500" },
+                { label: "Lipides", value: profile.goalFat, color: "text-blue-500" },
+                { label: "Fibres", value: profile.goalFiber, color: "text-green-600" },
+              ].map((m) => (
+                <div key={m.label} className="text-center py-3 rounded-xl bg-muted/40">
+                  <p className="text-2xl font-bold text-foreground">{m.value ?? "—"}<span className="text-sm font-normal text-muted-foreground">g</span></p>
+                  <p className={`text-xs font-medium ${m.color}`}>{m.label}</p>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
 
+        {/* Courbe de poids */}
         <Card className="border-warm-border">
           <CardHeader>
-            <div className="flex items-center gap-2">
-              <Scale className="h-5 w-5 text-accent-foreground" />
-              <CardTitle className="text-base">Référentiel (optionnel)</CardTitle>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Scale className="h-5 w-5 text-primary" />
+                <CardTitle className="text-base">Évolution du poids</CardTitle>
+              </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label>Poids (kg)</Label>
+          <CardContent>
+            {chartData.length >= 2 ? (
+              <ResponsiveContainer width="100%" height={220}>
+                <LineChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e5e5" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                  <YAxis domain={["dataMin - 1", "dataMax + 1"]} tick={{ fontSize: 11 }} unit=" kg" />
+                  <Tooltip formatter={(v) => [`${v} kg`, "Poids"]} />
+                  {profile.goalWeight && (
+                    <ReferenceLine y={profile.goalWeight} stroke="#8FA586" strokeDasharray="5 5" label={{ value: "Objectif", fontSize: 11, fill: "#8FA586" }} />
+                  )}
+                  <Line type="monotone" dataKey="poids" stroke="#26474E" strokeWidth={2} dot={{ r: 4 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                Pas assez de données. Pèse-toi chaque semaine pour voir ta courbe.
+              </p>
+            )}
+
+            {/* Pesée hebdo */}
+            <div className="mt-4 pt-4 border-t border-warm-border">
+              <p className="text-sm font-medium text-foreground mb-2">Pesée hebdomadaire</p>
+              <div className="flex gap-2">
                 <Input
                   type="number"
                   step="0.1"
-                  value={weight}
-                  onChange={(e) => setWeight(e.target.value)}
-                  placeholder="—"
+                  placeholder="Ex: 65.2"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  className="max-w-[140px]"
                 />
-              </div>
-              <div className="space-y-2">
-                <Label>Taille (cm)</Label>
-                <Input
-                  type="number"
-                  step="0.5"
-                  value={height}
-                  onChange={(e) => setHeight(e.target.value)}
-                  placeholder="—"
-                />
-              </div>
-            </div>
-            <div className="border-t border-warm-border pt-4">
-              <p className="text-sm font-medium text-foreground mb-3">Mensurations</p>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <Label>Tour de taille (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={waistCm}
-                    onChange={(e) => setWaistCm(e.target.value)}
-                    placeholder="—"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tour de hanches (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={hipCm}
-                    onChange={(e) => setHipCm(e.target.value)}
-                    placeholder="—"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Tour de cuisse (cm)</Label>
-                  <Input
-                    type="number"
-                    step="0.5"
-                    value={thighCm}
-                    onChange={(e) => setThighCm(e.target.value)}
-                    placeholder="—"
-                  />
-                </div>
+                <Button
+                  onClick={handleWeighIn}
+                  disabled={savingWeight || !newWeight.trim()}
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  size="sm"
+                >
+                  {savingWeight ? "..." : "Enregistrer"}
+                </Button>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Button
-          className="bg-primary hover:bg-primary/90 text-white"
-          disabled={saving}
-          onClick={handleSave}
-        >
-          {saving ? "Enregistrement…" : "Enregistrer mes objectifs"}
-        </Button>
+        {/* Mensurations mensuelles */}
+        <Card className="border-warm-border">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Ruler className="h-5 w-5 text-primary" />
+              <CardTitle className="text-base">Mensurations mensuelles</CardTitle>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Taille (cm)</Label>
+                <Input type="number" step="0.5" placeholder="—" value={mWaist} onChange={(e) => setMWaist(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Hanches (cm)</Label>
+                <Input type="number" step="0.5" placeholder="—" value={mHip} onChange={(e) => setMHip(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Fesses (cm)</Label>
+                <Input type="number" step="0.5" placeholder="—" value={mButt} onChange={(e) => setMButt(e.target.value)} />
+              </div>
+            </div>
+            <Button
+              onClick={handleMeasurement}
+              disabled={savingMeasurement || (!mWaist && !mHip && !mButt)}
+              className="bg-primary hover:bg-primary/90 text-white"
+              size="sm"
+            >
+              {savingMeasurement ? "..." : "Enregistrer les mensurations"}
+            </Button>
+
+            {measurements.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-warm-border">
+                <p className="text-sm font-medium text-foreground mb-2">Historique</p>
+                <div className="space-y-2">
+                  {measurements.slice(0, 6).map((m) => (
+                    <div key={m.id} className="flex items-center justify-between text-sm py-1.5 border-b border-black/[0.04] last:border-0">
+                      <span className="text-muted-foreground">
+                        {new Date(m.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                      </span>
+                      <div className="flex gap-4 text-foreground">
+                        {m.waistCm && <span>Taille: {m.waistCm}cm</span>}
+                        {m.hipCm && <span>Hanches: {m.hipCm}cm</span>}
+                        {m.buttCm && <span>Fesses: {m.buttCm}cm</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Moyennes hebdomadaires */}
+        <Card className="border-warm-border">
+          <CardHeader>
+            <CardTitle className="text-base">Moyennes sur 7 jours</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.calories}</p>
+                <p className="text-xs text-muted-foreground">kcal consommées / jour</p>
+              </div>
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.burned}</p>
+                <p className="text-xs text-muted-foreground">kcal dépensées / jour</p>
+              </div>
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.protein}g</p>
+                <p className="text-xs text-red-500">Protéines</p>
+              </div>
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.carbs}g</p>
+                <p className="text-xs text-amber-500">Glucides</p>
+              </div>
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.fat}g</p>
+                <p className="text-xs text-blue-500">Lipides</p>
+              </div>
+              <div className="text-center py-3 rounded-xl bg-muted/40">
+                <p className="text-xl font-bold text-foreground">{weeklyAvg.fiber}g</p>
+                <p className="text-xs text-green-600">Fibres</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

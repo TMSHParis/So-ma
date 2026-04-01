@@ -40,6 +40,14 @@ export async function GET() {
     waistCm: c.waistCm,
     hipCm: c.hipCm,
     thighCm: c.thighCm,
+    buttCm: c.buttCm,
+    sex: c.sex,
+    goalWaterL: c.goalWaterL,
+    goalSteps: c.goalSteps,
+    sessionsPerWeek: c.sessionsPerWeek,
+    sessionTypes: c.sessionTypes,
+    startWeight: c.startWeight,
+    goalWeight: c.goalWeight,
     birthDate: c.birthDate?.toISOString() ?? null,
   });
 }
@@ -63,6 +71,14 @@ export async function PATCH(request: NextRequest) {
     waistCm,
     hipCm,
     thighCm,
+    buttCm,
+    sex,
+    goalWaterL,
+    goalSteps,
+    sessionsPerWeek,
+    sessionTypes,
+    startWeight,
+    goalWeight,
   } = body as Record<string, unknown>;
 
   const nextMaintenance =
@@ -118,6 +134,32 @@ export async function PATCH(request: NextRequest) {
     const v = Number(thighCm);
     data.thighCm = thighCm === null || thighCm === "" || !Number.isFinite(v) ? null : v;
   }
+  if (buttCm !== undefined) {
+    const v = Number(buttCm);
+    data.buttCm = buttCm === null || buttCm === "" || !Number.isFinite(v) ? null : v;
+  }
+  if (sex !== undefined) data.sex = sex as string | null;
+  if (goalWaterL !== undefined) {
+    const v = Number(goalWaterL);
+    data.goalWaterL = goalWaterL === null || !Number.isFinite(v) ? null : v;
+  }
+  if (goalSteps !== undefined) {
+    const v = Number(goalSteps);
+    data.goalSteps = goalSteps === null || !Number.isFinite(v) ? null : Math.round(v);
+  }
+  if (sessionsPerWeek !== undefined) {
+    const v = Number(sessionsPerWeek);
+    data.sessionsPerWeek = sessionsPerWeek === null || !Number.isFinite(v) ? null : Math.round(v);
+  }
+  if (sessionTypes !== undefined) data.sessionTypes = (sessionTypes as string[]) ?? [];
+  if (startWeight !== undefined) {
+    const v = Number(startWeight);
+    data.startWeight = startWeight === null || !Number.isFinite(v) ? null : v;
+  }
+  if (goalWeight !== undefined) {
+    const v = Number(goalWeight);
+    data.goalWeight = goalWeight === null || !Number.isFinite(v) ? null : v;
+  }
 
   if (touchedEnergy && nextMaintenance != null) {
     const computedGoal = syncGoalCaloriesFromMaintenance(
@@ -150,5 +192,13 @@ export async function PATCH(request: NextRequest) {
     waistCm: updated.waistCm,
     hipCm: updated.hipCm,
     thighCm: updated.thighCm,
+    buttCm: updated.buttCm,
+    sex: updated.sex,
+    goalWaterL: updated.goalWaterL,
+    goalSteps: updated.goalSteps,
+    sessionsPerWeek: updated.sessionsPerWeek,
+    sessionTypes: updated.sessionTypes,
+    startWeight: updated.startWeight,
+    goalWeight: updated.goalWeight,
   });
 }
