@@ -57,6 +57,113 @@ const phases = [
   },
 ];
 
+const phaseDetails = [
+  {
+    phase: "PHASE 1",
+    label: "Menstruelle",
+    days: "Jours 1–5",
+    color: "text-red-500",
+    labelColor: "text-red-700",
+    sections: [
+      {
+        title: "HORMONES",
+        text: "Œstrogènes et progestérone au plus bas. Le corps \"repart de zéro\".",
+      },
+      {
+        title: "HUMEUR",
+        text: "Fatigue, besoin de retrait, hyper-sensibilité possible.",
+      },
+      {
+        title: "POIDS",
+        text: "Rétention d'eau qui commence à partir → léger dégonflement en fin de phase.",
+      },
+      {
+        title: "ÉNERGIE & SPORT",
+        text: "Faible. Privilégier marche, yoga doux, étirements. Pas le moment de se pousser.",
+      },
+    ],
+    metabolism: { label: "Bas", value: "-100 à -150 kcal/j", color: "text-red-500" },
+  },
+  {
+    phase: "PHASE 2",
+    label: "Folliculaire",
+    days: "Jours 6–13",
+    color: "text-blue-500",
+    labelColor: "text-blue-700",
+    sections: [
+      {
+        title: "HORMONES",
+        text: "Les œstrogènes montent progressivement. Le follicule se développe.",
+      },
+      {
+        title: "HUMEUR",
+        text: "Retour de l'énergie, optimisme, envie de socialiser. La \"meilleure version\".",
+      },
+      {
+        title: "POIDS",
+        text: "Plus stable, moins de rétention. Le ventre dégonfle.",
+      },
+      {
+        title: "ÉNERGIE & SPORT",
+        text: "En hausse. Bonne phase pour reprendre l'intensité : cardio, musculation, HIIT léger.",
+      },
+    ],
+    metabolism: { label: "Neutre", value: "Base", color: "text-blue-500" },
+  },
+  {
+    phase: "PHASE 3",
+    label: "Ovulatoire",
+    days: "Jours 14–16",
+    color: "text-amber-500",
+    labelColor: "text-amber-700",
+    sections: [
+      {
+        title: "HORMONES",
+        text: "Pic d'œstrogènes + surge de LH → ovulation. Testostérone aussi au pic.",
+      },
+      {
+        title: "HUMEUR",
+        text: "Confiance, élan, sociabilité maximale. Pic de libido souvent.",
+      },
+      {
+        title: "POIDS",
+        text: "Légère rétention possible liée au pic hormonal, souvent invisible.",
+      },
+      {
+        title: "ÉNERGIE & SPORT",
+        text: "Maximale. Phase idéale pour les PR, séances HIIT, efforts intenses. Le corps récupère vite.",
+      },
+    ],
+    metabolism: { label: "Légèrement élevé", value: "+50 à +100 kcal/j", color: "text-amber-500" },
+  },
+  {
+    phase: "PHASE 4",
+    label: "Lutéale",
+    days: "Jours 17–28",
+    color: "text-purple-500",
+    labelColor: "text-purple-700",
+    sections: [
+      {
+        title: "HORMONES",
+        text: "La progestérone domine et monte la température corporelle. Les œstrogènes redescendent vers la fin.",
+      },
+      {
+        title: "HUMEUR",
+        text: "Irritabilité, anxiété, besoin de calme possible. SPM en fin de phase.",
+      },
+      {
+        title: "POIDS",
+        text: "Rétention d'eau visible (1 à 2 kg parfois), ventre gonflé. C'est hormonal, pas du gras.",
+      },
+      {
+        title: "ÉNERGIE & SPORT",
+        text: "Variable selon la moitié de la phase. Début : encore correct. Fin : préférer pilates, natation, marche.",
+      },
+    ],
+    metabolism: { label: "Le plus élevé", value: "+100 à +300 kcal/j", color: "text-purple-500" },
+  },
+];
+
 const symptomsList = [
   "Crampes",
   "Fatigue",
@@ -213,20 +320,48 @@ export default function CyclePage() {
         </Card>
       )}
 
-      {/* Phase cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-        {phases.map((p) => (
-          <Card key={p.value} className="border-warm-border">
-            <CardContent className="pt-4 pb-4 text-center">
-              <div
-                className={`w-10 h-10 ${p.color} rounded-full flex items-center justify-center mx-auto mb-2`}
-              >
-                <p.icon className="h-5 w-5" />
-              </div>
-              <p className="text-xs font-medium">{p.label}</p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Phase detail cards */}
+      <div className="mb-8">
+        <h2 className="font-semibold text-foreground mb-2">Comprendre ton cycle</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Plus tu avances dans le cycle, plus ton corps brûle — pic en phase lutéale (+100 à +300 kcal/j grâce à la progestérone), plancher en phase menstruelle. La rétention d&apos;eau de la phase lutéale n&apos;a rien à voir avec ta balance réelle.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {phaseDetails.map((p) => (
+            <Card key={p.phase} className="border-warm-border">
+              <CardContent className="pt-5 pb-5 space-y-3">
+                <div>
+                  <p className={`text-xs font-semibold uppercase tracking-wide ${p.color}`}>
+                    {p.phase}
+                  </p>
+                  <h3 className={`text-lg font-bold ${p.labelColor}`}>{p.label}</h3>
+                  <p className={`text-sm ${p.color}`}>{p.days}</p>
+                </div>
+                {p.sections.map((s) => (
+                  <div key={s.title}>
+                    <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                      {s.title}
+                    </p>
+                    <p className="text-sm text-foreground">{s.text}</p>
+                  </div>
+                ))}
+                <div>
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-0.5">
+                    MÉTABOLISME
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <span className={`text-sm font-semibold ${p.metabolism.color}`}>
+                      {p.metabolism.label}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {p.metabolism.value}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Add entry form */}
