@@ -1,9 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { Check, X } from "lucide-react";
 
 export default function SuiviNutritionnelPage() {
+  const [accepted, setAccepted] = useState(false);
   return (
     <>
       <Header />
@@ -199,28 +203,67 @@ export default function SuiviNutritionnelPage() {
             </div>
             <p className="text-[15px] text-muted-foreground mt-2">Paiement unique</p>
 
-            <div className="mt-6 bg-white rounded-[16px] p-6 border border-warm-border text-left space-y-3 text-[15px] text-muted-foreground">
-              <p>Une fois que tu payes, tu reçois tes accès.</p>
-              <p>Ton questionnaire.</p>
-              <p>Et une fois que tu l&apos;auras complété, tu auras ton bilan complet, ainsi que tes programmes, fiches pratiques, et ton ebook de recettes saines.</p>
+            {/* Déroulement après paiement */}
+            <div className="mt-6 bg-white rounded-[16px] p-6 border border-warm-border text-left">
+              <p className="text-sm font-semibold text-foreground mb-4">Comment ça se passe&nbsp;?</p>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-semibold text-primary">1</span>
+                  </div>
+                  <p className="text-[15px] text-muted-foreground">Tu effectues ton paiement et tu reçois immédiatement <strong className="text-foreground">tes accès à ton espace client</strong>.</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-semibold text-primary">2</span>
+                  </div>
+                  <p className="text-[15px] text-muted-foreground">Tu remplis <strong className="text-foreground">ton questionnaire de bilan personnalisé</strong> pour que j&apos;apprenne à te connaître.</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <span className="text-xs font-semibold text-primary">3</span>
+                  </div>
+                  <p className="text-[15px] text-muted-foreground">Une fois complété, tu reçois <strong className="text-foreground">ton bilan complet, tes programmes alimentaire et sportif, tes fiches pratiques, et ton ebook de recettes saines</strong>.</p>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-8 space-y-3">
+            {/* Checkbox CGV */}
+            <label className="flex items-start gap-3 mt-6 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={accepted}
+                onChange={(e) => setAccepted(e.target.checked)}
+                className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-primary"
+              />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                J&apos;atteste avoir lu et accepté les{" "}
+                <Link href="/mentions-legales" className="text-primary underline hover:text-primary/80">
+                  conditions générales de vente et mentions légales
+                </Link>.
+              </span>
+            </label>
+
+            <div className="mt-6 space-y-3">
               <Link
-                href="/api/payment/stripe"
-                className="flex items-center justify-center w-full h-12 bg-primary text-white text-[15px] font-normal rounded-full hover:bg-primary/90 transition-colors"
+                href={accepted ? "/api/payment/stripe" : "#offre"}
+                onClick={(e) => { if (!accepted) e.preventDefault(); }}
+                className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-primary hover:bg-primary/90" : "bg-primary/40 cursor-not-allowed"}`}
+                aria-disabled={!accepted}
               >
                 Payer par carte bancaire
               </Link>
               <Link
-                href="/api/payment/paypal"
-                className="flex items-center justify-center w-full h-12 bg-[#0070BA] text-white text-[15px] font-normal rounded-full hover:bg-[#0070BA]/90 transition-colors"
+                href={accepted ? "/api/payment/paypal" : "#offre"}
+                onClick={(e) => { if (!accepted) e.preventDefault(); }}
+                className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-[#0070BA] hover:bg-[#0070BA]/90" : "bg-[#0070BA]/40 cursor-not-allowed"}`}
+                aria-disabled={!accepted}
               >
                 Payer avec PayPal
               </Link>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Paiement sécurisé. J&apos;atteste avoir lu et accepté les conditions et mentions.
+              Paiement sécurisé.
             </p>
           </div>
         </section>
