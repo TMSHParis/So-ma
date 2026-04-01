@@ -108,8 +108,8 @@ export default function HomePage() {
         {/* À propos */}
         <section id="a-propos" className="bg-[#FBFAF8]">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
-            <div className="max-w-[700px] mx-auto">
-              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-6 text-center">
+            <div className="max-w-[700px] mx-auto text-center">
+              <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-6">
                 À propos
               </p>
 
@@ -126,7 +126,7 @@ export default function HomePage() {
                   J&apos;ai essayé de me conformer à la &laquo;&nbsp;norme&nbsp;&raquo; pendant des années&hellip;
                 </p>
 
-                <div className="pl-6 border-l-2 border-primary/30 space-y-1 text-foreground/70 italic">
+                <div className="pl-6 border-l-2 border-primary/30 space-y-1 text-foreground/70 italic text-left mx-auto max-w-fit">
                   <p>Parle normalement.</p>
                   <p>Bouge normalement.</p>
                   <p>Pense normalement.</p>
@@ -158,7 +158,7 @@ export default function HomePage() {
                   Et si j&apos;ai réussi, tu le peux aussi&nbsp;!
                 </p>
 
-                <div className="bg-white rounded-2xl p-6 mt-6 border border-warm-border">
+                <div className="bg-white rounded-2xl p-6 mt-6 border border-warm-border text-left">
                   <p className="text-sm text-muted-foreground mb-2">
                     <span className="font-semibold text-foreground">Mais alors pourquoi ce nom de domaine&nbsp;?</span>
                   </p>
