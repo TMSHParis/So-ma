@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 export default function SuiviNutritionnelPage() {
   return (
@@ -12,136 +12,169 @@ export default function SuiviNutritionnelPage() {
         {/* Hero */}
         <section className="bg-[#FBFAF8]">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-20 pb-12 md:pt-28 md:pb-16 text-center">
-            <p className="text-primary text-sm font-medium tracking-wide uppercase mb-4">
-              Accompagnement santé
-            </p>
-            <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-semibold leading-[1.05] tracking-tight text-foreground max-w-[720px] mx-auto">
-              Arrêtez de suivre des méthodes qui ne sont pas faites pour vous.
+            <h1 className="text-[36px] md:text-[52px] lg:text-[60px] font-semibold leading-[1.05] tracking-tight text-foreground max-w-[800px] mx-auto">
+              Si tu es neuroatypique, les méthodes classiques ne peuvent pas fonctionner <span className="text-primary">durablement</span> sur toi.
             </h1>
-            <p className="text-[17px] md:text-[21px] font-normal leading-[1.4] text-muted-foreground mt-4 max-w-[540px] mx-auto">
-              Vous ne réagissez pas comme les autres. Votre accompagnement ne devrait pas non plus.
-            </p>
-            <a
-              href="#offre"
-              className="inline-flex items-center justify-center h-11 px-7 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors mt-8"
-            >
-              Voir l&apos;offre
-            </a>
           </div>
         </section>
 
-        {/* Problem */}
+        {/* Le schéma qui se répète */}
         <section className="bg-white">
-          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-20 md:py-28">
-            <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground text-center mb-12">
-              Vous vous reconnaissez ?
-            </h2>
-            <div className="space-y-4">
-              {[
-                "Vous avez essayé des dizaines de régimes sans résultat durable",
-                "Vous culpabilisez de ne pas réussir à tenir un programme",
-                "Vous avez du mal à planifier vos repas régulièrement",
-                "Le sport vous semble une corvée plutôt qu'un plaisir",
-                "Votre relation à la nourriture est compliquée",
-                "Ce qui marche pour les autres ne marche pas pour vous",
-              ].map((item, i) => (
-                <div
-                  key={i}
-                  className="flex items-start gap-4 py-4 border-b border-black/[0.04] last:border-0"
-                >
-                  <span className="text-[15px] text-muted-foreground/40 font-mono tabular-nums">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <p className="text-[17px] text-foreground leading-[1.47]">{item}</p>
-                </div>
-              ))}
+          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
+            <div className="space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
+              <p>Tu te motives.</p>
+              <p>Tu regardes des contenus généraux en boucle, que tu consommes, avant d&apos;enfin essayer de les appliquer.</p>
+              <p>Tu manges mieux.</p>
+              <p>Mais sans bonne direction, tu t&apos;épuises et tu finis par lâcher&hellip; À chaque fois c&apos;est le même schéma.</p>
+              <p className="text-foreground font-medium">
+                Tu craques. Tu culpabilises. Tu t&apos;en veux&hellip; et tu finis par penser que le code erreur c&apos;est toi.
+              </p>
             </div>
-            <p className="text-center text-[17px] text-muted-foreground leading-[1.47] mt-10">
-              <strong className="text-foreground">Ce n&apos;est pas votre faute.</strong>{" "}
-              Les méthodes classiques ne tiennent pas compte des spécificités neurologiques.
-            </p>
+
+            <div className="mt-12 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[20px] p-8 md:p-10">
+              <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3]">
+                Et si le vrai problème, ce n&apos;était pas toi, mais que tu utilises des méthodes qui n&apos;ont jamais été faites pour ton cerveau&nbsp;?
+              </p>
+            </div>
+
+            <div className="mt-10 space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
+              <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.2]">
+                Tu ne réagis pas comme la masse, alors pourquoi suivre les mêmes méthodes&nbsp;?
+              </p>
+              <p>
+                Ce n&apos;est pas toujours un problème de discipline. Ce n&apos;est pas que &laquo;&nbsp;tu fais mal&nbsp;&raquo; ou pas assez. Au contraire, tu fais beaucoup, mais à contresens.
+              </p>
+              <p>
+                Car tu appliques des méthodes qui n&apos;ont jamais été pensées pour ton fonctionnement.
+              </p>
+              <p className="italic">
+                Est-ce que tu arrives facilement à destination, toi, si la carte que tu suis n&apos;est pas dans le bon sens&nbsp;?
+              </p>
+            </div>
           </div>
         </section>
 
-        {/* Solution */}
-        <section className="bg-[#f5f5f7]">
-          <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
-            <div className="text-center mb-16">
-              <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground">
-                Un accompagnement qui respecte{" "}
-                <br className="hidden md:block" />
-                votre fonctionnement.
-              </h2>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Ce que beaucoup ignorent */}
+        <section className="bg-[#FBFAF8]">
+          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
+            <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground mb-6">
+              Ce que beaucoup ignorent, c&apos;est que les personnes neuroatypiques ne sont pas juste &laquo;&nbsp;différentes&nbsp;&raquo;.
+            </h2>
+            <p className="text-[17px] text-muted-foreground leading-[1.6] mb-8">
+              Elles sont aussi plus exposées à de vraies fragilités physiques et mentales (si elles ne sont pas prises en charge)&nbsp;:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
-                {
-                  label: "Neuro-adapté",
-                  title: "Conçu pour votre profil cognitif",
-                  desc: "TDAH, TSA, HPI/HPE, DYS. Chaque programme respecte votre fonctionnement unique.",
-                  color: "text-primary",
-                },
-                {
-                  label: "Evidence-based",
-                  title: "Basé sur la science",
-                  desc: "Bilan sanguin, calcul métabolique, approche validée scientifiquement.",
-                  color: "text-secondary",
-                },
-                {
-                  label: "Anti-restriction",
-                  title: "Sans culpabilité",
-                  desc: "On travaille avec votre corps, pas contre lui. Durablement.",
-                  color: "text-accent",
-                },
+                "Des troubles du comportement alimentaire (TCA)",
+                "De l\u2019anxiété chronique",
+                "Des burnouts précoces",
+                "Une fatigue persistante",
+                "Des troubles digestifs et hormonaux",
+                "Des déséquilibres liés au stress et à la surcharge mentale",
               ].map((item) => (
-                <div key={item.label} className="bg-white rounded-[20px] p-8">
-                  <p className={`text-xs font-medium uppercase tracking-wide ${item.color} mb-3`}>
-                    {item.label}
-                  </p>
-                  <h3 className="text-[19px] font-semibold tracking-tight text-foreground mb-3">
-                    {item.title}
-                  </h3>
-                  <p className="text-[15px] text-muted-foreground leading-relaxed">
-                    {item.desc}
-                  </p>
+                <div key={item} className="bg-white rounded-xl p-4 border border-warm-border">
+                  <p className="text-[15px] text-foreground leading-relaxed">{item}</p>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* What's included */}
+        {/* Les méthodes standardisées */}
         <section className="bg-white">
-          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-20 md:py-28">
-            <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground text-center mb-12">
-              Tout est inclus.
+          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
+            <h2 className="text-[24px] md:text-[32px] font-semibold leading-[1.15] tracking-tight text-foreground mb-4">
+              Peut-on écrire un livre lorsqu&apos;on ne nous donne qu&apos;une seule feuille&nbsp;?
             </h2>
-
-            <div className="space-y-0">
+            <p className="text-[17px] text-muted-foreground leading-[1.6] mb-8">
+              Les méthodes standardisées sont construites pour&nbsp;:
+            </p>
+            <div className="space-y-3 mb-8">
               {[
-                "Questionnaire de bilan complet",
-                "Recommandations de bilan sanguin",
-                "Consultation individuelle en visio",
-                "Calcul métabolique personnalisé (NAP)",
-                "Programme alimentaire sur mesure",
-                "Programme sportif adapté",
-                "20+ recettes équilibrées",
-                "Guide d'organisation des repas",
-                "Accès à votre espace client personnalisé",
-                "Suivi nutrition, sport et cycle menstruel",
-                "Documents et ressources bonus",
+                "Un système nerveux \"stable\"",
+                "Une tolérance élevée à la contrainte",
+                "Une régularité neurologique linéaire",
+                "Une relation neutre au contrôle",
               ].map((item) => (
-                <div
-                  key={item}
-                  className="flex items-center gap-4 py-3.5 border-b border-black/[0.04] last:border-0"
-                >
-                  <div className="w-5 h-5 rounded-full bg-secondary/15 flex items-center justify-center flex-shrink-0">
-                    <Check className="h-3 w-3 text-secondary" />
+                <div key={item} className="flex items-center gap-3 py-2">
+                  <div className="w-5 h-5 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                    <X className="h-3 w-3 text-destructive" />
                   </div>
-                  <span className="text-[15px] text-foreground">{item}</span>
+                  <span className="text-[15px] text-muted-foreground">{item}</span>
                 </div>
               ))}
+            </div>
+            <p className="text-[17px] text-foreground font-medium">
+              Ce qui ne correspond pas à la réalité de beaucoup de personnes neuroatypiques&nbsp;!
+            </p>
+          </div>
+        </section>
+
+        {/* La femme neuroatypique */}
+        <section className="bg-[#FBFAF8]">
+          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
+            <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground mb-6">
+              La femme neuroatypique a des particularités spécifiques.
+            </h2>
+            <div className="space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
+              <p>
+                Le corps, le mental et le système nerveux fonctionnent ensemble (ainsi que d&apos;autres particularités abordées dans mes carrousels).
+              </p>
+              <p>
+                Et quand on y ajoute un profil métabolique féminin, encore plus contraint chez les femmes neurodivergentes, si on ne prend pas tous les facteurs en compte, on s&apos;épuise. On se rigidifie, et on finit par abandonner.
+              </p>
+              <p className="text-foreground font-medium">
+                S&apos;imposer un cadre inadapté n&apos;est pas le bon objectif. En plus, c&apos;est très souvent la cause de régression.
+              </p>
+              <p>
+                C&apos;est pour ça que j&apos;ai créé mon accompagnement&nbsp;: pour t&apos;aider à comprendre ton fonctionnement, et t&apos;accompagner avec un cadre construit pour toi.
+              </p>
+              <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3]">
+                Progressif, adapté, et pensé pour réussir sur la durée.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Pour qui / pas pour qui */}
+        <section className="bg-white">
+          <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
+            <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground text-center mb-4">
+              Ce type d&apos;accompagnement n&apos;est pas pour tout le monde.
+            </h2>
+            <p className="text-[17px] text-muted-foreground text-center mb-12">
+              Car, avec moi&nbsp;: pas de flagellation, mais de l&apos;introspection et des remises en question.
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Pas pour */}
+              <div className="bg-[#fef2f2] rounded-[20px] p-8">
+                <p className="text-sm font-medium uppercase tracking-wide text-destructive mb-4">
+                  Il n&apos;est pas fait pour celles
+                </p>
+                <p className="text-[15px] text-foreground leading-relaxed">
+                  Qui veulent une méthode miracle et qui cherchent un plan générique, conçu pour la masse.
+                </p>
+              </div>
+
+              {/* Pour */}
+              <div className="bg-[#f0fdf4] rounded-[20px] p-8">
+                <p className="text-sm font-medium uppercase tracking-wide text-secondary mb-4">
+                  Il est pour
+                </p>
+                <p className="text-[15px] text-foreground leading-relaxed">
+                  Celles qui veulent arrêter de se battre contre elles-mêmes, et sortir de leurs blocages.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-10 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[20px] p-8 md:p-10 space-y-4 text-[17px] text-muted-foreground leading-[1.6]">
+              <p>
+                Nous sommes une équipe. Ce qui veut dire que si je m&apos;investis pour toi, toi tu dois aussi t&apos;investir pour toi-même, en retour.
+              </p>
+              <p>
+                Je n&apos;impose pas des règles impossibles, mais elles doivent être respectées. Parce qu&apos;un accompagnement juste n&apos;est pas moins efficace&hellip; il est simplement plus durable.
+              </p>
             </div>
           </div>
         </section>
@@ -149,6 +182,9 @@ export default function SuiviNutritionnelPage() {
         {/* Pricing */}
         <section id="offre" className="bg-[#FBFAF8]">
           <div className="max-w-[480px] mx-auto px-4 lg:px-0 py-20 md:py-28 text-center">
+            <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3] mb-8">
+              Alors si tu es prête à exploiter ton plein potentiel, fais le pas maintenant.
+            </p>
             <p className="text-muted-foreground text-sm font-medium uppercase tracking-wide mb-4">
               Offre complète
             </p>
@@ -163,7 +199,13 @@ export default function SuiviNutritionnelPage() {
             </div>
             <p className="text-[15px] text-muted-foreground mt-2">Paiement unique</p>
 
-            <div className="mt-10 space-y-3">
+            <div className="mt-6 bg-white rounded-[16px] p-6 border border-warm-border text-left space-y-3 text-[15px] text-muted-foreground">
+              <p>Une fois que tu payes, tu reçois tes accès.</p>
+              <p>Ton questionnaire.</p>
+              <p>Et une fois que tu l&apos;auras complété, tu auras ton bilan complet, ainsi que tes programmes, fiches pratiques, et ton ebook de recettes saines.</p>
+            </div>
+
+            <div className="mt-8 space-y-3">
               <Link
                 href="/api/payment/stripe"
                 className="flex items-center justify-center w-full h-12 bg-primary text-white text-[15px] font-normal rounded-full hover:bg-primary/90 transition-colors"
@@ -178,7 +220,7 @@ export default function SuiviNutritionnelPage() {
               </Link>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
-              Paiement sécurisé. Vous recevrez un email de confirmation.
+              Paiement sécurisé. J&apos;atteste avoir lu et accepté les conditions et mentions.
             </p>
           </div>
         </section>
@@ -193,24 +235,24 @@ export default function SuiviNutritionnelPage() {
             <div className="space-y-0">
               {[
                 {
-                  q: "C'est quoi la neuroatypie ?",
-                  a: "La neuroatypie désigne les fonctionnements neurologiques qui diffèrent de la norme : TDAH, TSA, HPI/HPE, DYS. Ce n'est ni une maladie ni un handicap, c'est une façon différente de fonctionner.",
+                  q: "C\u2019est quoi la neuroatypie ?",
+                  a: "La neuroatypie et les TND désignent les fonctionnements neurologiques et cognitifs qui diffèrent de la norme : TDAH, TSA, HPI/HPE, DYS, etc. Ce n\u2019est ni une maladie ni un handicap, c\u2019est une façon différente de fonctionner.",
                 },
                 {
-                  q: "Je ne suis pas diagnostiquée, c'est pour moi ?",
-                  a: "Oui. Si les méthodes classiques n'ont jamais fonctionné pour vous, cet accompagnement peut vous convenir. Le diagnostic n'est pas un prérequis.",
+                  q: "Je ne suis pas diagnostiquée, c\u2019est pour moi ?",
+                  a: "Oui. Si les méthodes classiques n\u2019ont jamais fonctionné pour toi, cet accompagnement peut te convenir. Le diagnostic n\u2019est pas un prérequis.",
                 },
                 {
                   q: "Comment se passe la consultation ?",
-                  a: "Après le questionnaire, nous fixons un rendez-vous en visio. Je vous présente votre bilan personnalisé et réponds à toutes vos questions.",
+                  a: "Après le questionnaire, nous fixons un rendez-vous en visio où nous échangerons afin de mieux te connaître.",
                 },
                 {
                   q: "Est-ce un régime restrictif ?",
-                  a: "Non. Mon approche est anti-régime. On travaille sur l'équilibre et le plaisir alimentaire. Pas de privation.",
+                  a: "Non. Mon approche est anti-régime. On travaille sur le rééquilibrage, avec un déficit léger qui n\u2019enlève pas le plaisir alimentaire.",
                 },
                 {
                   q: "Comment accéder à mon espace client ?",
-                  a: "Après votre consultation, vous recevez vos identifiants par email. Votre espace contient vos programmes et le suivi quotidien.",
+                  a: "Après le retour de ton formulaire rempli, tu reçois tes identifiants par email. Ton espace contient tes programmes et le suivi quotidien.",
                 },
               ].map((item) => (
                 <div
@@ -233,11 +275,8 @@ export default function SuiviNutritionnelPage() {
         <section className="bg-[#1d1d1f]">
           <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-20 md:py-24 text-center">
             <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-white">
-              Investissez en vous.
+              Investis en toi.
             </h2>
-            <p className="text-[17px] text-white/60 mt-3">
-              Votre corps et votre esprit vous remercieront.
-            </p>
             <a
               href="#offre"
               className="inline-flex items-center justify-center h-11 px-7 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors mt-8"
