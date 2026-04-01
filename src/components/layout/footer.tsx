@@ -16,7 +16,7 @@ export function Footer() {
             <ul className="space-y-1.5 text-muted-foreground">
               <li><Link href="/" className="hover:text-foreground transition-colors">Accueil</Link></li>
               <li><Link href="/suivi-nutritionnel" className="hover:text-foreground transition-colors">Accompagnement</Link></li>
-              <li><Link href="#" className="hover:text-foreground transition-colors">CGV &amp; Mentions légales</Link></li>
+              <li><Link href="/mentions-legales" className="hover:text-foreground transition-colors">CGV &amp; Mentions légales</Link></li>
             </ul>
           </div>
           <div>
