@@ -4,18 +4,18 @@ function Cloud1({ className }: { className?: string }) {
   return (
     <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg" className={className} aria-hidden="true">
       {/* Back large cloud */}
-      <ellipse cx="105" cy="62" rx="65" ry="40" fill="#C4956A" opacity="0.35" />
-      <ellipse cx="70" cy="50" rx="42" ry="32" fill="#C4956A" opacity="0.4" />
-      <ellipse cx="140" cy="55" rx="38" ry="30" fill="#b5845c" opacity="0.35" />
-      <ellipse cx="105" cy="42" rx="35" ry="28" fill="#C4956A" opacity="0.45" />
+      <ellipse cx="105" cy="62" rx="65" ry="40" fill="#26474E" opacity="0.35" />
+      <ellipse cx="70" cy="50" rx="42" ry="32" fill="#26474E" opacity="0.4" />
+      <ellipse cx="140" cy="55" rx="38" ry="30" fill="#1a3439" opacity="0.35" />
+      <ellipse cx="105" cy="42" rx="35" ry="28" fill="#26474E" opacity="0.45" />
       {/* Back cloud stroke */}
-      <path d="M40 75 C40 50 55 30 80 28 C90 15 110 12 125 22 C140 15 165 22 172 40 C185 42 195 55 190 70 C192 80 182 90 168 88 L48 88 C35 88 30 78 40 75Z" stroke="#C4956A" strokeWidth="2.2" fill="none" opacity="0.3" />
+      <path d="M40 75 C40 50 55 30 80 28 C90 15 110 12 125 22 C140 15 165 22 172 40 C185 42 195 55 190 70 C192 80 182 90 168 88 L48 88 C35 88 30 78 40 75Z" stroke="#26474E" strokeWidth="2.2" fill="none" opacity="0.3" />
       {/* Front white cloud */}
       <ellipse cx="125" cy="82" rx="48" ry="28" fill="white" opacity="0.7" />
       <ellipse cx="105" cy="75" rx="30" ry="22" fill="white" opacity="0.75" />
       <ellipse cx="148" cy="78" rx="25" ry="20" fill="#faf8f5" opacity="0.65" />
       {/* Front cloud stroke */}
-      <path d="M82 95 C78 85 85 72 100 70 C102 60 115 55 128 60 C136 55 150 58 155 68 C165 70 172 78 168 88 C170 95 162 100 152 98 L90 98 C80 98 76 92 82 95Z" stroke="#C4956A" strokeWidth="1.8" fill="none" opacity="0.35" />
+      <path d="M82 95 C78 85 85 72 100 70 C102 60 115 55 128 60 C136 55 150 58 155 68 C165 70 172 78 168 88 C170 95 162 100 152 98 L90 98 C80 98 76 92 82 95Z" stroke="#26474E" strokeWidth="1.8" fill="none" opacity="0.35" />
     </svg>
   );
 }
@@ -29,7 +29,7 @@ function Cloud2({ className }: { className?: string }) {
       <ellipse cx="120" cy="50" rx="32" ry="24" fill="#faf8f5" opacity="0.7" />
       <ellipse cx="90" cy="40" rx="28" ry="22" fill="white" opacity="0.85" />
       {/* Cloud outline */}
-      <path d="M30 68 C28 55 38 42 55 40 C58 28 72 22 88 26 C98 20 115 24 122 35 C135 35 148 44 145 58 C150 65 142 75 130 73 L40 73 C30 73 24 66 30 68Z" stroke="#C4956A" strokeWidth="2" fill="none" opacity="0.4" />
+      <path d="M30 68 C28 55 38 42 55 40 C58 28 72 22 88 26 C98 20 115 24 122 35 C135 35 148 44 145 58 C150 65 142 75 130 73 L40 73 C30 73 24 66 30 68Z" stroke="#26474E" strokeWidth="2" fill="none" opacity="0.4" />
       {/* Light shine */}
       <ellipse cx="80" cy="62" rx="40" ry="10" fill="white" opacity="0.3" />
     </svg>
@@ -65,7 +65,7 @@ function CloudSmall({ className }: { className?: string }) {
       <ellipse cx="78" cy="35" rx="20" ry="16" fill="#faf8f5" opacity="0.65" />
       <ellipse cx="60" cy="28" rx="18" ry="15" fill="white" opacity="0.8" />
       {/* Outline */}
-      <path d="M22 48 C20 40 28 30 40 28 C42 20 52 16 62 18 C70 14 80 16 85 24 C94 24 102 32 100 42 C103 47 98 52 90 50 L28 50 C22 50 18 45 22 48Z" stroke="#D4AD6A" strokeWidth="1.8" fill="none" opacity="0.4" />
+      <path d="M22 48 C20 40 28 30 40 28 C42 20 52 16 62 18 C70 14 80 16 85 24 C94 24 102 32 100 42 C103 47 98 52 90 50 L28 50 C22 50 18 45 22 48Z" stroke="#26474E" strokeWidth="1.8" fill="none" opacity="0.4" />
     </svg>
   );
 }

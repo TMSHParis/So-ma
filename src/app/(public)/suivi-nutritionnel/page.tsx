@@ -31,7 +31,7 @@ export default function SuiviNutritionnelPage() {
               </p>
             </div>
 
-            <div className="mt-12 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[20px] p-8 md:p-10">
+            <div className="mt-12 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[20px] p-8 md:p-10">
               <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3]">
                 Et si le vrai problème, ce n&apos;était pas toi, mais que tu utilises des méthodes qui n&apos;ont jamais été faites pour ton cerveau&nbsp;?
               </p>
@@ -168,7 +168,7 @@ export default function SuiviNutritionnelPage() {
               </div>
             </div>
 
-            <div className="mt-10 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[20px] p-8 md:p-10 space-y-4 text-[17px] text-muted-foreground leading-[1.6]">
+            <div className="mt-10 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[20px] p-8 md:p-10 space-y-4 text-[17px] text-muted-foreground leading-[1.6]">
               <p>
                 Nous sommes une équipe. Ce qui veut dire que si je m&apos;investis pour toi, toi tu dois aussi t&apos;investir pour toi-même, en retour.
               </p>

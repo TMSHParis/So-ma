@@ -39,7 +39,7 @@ export default function HomePage() {
           </div>
 
           {/* Logo dans la bulle + nuages animés */}
-          <div className="h-[200px] md:h-[260px] bg-gradient-to-b from-[#FBFAF8] via-[#f0ebe3] to-[#e6ddd0] relative overflow-hidden">
+          <div className="h-[200px] md:h-[260px] bg-gradient-to-b from-[#FBFAF8] via-[#F5F2EC] to-[#E9F1EF] relative overflow-hidden">
             <AnimatedClouds />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-[180px] h-[180px] md:w-[220px] md:h-[220px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 flex items-center justify-center">
@@ -90,7 +90,7 @@ export default function HomePage() {
               </div>
 
               {/* Card Neuroatypie - Full width */}
-              <div className="md:col-span-2 bg-gradient-to-br from-[#faf6f1] to-[#f0ebe3] rounded-[28px] p-10 md:p-12 min-h-[260px]">
+              <div className="md:col-span-2 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[28px] p-10 md:p-12 min-h-[260px]">
                 <p className="text-accent text-sm font-medium uppercase tracking-wide mb-3">
                   Neuroatypie, TND&hellip;
                 </p>
