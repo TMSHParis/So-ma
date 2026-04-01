@@ -177,6 +177,7 @@ const symptomsList = [
   "Anxiété",
   "Nausées",
   "Douleurs lombaires",
+  "Rétention d'eau",
 ];
 
 function todayISO() {
