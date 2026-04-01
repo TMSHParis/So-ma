@@ -100,12 +100,17 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
-          Bonjour !
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Voici le résumé de votre journée ({iso}).
+      <div className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
+            Bonjour !
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Voici le résumé de votre journée ({iso}).
+          </p>
+        </div>
+        <p className="text-sm text-muted-foreground italic text-right whitespace-nowrap mt-1">
+          Assalamu &apos;alaikum oua rahmatoullah
         </p>
       </div>
 
