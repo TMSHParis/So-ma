@@ -110,7 +110,7 @@ export default async function DashboardPage() {
           </p>
         </div>
         <p className="text-sm text-muted-foreground italic text-right whitespace-nowrap mt-1">
-          Assalamu &apos;alaikum oua rahmatoullah
+          السلام عليكم ورحمة الله
         </p>
       </div>
 
