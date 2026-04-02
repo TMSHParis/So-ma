@@ -14,6 +14,15 @@ async function requireAdmin() {
   return session;
 }
 
+/** Estimation MET marche pour rétrocompatibilité (sessions sans calories) */
+function walkingMET(speedKmh: number): number {
+  if (speedKmh <= 3.2) return 2.8;
+  if (speedKmh <= 4.0) return 3.0;
+  if (speedKmh <= 4.8) return 3.5;
+  if (speedKmh <= 5.6) return 4.3;
+  return 5.0;
+}
+
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ clientId: string }> },
@@ -36,6 +45,8 @@ export async function GET(
         goalFiber: true,
         goalWaterL: true,
         goalSteps: true,
+        weight: true,
+        height: true,
       },
     }),
     prisma.foodEntry.findMany({
@@ -65,16 +76,43 @@ export async function GET(
     food.fiber += e.fiber;
   }
 
-  // Aggregate sport
+  // Aggregate sport — total + par type
   const sport = {
     duration: 0,
     calories: 0,
     steps: 0,
   };
+
+  const sportByType: Record<string, { duration: number; calories: number; steps: number; sessions: number }> = {};
+
+  const weight = client.weight ?? 65;
+
   for (const e of sportEntries) {
-    sport.duration += e.duration ?? 0;
-    sport.calories += e.calories ?? 0;
+    const dur = e.duration ?? 0;
+    let cal = e.calories ?? 0;
+
+    // Rétrocompatibilité : estimer calories marche si absentes
+    if (!cal && e.sportType === "MARCHE" && e.steps && e.steps > 0) {
+      const heightCm = client.height && client.height > 3 ? client.height : (client.height && client.height <= 3 ? client.height * 100 : 165);
+      const strideCm = heightCm * 0.414;
+      const distKm = (e.steps * strideCm) / 100_000;
+      const speed = 4.8; // vitesse moyenne par défaut
+      const hours = distKm / speed;
+      cal = Math.round(walkingMET(speed) * weight * hours);
+    }
+
+    sport.duration += dur;
+    sport.calories += cal;
     sport.steps += e.steps ?? 0;
+
+    const type = e.sportType;
+    if (!sportByType[type]) {
+      sportByType[type] = { duration: 0, calories: 0, steps: 0, sessions: 0 };
+    }
+    sportByType[type].duration += dur;
+    sportByType[type].calories += cal;
+    sportByType[type].steps += e.steps ?? 0;
+    sportByType[type].sessions += 1;
   }
 
   return NextResponse.json({
@@ -87,6 +125,13 @@ export async function GET(
       fat: Math.round(food.fat),
       fiber: Math.round(food.fiber),
     },
-    sport,
+    sport: {
+      duration: sport.duration,
+      calories: Math.round(sport.calories),
+      steps: sport.steps,
+    },
+    sportByType: Object.fromEntries(
+      Object.entries(sportByType).map(([k, v]) => [k, { ...v, calories: Math.round(v.calories) }])
+    ),
   });
 }

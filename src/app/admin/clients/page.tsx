@@ -50,6 +50,8 @@ type ClientRow = {
   } | null;
 };
 
+type SportByType = Record<string, { duration: number; calories: number; steps: number; sessions: number }>;
+
 type ProgressData = {
   date: string;
   goals: {
@@ -63,6 +65,18 @@ type ProgressData = {
   };
   food: { calories: number; protein: number; carbs: number; fat: number; fiber: number };
   sport: { duration: number; calories: number; steps: number };
+  sportByType?: SportByType;
+};
+
+const SPORT_LABELS: Record<string, string> = {
+  MUSCULATION: "Muscu",
+  CARDIO: "Cardio",
+  MARCHE: "Marche",
+  COURSE: "Course",
+  YOGA: "Yoga",
+  NATATION: "Natation",
+  VELO: "Vélo",
+  AUTRE: "Autre",
 };
 
 const SPORT_TYPES = [
@@ -389,59 +403,93 @@ export default function ClientsPage() {
                         <Loader2 className="h-3 w-3 animate-spin" /> Chargement...
                       </div>
                     ) : progress ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-2 border-t border-warm-border/50">
-                        {/* Calories */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Flame className="h-3 w-3 text-orange-500" />
-                            Calories
+                      <div className="pt-2 border-t border-warm-border/50 space-y-3">
+                        {/* Nutrition */}
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Nutrition</p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Flame className="h-3 w-3 text-orange-500" />
+                                Calories
+                              </div>
+                              <ProgressBar current={progress.food.calories} goal={progress.goals.goalCalories} color="bg-orange-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Beef className="h-3 w-3 text-red-500" />
+                                Protéines
+                              </div>
+                              <ProgressBar current={progress.food.protein} goal={progress.goals.goalProtein} color="bg-red-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Wheat className="h-3 w-3 text-amber-500" />
+                                Glucides
+                              </div>
+                              <ProgressBar current={progress.food.carbs} goal={progress.goals.goalCarbs} color="bg-amber-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Droplets className="h-3 w-3 text-yellow-600" />
+                                Lipides
+                              </div>
+                              <ProgressBar current={progress.food.fat} goal={progress.goals.goalFat} color="bg-yellow-500" />
+                            </div>
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Wheat className="h-3 w-3 text-green-600" />
+                                Fibres
+                              </div>
+                              <ProgressBar current={progress.food.fiber} goal={progress.goals.goalFiber} color="bg-green-500" />
+                            </div>
                           </div>
-                          <ProgressBar current={progress.food.calories} goal={progress.goals.goalCalories} color="bg-orange-500" />
                         </div>
 
-                        {/* Protéines */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Beef className="h-3 w-3 text-red-500" />
-                            Protéines
-                          </div>
-                          <ProgressBar current={progress.food.protein} goal={progress.goals.goalProtein} color="bg-red-500" />
-                        </div>
+                        {/* Sport */}
+                        <div>
+                          <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Activité</p>
+                          <div className="flex flex-wrap items-center gap-3">
+                            {/* Pas */}
+                            <div className="space-y-1 min-w-[100px]">
+                              <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                <Footprints className="h-3 w-3 text-warm-primary" />
+                                Pas
+                              </div>
+                              <ProgressBar current={progress.sport.steps} goal={progress.goals.goalSteps} color="bg-warm-primary" />
+                            </div>
 
-                        {/* Glucides */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Wheat className="h-3 w-3 text-amber-500" />
-                            Glucides
-                          </div>
-                          <ProgressBar current={progress.food.carbs} goal={progress.goals.goalCarbs} color="bg-amber-500" />
-                        </div>
+                            {/* Total calories brûlées */}
+                            {progress.sport.calories > 0 && (
+                              <div className="flex items-center gap-1.5 rounded-lg bg-orange-50 border border-orange-200 px-2.5 py-1.5">
+                                <Flame className="h-3.5 w-3.5 text-orange-500" />
+                                <span className="text-xs font-semibold text-orange-700">{progress.sport.calories} kcal</span>
+                                <span className="text-[10px] text-orange-500">brûlées</span>
+                              </div>
+                            )}
 
-                        {/* Lipides */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Droplets className="h-3 w-3 text-yellow-600" />
-                            Lipides
-                          </div>
-                          <ProgressBar current={progress.food.fat} goal={progress.goals.goalFat} color="bg-yellow-500" />
-                        </div>
+                            {/* Durée totale */}
+                            {progress.sport.duration > 0 && (
+                              <span className="text-xs text-muted-foreground">{progress.sport.duration} min</span>
+                            )}
 
-                        {/* Fibres */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Wheat className="h-3 w-3 text-green-600" />
-                            Fibres
+                            {/* Détail par type de sport */}
+                            {progress.sportByType && Object.keys(progress.sportByType).length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {Object.entries(progress.sportByType).map(([type, data]) => (
+                                  <span
+                                    key={type}
+                                    className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground"
+                                  >
+                                    <span className="font-medium">{SPORT_LABELS[type] || type}</span>
+                                    {data.calories > 0 && <span>{data.calories} kcal</span>}
+                                    {data.duration > 0 && <span>· {data.duration} min</span>}
+                                    {data.steps > 0 && <span>· {data.steps.toLocaleString()} pas</span>}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
-                          <ProgressBar current={progress.food.fiber} goal={progress.goals.goalFiber} color="bg-green-500" />
-                        </div>
-
-                        {/* Pas */}
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Footprints className="h-3 w-3 text-warm-primary" />
-                            Pas
-                          </div>
-                          <ProgressBar current={progress.sport.steps} goal={progress.goals.goalSteps} color="bg-warm-primary" />
                         </div>
                       </div>
                     ) : (
