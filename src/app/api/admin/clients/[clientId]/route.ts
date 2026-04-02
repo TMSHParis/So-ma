@@ -68,3 +68,16 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
 
   return NextResponse.json(updated);
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ clientId: string }> }) {
+  if (!(await requireAdmin())) return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+  const { clientId } = await params;
+
+  const client = await prisma.client.findUnique({ where: { id: clientId }, select: { userId: true } });
+  if (!client) return NextResponse.json({ error: "Cliente introuvable" }, { status: 404 });
+
+  // Delete user (cascades to client + all related entries)
+  await prisma.user.delete({ where: { id: client.userId } });
+
+  return NextResponse.json({ ok: true });
+}

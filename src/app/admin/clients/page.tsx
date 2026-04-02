@@ -30,6 +30,7 @@ import {
   Footprints,
   Flame,
   X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -155,6 +156,10 @@ export default function ClientsPage() {
 
   // Expanded client detail
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Delete confirmation
+  const [deleteClientId, setDeleteClientId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Edit panel
   const [editClientId, setEditClientId] = useState<string | null>(null);
@@ -396,6 +401,19 @@ export default function ClientsPage() {
 
   const updateEdit = (field: string, value: string) => setEditData((prev) => ({ ...prev, [field]: value }));
 
+  async function handleDeleteClient() {
+    if (!deleteClientId) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/clients/${deleteClientId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      toast.success("Cliente supprimée");
+      setDeleteClientId(null);
+      fetchClients();
+    } catch { toast.error("Erreur lors de la suppression"); }
+    finally { setDeleting(false); }
+  }
+
   function getBalanceLabel(b: string | null | undefined) {
     if (b === "DEFICIT") return { label: "Déficit", color: "bg-orange-100 text-orange-700" };
     if (b === "SURPLUS") return { label: "Prise de masse", color: "bg-blue-100 text-blue-700" };
@@ -510,11 +528,16 @@ export default function ClientsPage() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-0.5 shrink-0">
                     {clientId && (
-                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPanel(clientId); }} className="h-8 w-8 p-0">
-                        <Settings2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
+                      <>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPanel(clientId); }} className="h-8 w-8 p-0">
+                          <Settings2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteClientId(clientId); }} className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </>
                     )}
                     <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                   </div>
@@ -927,6 +950,23 @@ export default function ClientsPage() {
           </div>
         </div>
       )}
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteClientId} onOpenChange={(open) => { if (!open) setDeleteClientId(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Supprimer cette cliente ?</DialogTitle></DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Cette action est irréversible. Toutes les données de la cliente seront supprimées (nutrition, sport, cycle, bilans, programmes).
+          </p>
+          <div className="flex gap-3 pt-2">
+            <Button variant="outline" onClick={() => setDeleteClientId(null)} className="flex-1">Annuler</Button>
+            <Button onClick={handleDeleteClient} disabled={deleting} className="flex-1 bg-red-600 hover:bg-red-700 text-white">
+              <Trash2 className="h-4 w-4 mr-2" />
+              {deleting ? "Suppression..." : "Supprimer"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
