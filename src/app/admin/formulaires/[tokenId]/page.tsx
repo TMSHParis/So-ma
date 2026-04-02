@@ -157,15 +157,17 @@ export default function BilanValidationPage() {
 
     const sex = (bilanData.sexe as string) || "F";
     const age = Number(bilanData.age) || 30;
-    const heightCm = Number(bilanData.taille) || 165;
+    let heightCm = Number(bilanData.taille) || 165;
+    if (heightCm < 3) heightCm = Math.round(heightCm * 100);
     const weightKg = Number(bilanData.poids) || 60;
     const heightM = heightCm / 100;
 
     const bmr = computeBMR(sex, weightKg, heightM, age);
     const napVal = Number(nap);
     const tdee = Math.round(bmr * napVal);
-    const deltaVal = Number(delta) || 0;
-    const goalCal = balance === "MAINTENANCE" ? tdee : tdee + deltaVal;
+    const absDelta = Math.abs(Number(delta) || 0);
+    const deltaVal = balance === "DEFICIT" ? -absDelta : balance === "SURPLUS" ? absDelta : 0;
+    const goalCal = tdee + deltaVal;
 
     // Recalculate macros based on new calories
     const protein = Math.round(weightKg * 2);
@@ -199,7 +201,7 @@ export default function BilanValidationPage() {
             goalCalories: Number(goalCalories),
             maintenanceCalories: calc?.tdee || 0,
             energyBalance: balance,
-            caloricDeltaKcal: Number(delta) || 0,
+            caloricDeltaKcal: balance === "DEFICIT" ? -Math.abs(Number(delta) || 0) : Math.abs(Number(delta) || 0),
             goalProtein: Number(goalProtein),
             goalCarbs: Number(goalCarbs),
             goalFat: Number(goalFat),
@@ -427,13 +429,14 @@ export default function BilanValidationPage() {
                   <div className="space-y-1">
                     <Label className="text-xs">
                       Delta kcal/jour{" "}
-                      {balance === "DEFICIT" ? "(négatif)" : "(positif)"}
+                      {balance === "DEFICIT" ? "(sera soustrait)" : "(sera ajouté)"}
                     </Label>
                     <Input
                       type="number"
-                      value={delta}
+                      min={0}
+                      value={Math.abs(Number(delta) || 0).toString()}
                       onChange={(e) => setDelta(e.target.value)}
-                      placeholder="-300"
+                      placeholder="300"
                     />
                   </div>
                 )}
