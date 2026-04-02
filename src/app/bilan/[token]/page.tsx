@@ -50,8 +50,11 @@ export default function BilanPage() {
     });
   }
 
+  const [error, setError] = useState<string | null>(null);
+
   async function handleSubmit() {
     setLoading(true);
+    setError(null);
     try {
       const res = await fetch("/api/bilan", {
         method: "POST",
@@ -60,7 +63,12 @@ export default function BilanPage() {
       });
       if (res.ok) {
         setSubmitted(true);
+      } else {
+        const data = await res.json().catch(() => null);
+        setError(data?.message || "Une erreur est survenue. Veuillez réessayer.");
       }
+    } catch {
+      setError("Erreur de connexion. Vérifiez votre connexion internet.");
     } finally {
       setLoading(false);
     }
@@ -550,14 +558,21 @@ export default function BilanPage() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               ) : (
-                <Button
-                  onClick={handleSubmit}
-                  disabled={loading}
-                  className="bg-secondary hover:bg-secondary/90 text-white"
-                >
-                  {loading ? "Envoi en cours..." : "Envoyer mon bilan"}
-                  <Send className="ml-2 h-4 w-4" />
-                </Button>
+                <div className="flex flex-col items-end gap-2">
+                  {error && (
+                    <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2 w-full text-center">
+                      {error}
+                    </p>
+                  )}
+                  <Button
+                    onClick={handleSubmit}
+                    disabled={loading}
+                    className="bg-secondary hover:bg-secondary/90 text-white"
+                  >
+                    {loading ? "Envoi en cours..." : "Envoyer mon bilan"}
+                    <Send className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>
