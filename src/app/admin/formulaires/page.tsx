@@ -12,8 +12,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Link2, FileText, Loader2, Eye } from "lucide-react";
+import { Plus, Copy, Link2, FileText, Loader2, Eye, Calculator } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 type TokenRow = {
   id: string;
@@ -31,6 +32,7 @@ type TokenRow = {
 };
 
 export default function FormulairesPage() {
+  const router = useRouter();
   const [tokens, setTokens] = useState<TokenRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -233,14 +235,26 @@ export default function FormulairesPage() {
                         <Badge variant="secondary">En attente</Badge>
                       )}
                       {token.response && (
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => setDetailDialog(token)}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setDetailDialog(token)}
+                            title="Voir les réponses"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="bg-primary hover:bg-primary/90 text-white h-8 text-xs"
+                            onClick={() => router.push(`/admin/formulaires/${token.id}`)}
+                            title="Calculer & valider"
+                          >
+                            <Calculator className="h-3.5 w-3.5 mr-1" />
+                            Calculer
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>

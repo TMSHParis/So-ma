@@ -190,6 +190,21 @@ export default function BilanPage() {
                   </div>
                 </div>
                 <div className="space-y-2">
+                  <Label>Sexe</Label>
+                  <Select
+                    value={(formData.sexe as string) || ""}
+                    onValueChange={(v) => updateField("sexe", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="F">Femme</SelectItem>
+                      <SelectItem value="M">Homme</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Profil neuroatypique (si connu)</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {["TDAH", "TSA", "HPI/HPE", "DYS", "Non diagnostiquée", "Autre"].map(
