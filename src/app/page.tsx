@@ -30,7 +30,7 @@ export default function HomePage() {
                 Découvrir
               </Link>
               <Link
-                href="/#methode"
+                href="/suivi-nutritionnel"
                 className="inline-flex items-center text-primary text-sm font-normal hover:underline"
               >
                 En savoir plus &rsaquo;
@@ -43,7 +43,7 @@ export default function HomePage() {
             <AnimatedClouds />
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="w-[180px] h-[180px] md:w-[220px] md:h-[220px] rounded-full bg-gradient-to-br from-primary/15 via-secondary/10 to-accent/15 flex items-center justify-center">
-                <img src="/logo-soma.png" alt="So-ma" className="h-12 md:h-16 w-auto" />
+                <img src="/logo-soma.png" alt="So-ma" className="h-12 md:h-16 w-auto mix-blend-multiply" />
               </div>
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function HomePage() {
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="text-center mb-16">
               <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-foreground">
-                Trois étapes seulement.
+                Trois étapes <span className="relative inline-block">seulement<span className="absolute bottom-1 left-0 w-full h-[6px] md:h-[8px] bg-[#C4B5FD]/50 rounded-full -z-10" /></span>.
               </h2>
             </div>
 

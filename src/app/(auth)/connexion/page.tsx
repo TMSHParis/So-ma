@@ -47,7 +47,7 @@ export default function ConnexionPage() {
       <div className="w-full max-w-[340px]">
         <div className="text-center mb-10">
           <Link href="/">
-            <img src="/logo-soma.png" alt="So-ma" className="h-10 w-auto mx-auto" />
+            <img src="/logo-soma.png" alt="So-ma" className="h-10 w-auto mx-auto mix-blend-multiply" />
           </Link>
         </div>
 

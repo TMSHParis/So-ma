@@ -21,7 +21,7 @@ export function Header() {
     <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04]">
       <nav className="max-w-[980px] mx-auto flex items-center justify-between h-11 px-4 lg:px-0">
         <Link href="/" className="flex items-center">
-          <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto" />
+          <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto mix-blend-multiply" />
         </Link>
 
         {/* Desktop */}

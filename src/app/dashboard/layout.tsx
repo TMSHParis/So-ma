@@ -45,7 +45,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-warm-border">
         <Link href="/dashboard">
-          <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto" />
+          <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto mix-blend-multiply" />
           <p className="text-xs text-muted-foreground mt-1">
             Mon espace bien-être
           </p>
@@ -109,7 +109,7 @@ export default function DashboardLayout({
       <div className="flex flex-col flex-1 overflow-hidden">
         <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
           <Link href="/dashboard">
-            <img src="/logo-soma.png" alt="So-ma" className="h-7 w-auto" />
+            <img src="/logo-soma.png" alt="So-ma" className="h-7 w-auto mix-blend-multiply" />
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger className="inline-flex items-center justify-center rounded-lg h-8 w-8 hover:bg-muted transition-colors">

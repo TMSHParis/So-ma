@@ -35,7 +35,7 @@ function SidebarContent({ pathname }: { pathname: string }) {
       <div className="p-6 border-b border-warm-border">
         <Link href="/admin" className="flex items-center gap-2">
           <div>
-            <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto" />
+            <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto mix-blend-multiply" />
             <p className="text-xs text-muted-foreground mt-1">Administration</p>
           </div>
         </Link>
