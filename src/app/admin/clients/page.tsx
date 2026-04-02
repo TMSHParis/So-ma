@@ -364,7 +364,7 @@ export default function ClientsPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-6">
+        <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border">
           {clients.map((c) => {
             const clientId = c.client?.id;
             const progress = clientId ? progressMap[clientId] : undefined;
@@ -372,108 +372,52 @@ export default function ClientsPage() {
             const balance = getBalanceLabel(c.client?.energyBalance);
 
             return (
-              <Card key={c.id} className="border-warm-border hover:border-warm-primary/30 transition-colors">
-                <CardContent className="p-5 md:p-7">
-                  {/* Header row */}
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-4">
-                      <div className="h-12 w-12 rounded-full bg-warm-primary/10 flex items-center justify-center text-base font-bold text-warm-primary">
-                        {c.firstName?.[0]}{c.lastName?.[0]}
-                      </div>
-                      <div>
-                        <p className="font-semibold text-lg">{c.firstName} {c.lastName}</p>
-                        <p className="text-sm text-muted-foreground">{c.email}</p>
-                      </div>
-                    </div>
-                    {clientId && (
-                      <Button variant="outline" size="sm" onClick={() => openEditPanel(clientId)} className="h-9 px-3">
-                        <Settings2 className="h-4 w-4 mr-1.5" />
-                        <span className="hidden sm:inline">Objectifs</span>
-                        <ChevronRight className="h-3.5 w-3.5 ml-1" />
-                      </Button>
-                    )}
-                  </div>
+              <div key={c.id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors">
+                {/* Avatar */}
+                <div className="h-10 w-10 shrink-0 rounded-full bg-warm-primary/10 flex items-center justify-center text-sm font-bold text-warm-primary">
+                  {c.firstName?.[0]}{c.lastName?.[0]}
+                </div>
 
-                  {/* Tags */}
-                  <div className="flex items-center gap-2 ml-16 mb-4">
-                    <Badge className={`text-xs font-medium px-2.5 py-0.5 ${balance.color} border-0`}>
+                {/* Info */}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-medium text-sm truncate">{c.firstName} {c.lastName}</p>
+                    <Badge className={`text-[10px] font-medium px-2 py-0 leading-5 ${balance.color} border-0`}>
                       {balance.label}
                     </Badge>
-                    {c.client?.goalCalories && (
-                      <Badge variant="outline" className="text-xs px-2.5 py-0.5">{c.client.goalCalories} kcal/jour</Badge>
-                    )}
                   </div>
+                  <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                </div>
 
-                  {/* Progress section */}
-                  {clientId && (
-                    pLoading ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground py-4">
-                        <Loader2 className="h-4 w-4 animate-spin" /> Chargement...
-                      </div>
-                    ) : progress && (progress.food.calories > 0 || progress.sport.steps > 0 || progress.sport.calories > 0) ? (
-                      <div className="space-y-4">
-                        {/* Nutrition */}
-                        {progress.food.calories > 0 && (
-                          <div className="rounded-xl bg-muted/40 p-4">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Nutrition du jour</p>
-                            <div className="flex flex-wrap items-start gap-5">
-                              <MiniProgress current={progress.food.calories} goal={progress.goals.goalCalories} label="Calories" color="text-orange-500" />
-                              <MiniProgress current={progress.food.protein} goal={progress.goals.goalProtein} label="Protéines" color="text-red-500" />
-                              <MiniProgress current={progress.food.carbs} goal={progress.goals.goalCarbs} label="Glucides" color="text-amber-500" />
-                              <MiniProgress current={progress.food.fat} goal={progress.goals.goalFat} label="Lipides" color="text-yellow-600" />
-                              <MiniProgress current={progress.food.fiber} goal={progress.goals.goalFiber} label="Fibres" color="text-green-600" />
-                            </div>
-                          </div>
-                        )}
+                {/* Compact stats */}
+                <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                  {pLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0) ? (
+                    <>
+                      {progress.food.calories > 0 && progress.goals.goalCalories && (
+                        <span className="flex items-center gap-1">
+                          <span className="font-semibold text-foreground">{progress.food.calories}</span>
+                          <span>/ {progress.goals.goalCalories} kcal</span>
+                        </span>
+                      )}
+                      {progress.sport.calories > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Flame className="h-3.5 w-3.5 text-orange-500" />
+                          <span className="font-semibold text-foreground">{progress.sport.calories}</span>
+                        </span>
+                      )}
+                    </>
+                  ) : null}
+                </div>
 
-                        {/* Sport */}
-                        {(progress.sport.steps > 0 || progress.sport.calories > 0) && (
-                          <div className="rounded-xl bg-muted/40 p-4">
-                            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Activité du jour</p>
-                            <div className="flex flex-wrap items-start gap-5">
-                              {progress.sport.steps > 0 && (
-                                <MiniProgress current={progress.sport.steps} goal={progress.goals.goalSteps} label="Pas" color="text-emerald-600" />
-                              )}
-
-                              {progress.sport.calories > 0 && (
-                                <div className="flex items-center gap-2 rounded-lg bg-orange-50 px-3 py-2.5">
-                                  <Flame className="h-5 w-5 text-orange-500" />
-                                  <div>
-                                    <span className="text-base font-bold text-orange-600">{progress.sport.calories}</span>
-                                    <span className="text-xs text-orange-400 ml-1">kcal brûlées</span>
-                                  </div>
-                                </div>
-                              )}
-
-                              {progress.sport.duration > 0 && (
-                                <div className="flex items-center gap-1.5 rounded-lg bg-muted px-3 py-2.5">
-                                  <span className="text-base font-bold">{progress.sport.duration}</span>
-                                  <span className="text-xs text-muted-foreground">min</span>
-                                </div>
-                              )}
-                            </div>
-
-                            {/* Détail par sport */}
-                            {progress.sportByType && Object.keys(progress.sportByType).length > 0 && (
-                              <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-border/50">
-                                {Object.entries(progress.sportByType).map(([type, data]) => (
-                                  <div key={type} className="flex items-center gap-1.5 text-xs text-muted-foreground bg-background rounded-lg px-2.5 py-1.5 border border-border/50">
-                                    <span className="font-semibold text-foreground">{SPORT_LABELS[type] || type}</span>
-                                    <span className="text-muted-foreground/60">·</span>
-                                    <span>{data.calories} kcal</span>
-                                    <span className="text-muted-foreground/60">·</span>
-                                    <span>{data.duration} min</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    ) : null
-                  )}
-                </CardContent>
-              </Card>
+                {/* Action */}
+                {clientId && (
+                  <Button variant="ghost" size="sm" onClick={() => openEditPanel(clientId)} className="h-8 w-8 p-0 shrink-0">
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                )}
+              </div>
             );
           })}
         </div>
