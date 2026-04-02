@@ -398,9 +398,20 @@ export default function SportPage() {
     }
   }
 
-  const totalDuration = sessions.reduce((a, s) => a + s.duration, 0);
-  const totalCalories = sessions.reduce((a, s) => a + (s.calories || 0), 0);
-  const totalSteps = sessions.reduce((a, s) => a + (s.steps || 0), 0);
+  // Enrichir les sessions marche sans calories avec une estimation rétroactive
+  const enrichedSessions = useMemo(() => {
+    return sessions.map((s) => {
+      if (s.type === "MARCHE" && !s.calories && s.steps && s.steps > 0) {
+        const est = estimateWalkingMinutes(s.steps, clientHeight, clientAge, clientWeight, null);
+        return { ...s, calories: est.calories };
+      }
+      return s;
+    });
+  }, [sessions, clientHeight, clientAge, clientWeight]);
+
+  const totalDuration = enrichedSessions.reduce((a, s) => a + s.duration, 0);
+  const totalCalories = enrichedSessions.reduce((a, s) => a + (s.calories || 0), 0);
+  const totalSteps = enrichedSessions.reduce((a, s) => a + (s.steps || 0), 0);
 
   // Live preview for quick steps
   const quickStepsPreview = useMemo(() => {
@@ -815,7 +826,7 @@ export default function SportPage() {
         </Card>
       ) : (
         <div className="space-y-2">
-          {sessions.map((session) => {
+          {enrichedSessions.map((session) => {
             const Icon = sportTypes.find((s) => s.value === session.type)?.icon || Timer;
             return (
               <div key={session.id} className="group rounded-xl border border-warm-border hover:border-warm-primary/30 bg-background p-3.5 transition-colors">
