@@ -9,13 +9,6 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -457,18 +450,26 @@ export default function SportPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Type de sport</Label>
-                <Select value={sportType} onValueChange={(v) => v !== null && setSportType(v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sportTypes.map((s) => (
-                      <SelectItem key={s.value} value={s.value}>
-                        {s.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {sportTypes.map((s) => {
+                    const Icon = s.icon;
+                    return (
+                      <button
+                        key={s.value}
+                        type="button"
+                        onClick={() => setSportType(s.value)}
+                        className={`flex flex-col items-center gap-1 rounded-lg border px-2 py-2.5 text-[11px] transition-all ${
+                          sportType === s.value
+                            ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary text-warm-primary"
+                            : "border-warm-border text-muted-foreground hover:border-warm-primary/40"
+                        }`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        <span className="font-medium leading-tight text-center">{s.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Walking mode selector */}
@@ -743,139 +744,146 @@ export default function SportPage() {
         </Dialog>
       </div>
 
+      {/* Stats overview */}
+      <div className="grid grid-cols-3 gap-3 mb-6">
+        <div className="rounded-xl bg-gradient-to-br from-warm-primary/10 to-warm-primary/5 border border-warm-primary/20 p-4 text-center">
+          <Timer className="h-5 w-5 text-warm-primary mx-auto mb-1.5" />
+          <p className="text-2xl font-bold text-warm-primary">{totalDuration}</p>
+          <p className="text-[11px] text-muted-foreground">minutes</p>
+        </div>
+        <div className="rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 p-4 text-center">
+          <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1.5" />
+          <p className="text-2xl font-bold text-orange-600">{totalCalories}</p>
+          <p className="text-[11px] text-muted-foreground">kcal brûlées</p>
+        </div>
+        <div className="rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-200 p-4 text-center">
+          <Footprints className="h-5 w-5 text-emerald-600 mx-auto mb-1.5" />
+          <p className="text-2xl font-bold text-emerald-600">{totalSteps.toLocaleString()}</p>
+          <p className="text-[11px] text-muted-foreground">pas</p>
+        </div>
+      </div>
+
+      {/* Quick steps */}
       <Card className="border-warm-border mb-6">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base flex items-center gap-2">
-            <Footprints className="h-4 w-4" />
-            Pas du jour
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3 items-end">
-            <div className="space-y-2 flex-1 w-full">
-              <Label htmlFor="quick-steps">Nombre de pas</Label>
-              <Input
-                id="quick-steps"
-                type="number"
-                min={0}
-                placeholder="Ex. 8 000"
-                value={quickSteps}
-                onChange={(e) => setQuickSteps(e.target.value)}
-              />
-            </div>
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Footprints className="h-4 w-4 text-emerald-600" />
+            <span className="text-sm font-medium">Pas du jour</span>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              type="number"
+              min={0}
+              placeholder="Ex. 8 000"
+              value={quickSteps}
+              onChange={(e) => setQuickSteps(e.target.value)}
+              className="flex-1"
+            />
             <Button
               type="button"
-              variant="secondary"
-              className="shrink-0 text-white bg-secondary hover:bg-secondary/90"
+              className="shrink-0 bg-emerald-600 hover:bg-emerald-700 text-white"
               onClick={addStepsOnly}
             >
-              Enregistrer les pas
+              <Plus className="h-4 w-4 mr-1" />
+              Ajouter
             </Button>
           </div>
           {quickStepsPreview && (
-            <div className="mt-3 rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
-              <span className="font-medium">Estimation :</span>{" "}
-              ~{quickStepsPreview.minutes} min · {quickStepsPreview.distanceKm} km · {quickStepsPreview.calories} kcal
+            <div className="mt-2.5 flex items-center gap-4 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+              <span><Timer className="h-3 w-3 inline mr-1" />{quickStepsPreview.minutes} min</span>
+              <span><Footprints className="h-3 w-3 inline mr-1" />{quickStepsPreview.distanceKm} km</span>
+              <span><Flame className="h-3 w-3 inline mr-1" />{quickStepsPreview.calories} kcal</span>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-8">
-        <Card className="border-warm-border">
-          <CardContent className="pt-4 pb-4 text-center">
-            <Timer className="h-5 w-5 text-secondary-foreground mx-auto mb-1" />
-            <p className="text-xl font-bold">{totalDuration} min</p>
-            <p className="text-xs text-muted-foreground">Durée totale</p>
-          </CardContent>
-        </Card>
-        <Card className="border-warm-border">
-          <CardContent className="pt-4 pb-4 text-center">
-            <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1" />
-            <p className="text-xl font-bold">{totalCalories} kcal</p>
-            <p className="text-xs text-muted-foreground">Calories brûlées</p>
-          </CardContent>
-        </Card>
-        <Card className="border-warm-border">
-          <CardContent className="pt-4 pb-4 text-center">
-            <Footprints className="h-5 w-5 text-primary mx-auto mb-1" />
-            <p className="text-xl font-bold">{totalSteps.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground">Pas</p>
-          </CardContent>
-        </Card>
+      {/* Sessions */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-sm font-medium text-muted-foreground">Séances du jour</h2>
+        <span className="text-xs text-muted-foreground">{sessions.length} séance{sessions.length > 1 ? "s" : ""}</span>
       </div>
 
-      {/* Sessions */}
       {sessions.length === 0 ? (
-        <Card className="border-warm-border">
-          <CardContent className="py-12 text-center">
-            <Dumbbell className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground">
-              Aucune séance enregistrée aujourd&apos;hui
-            </p>
-            <p className="text-sm text-muted-foreground/60 mt-1">
-              Cliquez sur &quot;Ajouter une séance&quot; pour commencer
+        <Card className="border-warm-border border-dashed">
+          <CardContent className="py-10 text-center">
+            <Dumbbell className="h-10 w-10 text-muted-foreground/20 mx-auto mb-2" />
+            <p className="text-sm text-muted-foreground">
+              Aucune séance aujourd&apos;hui
             </p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-4">
-          {sessions.map((session) => (
-            <Card key={session.id} className="border-warm-border">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary">{session.typeLabel}</Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {session.duration} min
-                    </span>
-                    {session.calories && (
-                      <span className="text-sm text-muted-foreground">
-                        {session.calories} kcal
-                      </span>
-                    )}
+        <div className="space-y-2">
+          {sessions.map((session) => {
+            const Icon = sportTypes.find((s) => s.value === session.type)?.icon || Timer;
+            return (
+              <div key={session.id} className="group rounded-xl border border-warm-border hover:border-warm-primary/30 bg-background p-3.5 transition-colors">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start gap-3">
+                    <div className="h-9 w-9 rounded-lg bg-warm-primary/10 flex items-center justify-center shrink-0 mt-0.5">
+                      <Icon className="h-4 w-4 text-warm-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{session.typeLabel}</span>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          {session.duration > 0 && (
+                            <span className="flex items-center gap-0.5">
+                              <Timer className="h-3 w-3" />{session.duration} min
+                            </span>
+                          )}
+                          {session.calories ? (
+                            <span className="flex items-center gap-0.5">
+                              <Flame className="h-3 w-3 text-orange-500" />{Math.round(session.calories)} kcal
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      {session.steps ? (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {session.steps.toLocaleString()} pas
+                          {session.distance ? ` · ${session.distance} km` : ""}
+                        </p>
+                      ) : null}
+
+                      {session.treadmill && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Tapis {session.treadmill.speed} km/h
+                          {session.treadmill.incline > 0 && ` · pente ${session.treadmill.incline}%`}
+                        </p>
+                      )}
+
+                      {session.exercises && session.exercises.length > 0 && (
+                        <div className="mt-1.5 space-y-0.5">
+                          {session.exercises.map((ex, i) => (
+                            <p key={i} className="text-xs text-muted-foreground">
+                              {ex.name} — {ex.sets}×{ex.reps} @ {ex.weight}kg
+                            </p>
+                          ))}
+                        </div>
+                      )}
+
+                      {session.notes && (
+                        <p className="text-xs text-muted-foreground/70 mt-1.5 italic">
+                          {session.notes}
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                    className="h-7 w-7 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity shrink-0"
                     onClick={() => removeSession(session.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {session.steps && (
-                  <p className="text-sm text-muted-foreground">
-                    {session.steps.toLocaleString()} pas
-                    {session.distance && ` · ${session.distance} km`}
-                  </p>
-                )}
-                {session.treadmill && (
-                  <p className="text-sm text-muted-foreground">
-                    Tapis : {session.treadmill.speed} km/h
-                    {session.treadmill.incline > 0 && ` · pente ${session.treadmill.incline}%`}
-                  </p>
-                )}
-                {session.exercises && session.exercises.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    {session.exercises.map((ex, i) => (
-                      <p key={i} className="text-sm text-muted-foreground">
-                        {ex.name}: {ex.sets}x{ex.reps} @ {ex.weight}kg
-                      </p>
-                    ))}
-                  </div>
-                )}
-                {session.notes && (
-                  <p className="text-sm text-muted-foreground mt-2 italic">
-                    {session.notes}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
