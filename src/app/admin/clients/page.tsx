@@ -137,6 +137,9 @@ export default function ClientsPage() {
   const [progressMap, setProgressMap] = useState<Record<string, ProgressData>>({});
   const [progressLoading, setProgressLoading] = useState<Record<string, boolean>>({});
 
+  // Expanded client detail
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
   // Edit panel
   const [editClientId, setEditClientId] = useState<string | null>(null);
   const [editLoading, setEditLoading] = useState(false);
@@ -370,52 +373,172 @@ export default function ClientsPage() {
             const progress = clientId ? progressMap[clientId] : undefined;
             const pLoading = clientId ? progressLoading[clientId] : false;
             const balance = getBalanceLabel(c.client?.energyBalance);
+            const isExpanded = expandedId === c.id;
+
+            function pct(current: number, goal: number | null) {
+              if (!goal) return null;
+              return Math.min(Math.round((current / goal) * 100), 999);
+            }
+
+            function statColor(current: number, goal: number | null) {
+              if (!goal) return "text-muted-foreground";
+              const p = (current / goal) * 100;
+              if (p > 110) return "text-red-500";
+              if (p >= 90) return "text-green-600";
+              return "text-foreground";
+            }
 
             return (
-              <div key={c.id} className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors">
-                {/* Avatar */}
-                <div className="h-10 w-10 shrink-0 rounded-full bg-warm-primary/10 flex items-center justify-center text-sm font-bold text-warm-primary">
-                  {c.firstName?.[0]}{c.lastName?.[0]}
-                </div>
-
-                {/* Info */}
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm truncate">{c.firstName} {c.lastName}</p>
-                    <Badge className={`text-[10px] font-medium px-2 py-0 leading-5 ${balance.color} border-0`}>
-                      {balance.label}
-                    </Badge>
+              <div key={c.id}>
+                {/* Row */}
+                <div
+                  className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                  onClick={() => setExpandedId(isExpanded ? null : c.id)}
+                >
+                  {/* Avatar */}
+                  <div className="h-10 w-10 shrink-0 rounded-full bg-warm-primary/10 flex items-center justify-center text-sm font-bold text-warm-primary">
+                    {c.firstName?.[0]}{c.lastName?.[0]}
                   </div>
-                  <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium text-sm truncate">{c.firstName} {c.lastName}</p>
+                      <Badge className={`text-[10px] font-medium px-2 py-0 leading-5 ${balance.color} border-0`}>
+                        {balance.label}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                  </div>
+
+                  {/* Compact summary */}
+                  <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                    {pLoading ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0) ? (
+                      <>
+                        {progress.food.calories > 0 && progress.goals.goalCalories && (
+                          <span className="flex items-center gap-1">
+                            <span className={`font-semibold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
+                            <span>/ {progress.goals.goalCalories} kcal</span>
+                          </span>
+                        )}
+                        {progress.sport.calories > 0 && (
+                          <span className="flex items-center gap-1">
+                            <Flame className="h-3.5 w-3.5 text-orange-500" />
+                            <span className="font-semibold text-foreground">{progress.sport.calories}</span>
+                          </span>
+                        )}
+                      </>
+                    ) : null}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {clientId && (
+                      <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPanel(clientId); }} className="h-8 w-8 p-0">
+                        <Settings2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    )}
+                    <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                  </div>
                 </div>
 
-                {/* Compact stats */}
-                <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
-                  {pLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0) ? (
-                    <>
-                      {progress.food.calories > 0 && progress.goals.goalCalories && (
-                        <span className="flex items-center gap-1">
-                          <span className="font-semibold text-foreground">{progress.food.calories}</span>
-                          <span>/ {progress.goals.goalCalories} kcal</span>
-                        </span>
-                      )}
-                      {progress.sport.calories > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Flame className="h-3.5 w-3.5 text-orange-500" />
-                          <span className="font-semibold text-foreground">{progress.sport.calories}</span>
-                        </span>
-                      )}
-                    </>
-                  ) : null}
-                </div>
+                {/* Expanded detail */}
+                {isExpanded && (
+                  <div className="px-5 pb-5 pt-0">
+                    {pLoading ? (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground py-3">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Chargement...
+                      </div>
+                    ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0 || progress.sport.steps > 0) ? (
+                      <div className="ml-14 space-y-3">
+                        {/* Nutrition grid */}
+                        {progress.food.calories > 0 && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Nutrition du jour</p>
+                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-4 gap-y-2 text-xs">
+                              {[
+                                { label: "Calories", val: progress.food.calories, goal: progress.goals.goalCalories, unit: "kcal" },
+                                { label: "Protéines", val: progress.food.protein, goal: progress.goals.goalProtein, unit: "g" },
+                                { label: "Glucides", val: progress.food.carbs, goal: progress.goals.goalCarbs, unit: "g" },
+                                { label: "Lipides", val: progress.food.fat, goal: progress.goals.goalFat, unit: "g" },
+                                { label: "Fibres", val: progress.food.fiber, goal: progress.goals.goalFiber, unit: "g" },
+                              ].map((item) => {
+                                const p = pct(item.val, item.goal);
+                                return (
+                                  <div key={item.label} className="flex flex-col">
+                                    <span className="text-muted-foreground text-[10px]">{item.label}</span>
+                                    <div className="flex items-baseline gap-1">
+                                      <span className={`font-semibold ${statColor(item.val, item.goal)}`}>{item.val}</span>
+                                      {item.goal && <span className="text-muted-foreground">/ {item.goal}</span>}
+                                      <span className="text-muted-foreground">{item.unit}</span>
+                                    </div>
+                                    {item.goal && (
+                                      <div className="h-1 w-full bg-muted rounded-full mt-1 overflow-hidden">
+                                        <div
+                                          className={`h-full rounded-full transition-all ${
+                                            (p ?? 0) > 110 ? "bg-red-500" : (p ?? 0) >= 90 ? "bg-green-500" : "bg-warm-primary"
+                                          }`}
+                                          style={{ width: `${Math.min(p ?? 0, 100)}%` }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
 
-                {/* Action */}
-                {clientId && (
-                  <Button variant="ghost" size="sm" onClick={() => openEditPanel(clientId)} className="h-8 w-8 p-0 shrink-0">
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                  </Button>
+                        {/* Sport */}
+                        {(progress.sport.calories > 0 || progress.sport.steps > 0) && (
+                          <div>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Activité du jour</p>
+                            <div className="flex flex-wrap items-center gap-3 text-xs">
+                              {progress.sport.calories > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                  <Flame className="h-3.5 w-3.5 text-orange-500" />
+                                  <span className="font-semibold">{progress.sport.calories}</span>
+                                  <span className="text-muted-foreground">kcal brûlées</span>
+                                </span>
+                              )}
+                              {progress.sport.duration > 0 && (
+                                <span className="flex items-center gap-1">
+                                  <span className="font-semibold">{progress.sport.duration}</span>
+                                  <span className="text-muted-foreground">min</span>
+                                </span>
+                              )}
+                              {progress.sport.steps > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                  <Footprints className="h-3.5 w-3.5 text-emerald-600" />
+                                  <span className="font-semibold">{progress.sport.steps.toLocaleString()}</span>
+                                  {progress.goals.goalSteps && (
+                                    <span className="text-muted-foreground">/ {progress.goals.goalSteps.toLocaleString()} pas</span>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            {/* Sport breakdown */}
+                            {progress.sportByType && Object.keys(progress.sportByType).length > 0 && (
+                              <div className="flex flex-wrap gap-1.5 mt-2">
+                                {Object.entries(progress.sportByType).map(([type, data]) => (
+                                  <span key={type} className="inline-flex items-center gap-1 text-[11px] text-muted-foreground bg-muted/60 rounded-md px-2 py-0.5">
+                                    <span className="font-medium text-foreground">{SPORT_LABELS[type] || type}</span>
+                                    <span>{data.calories} kcal</span>
+                                    <span className="text-muted-foreground/50">·</span>
+                                    <span>{data.duration} min</span>
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="ml-14 text-xs text-muted-foreground py-1">Aucune donnée aujourd&apos;hui</p>
+                    )}
+                  </div>
                 )}
               </div>
             );
