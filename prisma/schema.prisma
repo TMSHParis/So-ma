@@ -253,6 +253,8 @@ model MealPlan {
   title       String
   description String?
   content     Json
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
   createdById String   @map("created_by_id")
   active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
@@ -270,6 +272,8 @@ model WorkoutPlan {
   title       String
   description String?
   content     Json
+  fileUrl     String?  @map("file_url")
+  fileName    String?  @map("file_name")
   createdById String   @map("created_by_id")
   active      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at")
@@ -287,6 +291,7 @@ model Resource {
   category  String
   content   String?
   fileUrl   String?  @map("file_url")
+  fileName  String?  @map("file_name")
   createdBy String   @map("created_by")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

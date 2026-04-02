@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
-  const { title, category, content, fileUrl } = await request.json();
+  const { title, category, content, fileUrl, fileName } = await request.json();
 
   if (!title || !category) {
     return NextResponse.json({ message: "title et category requis" }, { status: 400 });
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       category,
       content: content || null,
       fileUrl: fileUrl || null,
+      fileName: fileName || null,
       createdBy: user.id!,
     },
   });

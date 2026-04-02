@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Utensils, Dumbbell, Loader2 } from "lucide-react";
+import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type ClientOption = {
@@ -36,6 +36,8 @@ type Plan = {
   title: string;
   description: string | null;
   content: unknown;
+  fileUrl: string | null;
+  fileName: string | null;
   active: boolean;
   createdAt: string;
   client: { user: { firstName: string; lastName: string } };
@@ -54,6 +56,12 @@ export default function ProgrammesPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
+
+  // File upload
+  const [uploadedFileUrl, setUploadedFileUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAll = useCallback(async () => {
     try {
@@ -81,11 +89,55 @@ export default function ProgrammesPage() {
     setTitle("");
     setDescription("");
     setContent("");
+    setUploadedFileUrl("");
+    setUploadedFileName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 10 Mo)");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setUploadedFileUrl(data.url);
+        setUploadedFileName(data.fileName);
+        toast.success(`${data.fileName} uploadé`);
+      } else {
+        const err = await res.json();
+        toast.error(err.message || "Erreur upload");
+      }
+    } catch {
+      toast.error("Erreur upload");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removeFile() {
+    setUploadedFileUrl("");
+    setUploadedFileName("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
   async function handleCreate() {
-    if (!selectedClient || !title || !content) {
-      toast.error("Veuillez remplir tous les champs obligatoires");
+    if (!selectedClient || !title) {
+      toast.error("Veuillez remplir cliente et titre");
+      return;
+    }
+
+    if (!content && !uploadedFileUrl) {
+      toast.error("Ajoutez du contenu texte ou un fichier");
       return;
     }
 
@@ -99,12 +151,13 @@ export default function ProgrammesPage() {
         : "/api/admin/workout-plans";
 
     try {
-      let parsedContent: unknown;
-      try {
-        parsedContent = JSON.parse(content);
-      } catch {
-        // Si ce n'est pas du JSON, on le wrap en objet texte
-        parsedContent = { text: content };
+      let parsedContent: unknown = {};
+      if (content) {
+        try {
+          parsedContent = JSON.parse(content);
+        } catch {
+          parsedContent = { text: content };
+        }
       }
 
       const res = await fetch(endpoint, {
@@ -115,6 +168,8 @@ export default function ProgrammesPage() {
           title,
           description: description || null,
           content: parsedContent,
+          fileUrl: uploadedFileUrl || null,
+          fileName: uploadedFileName || null,
         }),
       });
 
@@ -149,6 +204,55 @@ export default function ProgrammesPage() {
     } catch {
       toast.error("Erreur");
     }
+  }
+
+  function renderPlanCard(plan: Plan, type: "meal" | "workout") {
+    return (
+      <Card key={plan.id} className="border-warm-border">
+        <CardContent className="pt-4 pb-4">
+          <div className="flex items-center justify-between">
+            <div className="min-w-0 flex-1">
+              <p className="font-medium">{plan.title}</p>
+              <p className="text-xs text-muted-foreground">
+                {plan.client.user.firstName} {plan.client.user.lastName}{" "}
+                &middot;{" "}
+                {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
+              </p>
+              {plan.description && (
+                <p className="text-sm text-muted-foreground mt-1">
+                  {plan.description}
+                </p>
+              )}
+              {plan.fileUrl && (
+                <a
+                  href={plan.fileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 mt-2 text-sm text-warm-primary hover:underline"
+                >
+                  <FileText className="h-4 w-4" />
+                  {plan.fileName || "Fichier joint"}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
+              <Badge variant={plan.active ? "default" : "secondary"}>
+                {plan.active ? "Actif" : "Inactif"}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                onClick={() => deletePlan(type, plan.id)}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   }
 
   if (loading) {
@@ -203,40 +307,7 @@ export default function ProgrammesPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {mealPlans.map((plan) => (
-                <Card key={plan.id} className="border-warm-border">
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{plan.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {plan.client.user.firstName} {plan.client.user.lastName}{" "}
-                          &middot;{" "}
-                          {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
-                        </p>
-                        {plan.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {plan.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={plan.active ? "default" : "secondary"}>
-                          {plan.active ? "Actif" : "Inactif"}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => deletePlan("meal", plan.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {mealPlans.map((plan) => renderPlanCard(plan, "meal"))}
             </div>
           )}
         </TabsContent>
@@ -260,47 +331,14 @@ export default function ProgrammesPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {workoutPlans.map((plan) => (
-                <Card key={plan.id} className="border-warm-border">
-                  <CardContent className="pt-4 pb-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">{plan.title}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {plan.client.user.firstName} {plan.client.user.lastName}{" "}
-                          &middot;{" "}
-                          {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
-                        </p>
-                        {plan.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {plan.description}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={plan.active ? "default" : "secondary"}>
-                          {plan.active ? "Actif" : "Inactif"}
-                        </Badge>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => deletePlan("workout", plan.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+              {workoutPlans.map((plan) => renderPlanCard(plan, "workout"))}
             </div>
           )}
         </TabsContent>
       </Tabs>
 
       {/* Create dialog */}
-      <Dialog open={!!dialogType} onOpenChange={(open) => !open && setDialogType(null)}>
+      <Dialog open={!!dialogType} onOpenChange={(open) => { if (!open) { setDialogType(null); resetForm(); } }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>
@@ -346,25 +384,59 @@ export default function ProgrammesPage() {
                 placeholder="Brève description du programme"
               />
             </div>
+
+            {/* File upload */}
             <div className="space-y-2">
-              <Label>Contenu</Label>
+              <Label>Fichier (PDF, image, etc.)</Label>
+              {uploadedFileName ? (
+                <div className="flex items-center gap-2 rounded-lg border border-warm-primary/30 bg-warm-primary/5 px-3 py-2.5">
+                  <FileText className="h-5 w-5 text-warm-primary shrink-0" />
+                  <span className="text-sm font-medium truncate flex-1">{uploadedFileName}</span>
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={removeFile}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-warm-primary/40 transition-colors py-6 px-4 cursor-pointer"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  ) : (
+                    <Upload className="h-6 w-6 text-muted-foreground" />
+                  )}
+                  <p className="text-sm text-muted-foreground">
+                    {uploading ? "Upload en cours..." : "Cliquez pour uploader un fichier"}
+                  </p>
+                  <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 10 Mo</p>
+                </div>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp"
+                onChange={handleFileUpload}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Contenu texte (optionnel si fichier joint)</Label>
               <Textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
-                className="min-h-[200px] font-mono text-sm"
+                className="min-h-[150px] font-mono text-sm"
                 placeholder={
                   dialogType === "meal"
-                    ? "Détaillez le programme alimentaire...\n\nPetit-déjeuner :\n- Porridge d'avoine 50g\n- Fruits frais\n\nDéjeuner :\n- Poulet grillé 150g\n- Riz complet 80g"
-                    : "Détaillez le programme sportif...\n\nLundi - Haut du corps :\n- Développé couché 3x10\n- Rowing haltère 3x10\n\nMercredi - Bas du corps :\n- Squat 3x12\n- Hip thrust 3x12"
+                    ? "Détaillez le programme alimentaire...\n\nPetit-déjeuner :\n- Porridge d'avoine 50g\n- Fruits frais"
+                    : "Détaillez le programme sportif...\n\nLundi - Haut du corps :\n- Développé couché 3x10\n- Rowing haltère 3x10"
                 }
               />
-              <p className="text-xs text-muted-foreground">
-                Saisissez le programme en texte libre ou en JSON.
-              </p>
             </div>
             <Button
               onClick={handleCreate}
-              disabled={saving || !selectedClient || !title || !content}
+              disabled={saving || uploading || !selectedClient || !title || (!content && !uploadedFileUrl)}
               className={`w-full text-white ${
                 dialogType === "meal"
                   ? "bg-primary hover:bg-primary/90"

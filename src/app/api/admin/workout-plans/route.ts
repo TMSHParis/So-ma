@@ -29,10 +29,10 @@ export async function POST(request: NextRequest) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
 
-  const { clientId, title, description, content } = await request.json();
+  const { clientId, title, description, content, fileUrl, fileName } = await request.json();
 
-  if (!clientId || !title || !content) {
-    return NextResponse.json({ message: "clientId, title et content requis" }, { status: 400 });
+  if (!clientId || !title) {
+    return NextResponse.json({ message: "clientId et title requis" }, { status: 400 });
   }
 
   const plan = await prisma.workoutPlan.create({
@@ -40,7 +40,9 @@ export async function POST(request: NextRequest) {
       clientId,
       title,
       description: description || null,
-      content,
+      content: content || {},
+      fileUrl: fileUrl || null,
+      fileName: fileName || null,
       createdById: user.id!,
     },
   });
