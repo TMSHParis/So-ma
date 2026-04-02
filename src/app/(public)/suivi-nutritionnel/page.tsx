@@ -246,20 +246,12 @@ export default function SuiviNutritionnelPage() {
 
             <div className="mt-6 space-y-3">
               <Link
-                href={accepted ? "/api/payment/stripe" : "#offre"}
+                href={accepted ? "/api/stripe/checkout-public" : "#offre"}
                 onClick={(e) => { if (!accepted) e.preventDefault(); }}
                 className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-primary hover:bg-primary/90" : "bg-primary/40 cursor-not-allowed"}`}
                 aria-disabled={!accepted}
               >
                 Payer par carte bancaire
-              </Link>
-              <Link
-                href={accepted ? "/api/payment/paypal" : "#offre"}
-                onClick={(e) => { if (!accepted) e.preventDefault(); }}
-                className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-[#0070BA] hover:bg-[#0070BA]/90" : "bg-[#0070BA]/40 cursor-not-allowed"}`}
-                aria-disabled={!accepted}
-              >
-                Payer avec PayPal
               </Link>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
