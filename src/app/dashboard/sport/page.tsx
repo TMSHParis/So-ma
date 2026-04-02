@@ -70,12 +70,35 @@ const sportTypes = [
  *   - 50-65 ans : 4.5 km/h
  *   - > 65 ans : 4.0 km/h
  */
+/**
+ * MET (Metabolic Equivalent of Task) pour la marche selon la vitesse.
+ * Source : Compendium of Physical Activities (Ainsworth et al.)
+ *   - 3.2 km/h : MET 2.8
+ *   - 4.0 km/h : MET 3.0
+ *   - 4.8 km/h : MET 3.5
+ *   - 5.6 km/h : MET 4.3
+ *   - 6.4 km/h : MET 5.0
+ */
+function walkingMET(speedKmh: number, incline: number = 0): number {
+  let met: number;
+  if (speedKmh <= 3.2) met = 2.8;
+  else if (speedKmh <= 4.0) met = 3.0;
+  else if (speedKmh <= 4.8) met = 3.5;
+  else if (speedKmh <= 5.6) met = 4.3;
+  else met = 5.0;
+  // Inclinaison : +0.7 MET par % d'inclinaison (approx tapis)
+  if (incline > 0) met += incline * 0.7;
+  return met;
+}
+
 function estimateWalkingMinutes(
   steps: number,
   heightCm: number | null,
   age: number | null,
+  weightKg: number | null,
   speedKmh: number | null,
-): { minutes: number; distanceKm: number } {
+  incline: number = 0,
+): { minutes: number; distanceKm: number; calories: number } {
   // Longueur de foulée en cm
   const strideCm = heightCm && heightCm > 50 ? heightCm * 0.414 : 70;
   const distanceKm = (steps * strideCm) / 100_000;
@@ -90,7 +113,26 @@ function estimateWalkingMinutes(
   }
 
   const hours = distanceKm / speed;
-  return { minutes: Math.round(hours * 60), distanceKm: Math.round(distanceKm * 100) / 100 };
+  const minutes = Math.round(hours * 60);
+
+  // Calories : MET × poids (kg) × durée (heures)
+  const weight = weightKg && weightKg > 0 ? weightKg : 65;
+  const met = walkingMET(speed, incline);
+  const calories = Math.round(met * weight * hours);
+
+  return { minutes, distanceKm: Math.round(distanceKm * 100) / 100, calories };
+}
+
+/** Estime les calories sur tapis avec vitesse, durée et inclinaison */
+function estimateTreadmillCalories(
+  speedKmh: number,
+  durationMin: number,
+  incline: number,
+  weightKg: number | null,
+): number {
+  const weight = weightKg && weightKg > 0 ? weightKg : 65;
+  const met = walkingMET(speedKmh, incline);
+  return Math.round(met * weight * (durationMin / 60));
 }
 
 export default function SportPage() {
@@ -123,8 +165,9 @@ export default function SportPage() {
   // Client profile for walk estimation
   const [clientHeight, setClientHeight] = useState<number | null>(null);
   const [clientAge, setClientAge] = useState<number | null>(null);
+  const [clientWeight, setClientWeight] = useState<number | null>(null);
 
-  // Fetch client profile for height/age
+  // Fetch client profile for height/age/weight
   useEffect(() => {
     fetch("/api/client/profile")
       .then((r) => (r.ok ? r.json() : null))
@@ -135,6 +178,7 @@ export default function SportPage() {
           if (h < 3) h = Math.round(h * 100);
           setClientHeight(h);
         }
+        if (data.weight) setClientWeight(Number(data.weight));
         if (data.birthDate) {
           const birth = new Date(data.birthDate);
           const ageDiff = Date.now() - birth.getTime();
@@ -232,6 +276,8 @@ export default function SportPage() {
     let sessionDistance: number | null = distance ? parseFloat(distance) : null;
     let details: Record<string, unknown> | null = null;
 
+    let estimatedCalories: number | null = null;
+
     if (sportType === "MARCHE") {
       if (walkMode === "treadmill") {
         // Tapis : durée et vitesse fournies par l'utilisateur
@@ -240,19 +286,21 @@ export default function SportPage() {
         const incline = parseFloat(treadmillIncline) || 0;
         sessionDistance = Math.round((speed * dur / 60) * 100) / 100;
 
-        // Estimation pas sur tapis : cadence ~110 pas/min en marche normale
+        // Estimation pas sur tapis
         const strideCm = clientHeight && clientHeight > 50 ? clientHeight * 0.414 : 70;
         const strideKm = strideCm / 100_000;
         sessionSteps = Math.round(sessionDistance / strideKm);
 
+        estimatedCalories = estimateTreadmillCalories(speed, dur, incline, clientWeight);
         details = { treadmill: { speed, incline } };
       } else {
         // Marche en ville : estimer durée à partir des pas
         const speedVal = parseFloat(walkSpeed) || 0;
         if (sessionSteps && sessionSteps > 0) {
-          const est = estimateWalkingMinutes(sessionSteps, clientHeight, clientAge, speedVal || null);
+          const est = estimateWalkingMinutes(sessionSteps, clientHeight, clientAge, clientWeight, speedVal || null);
           if (!dur || dur === 0) dur = est.minutes;
           if (!sessionDistance) sessionDistance = est.distanceKm;
+          estimatedCalories = est.calories;
         }
         if (speedVal > 0) {
           details = { walkSpeed: speedVal };
@@ -275,7 +323,7 @@ export default function SportPage() {
           date: todayIso,
           sportType,
           duration: dur,
-          calories: calories ? parseInt(calories, 10) : null,
+          calories: calories ? parseInt(calories, 10) : estimatedCalories,
           steps: sessionSteps,
           distance: sessionDistance,
           details,
@@ -299,7 +347,7 @@ export default function SportPage() {
       return;
     }
 
-    const est = estimateWalkingMinutes(n, clientHeight, clientAge, null);
+    const est = estimateWalkingMinutes(n, clientHeight, clientAge, clientWeight, null);
 
     try {
       const res = await fetch("/api/client/sport-entries", {
@@ -309,7 +357,7 @@ export default function SportPage() {
           date: todayIso,
           sportType: "MARCHE",
           duration: est.minutes,
-          calories: null,
+          calories: est.calories,
           steps: n,
           distance: est.distanceKm,
           details: null,
@@ -323,7 +371,7 @@ export default function SportPage() {
         mapApiToSession(row),
       ]);
       setQuickSteps("");
-      toast.success(`${n.toLocaleString()} pas ≈ ${est.minutes} min · ${est.distanceKm} km`);
+      toast.success(`${n.toLocaleString()} pas ≈ ${est.minutes} min · ${est.distanceKm} km · ${est.calories} kcal`);
     } catch {
       toast.error("Enregistrement impossible");
     }
@@ -365,7 +413,7 @@ export default function SportPage() {
   const quickStepsPreview = useMemo(() => {
     const n = parseInt(quickSteps, 10);
     if (!n || n <= 0) return null;
-    return estimateWalkingMinutes(n, clientHeight, clientAge, null);
+    return estimateWalkingMinutes(n, clientHeight, clientAge, clientWeight, null);
   }, [quickSteps, clientHeight, clientAge]);
 
   // Live preview for walk session form
@@ -374,7 +422,7 @@ export default function SportPage() {
     const n = parseInt(steps, 10);
     if (!n || n <= 0) return null;
     const speedVal = parseFloat(walkSpeed) || null;
-    return estimateWalkingMinutes(n, clientHeight, clientAge, speedVal);
+    return estimateWalkingMinutes(n, clientHeight, clientAge, clientWeight, speedVal);
   }, [sportType, walkMode, steps, walkSpeed, clientHeight, clientAge]);
 
   if (!ready) {
@@ -483,7 +531,7 @@ export default function SportPage() {
                   {walkPreview && (
                     <div className="rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
                       <span className="font-medium">Estimation :</span>{" "}
-                      {walkPreview.minutes} min · {walkPreview.distanceKm} km
+                      {walkPreview.minutes} min · {walkPreview.distanceKm} km · {walkPreview.calories} kcal
                       {clientHeight && (
                         <span className="text-xs text-muted-foreground ml-1">
                           (foulée {Math.round(clientHeight * 0.414)} cm)
@@ -530,10 +578,17 @@ export default function SportPage() {
                   </div>
                   {treadmillSpeed && treadmillDuration && (
                     <div className="rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
-                      <span className="font-medium">Distance :</span>{" "}
+                      <span className="font-medium">Estimation :</span>{" "}
                       {(parseFloat(treadmillSpeed) * parseInt(treadmillDuration) / 60).toFixed(2)} km
+                      {" · "}
+                      {estimateTreadmillCalories(
+                        parseFloat(treadmillSpeed),
+                        parseInt(treadmillDuration),
+                        parseFloat(treadmillIncline) || 0,
+                        clientWeight,
+                      )} kcal
                       {treadmillIncline && parseFloat(treadmillIncline) > 0 && (
-                        <span className="ml-2">· pente {treadmillIncline}%</span>
+                        <span className="ml-1">· pente {treadmillIncline}%</span>
                       )}
                     </div>
                   )}
@@ -720,7 +775,7 @@ export default function SportPage() {
           {quickStepsPreview && (
             <div className="mt-3 rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
               <span className="font-medium">Estimation :</span>{" "}
-              ~{quickStepsPreview.minutes} min de marche · {quickStepsPreview.distanceKm} km
+              ~{quickStepsPreview.minutes} min · {quickStepsPreview.distanceKm} km · {quickStepsPreview.calories} kcal
             </div>
           )}
         </CardContent>
