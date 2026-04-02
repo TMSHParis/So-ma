@@ -132,7 +132,9 @@ export type BilanData = {
 export function computeNutritionFromBilan(data: BilanData): NutritionResult {
   const sex = data.sexe || "F";
   const age = Number(data.age) || 30;
-  const heightCm = Number(data.taille) || 165;
+  let heightCm = Number(data.taille) || 165;
+  // Auto-correction : si la valeur est < 3, l'utilisateur a saisi en mètres
+  if (heightCm < 3) heightCm = Math.round(heightCm * 100);
   const weightKg = Number(data.poids) || 60;
   const heightM = heightCm / 100;
 

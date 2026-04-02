@@ -174,6 +174,9 @@ export default function BilanPage() {
                     <Label>Taille (cm)</Label>
                     <Input
                       type="number"
+                      placeholder="ex : 172"
+                      min={100}
+                      max={250}
                       value={(formData.taille as string) || ""}
                       onChange={(e) => updateField("taille", e.target.value)}
                       className="border-warm-border"
