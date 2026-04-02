@@ -30,3 +30,19 @@ export async function GET(
 
   return NextResponse.json(token);
 }
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ tokenId: string }> },
+) {
+  if (!(await requireAdmin()))
+    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+
+  const { tokenId } = await params;
+
+  // Supprime la réponse associée d'abord (FK), puis le token
+  await prisma.bilanResponse.deleteMany({ where: { tokenId } });
+  await prisma.bilanToken.delete({ where: { id: tokenId } });
+
+  return NextResponse.json({ success: true });
+}

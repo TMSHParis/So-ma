@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Link2, FileText, Loader2, Eye, Calculator } from "lucide-react";
+import { Plus, Copy, Link2, FileText, Loader2, Eye, Calculator, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -91,6 +91,23 @@ export default function FormulairesPage() {
   function copyLink() {
     navigator.clipboard.writeText(generatedLink);
     toast.success("Lien copié !");
+  }
+
+  async function handleDelete(tokenId: string) {
+    if (!confirm("Supprimer ce lien de bilan ?")) return;
+    try {
+      const res = await fetch(`/api/admin/bilan-tokens/${tokenId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        toast.success("Lien supprimé");
+        fetchTokens();
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch {
+      toast.error("Erreur de connexion");
+    }
   }
 
   return (
@@ -256,6 +273,15 @@ export default function FormulairesPage() {
                           </Button>
                         </>
                       )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                        onClick={() => handleDelete(token.id)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   </div>
                 );
