@@ -6,13 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
@@ -50,11 +43,11 @@ type TokenData = {
 };
 
 const NAP_OPTIONS = [
-  { value: 1.2, label: "Sédentaire (1.2)" },
-  { value: 1.375, label: "Légèrement actif (1.375)" },
-  { value: 1.55, label: "Modérément actif (1.55)" },
-  { value: 1.725, label: "Très actif (1.725)" },
-  { value: 1.9, label: "Extrêmement actif (1.9)" },
+  { value: 1.2, label: "Sédentaire", desc: "Peu ou pas d'exercice" },
+  { value: 1.375, label: "Légèrement actif", desc: "1-2×/semaine" },
+  { value: 1.55, label: "Modérément actif", desc: "3-4×/semaine" },
+  { value: 1.725, label: "Très actif", desc: "5+×/semaine" },
+  { value: 1.9, label: "Extrêmement actif", desc: "Athlète / travail physique" },
 ];
 
 const BILAN_LABELS: Record<string, string> = {
@@ -378,49 +371,53 @@ export default function BilanValidationPage() {
                 </div>
 
                 {/* NAP selector */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label className="text-xs">NAP (activité)</Label>
-                    <Select
-                      value={nap}
-                      onValueChange={(v) => {
-                        if (v) setNap(v);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {NAP_OPTIONS.map((o) => (
-                          <SelectItem
-                            key={o.value}
-                            value={o.value.toString()}
-                          >
-                            {o.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-2">
+                  <Label className="text-xs">NAP (niveau d&apos;activité physique)</Label>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {NAP_OPTIONS.map((o) => (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setNap(o.value.toString())}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-left text-sm transition-all ${
+                          nap === o.value.toString()
+                            ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary"
+                            : "border-warm-border hover:border-warm-primary/40"
+                        }`}
+                      >
+                        <div>
+                          <span className="font-medium">{o.label}</span>
+                          <span className="ml-2 text-xs text-muted-foreground">{o.desc}</span>
+                        </div>
+                        <span className="text-xs font-mono text-muted-foreground">{o.value}</span>
+                      </button>
+                    ))}
                   </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs">Balance énergétique</Label>
-                    <Select
-                      value={balance}
-                      onValueChange={(v) => {
-                        if (v) setBalance(v);
-                      }}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="DEFICIT">Déficit</SelectItem>
-                        <SelectItem value="MAINTENANCE">Maintien</SelectItem>
-                        <SelectItem value="SURPLUS">
-                          Prise de masse
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                </div>
+
+                {/* Balance énergétique */}
+                <div className="space-y-2">
+                  <Label className="text-xs">Balance énergétique</Label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {([
+                      { value: "DEFICIT", label: "Déficit", icon: "↓" },
+                      { value: "MAINTENANCE", label: "Maintien", icon: "=" },
+                      { value: "SURPLUS", label: "Prise de masse", icon: "↑" },
+                    ] as const).map((o) => (
+                      <button
+                        key={o.value}
+                        type="button"
+                        onClick={() => setBalance(o.value)}
+                        className={`flex flex-col items-center rounded-lg border px-2 py-2.5 text-sm transition-all ${
+                          balance === o.value
+                            ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary"
+                            : "border-warm-border hover:border-warm-primary/40"
+                        }`}
+                      >
+                        <span className="text-lg">{o.icon}</span>
+                        <span className="font-medium text-xs">{o.label}</span>
+                      </button>
+                    ))}
                   </div>
                 </div>
 
