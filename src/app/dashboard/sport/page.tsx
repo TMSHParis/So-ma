@@ -43,6 +43,8 @@ type SportSession = {
   steps?: number;
   distance?: number;
   exercises?: { name: string; sets: number; reps: number; weight: number }[];
+  treadmill?: { speed: number; incline: number };
+  walkSpeed?: number;
   notes: string;
 };
 
@@ -56,6 +58,40 @@ const sportTypes = [
   { value: "VELO", label: "Vélo", icon: Bike },
   { value: "AUTRE", label: "Autre", icon: Timer },
 ];
+
+/**
+ * Estime la durée de marche en minutes à partir du nombre de pas.
+ *
+ * Longueur de foulée : basée sur la taille (cm) × 0.414 (facteur moyen marche).
+ * Si la taille n'est pas connue, on utilise 70 cm par défaut.
+ * Vitesse de marche : basée sur la vitesse fournie (km/h) ou estimée selon l'âge.
+ *   - < 30 ans : 5.0 km/h
+ *   - 30-50 ans : 4.8 km/h
+ *   - 50-65 ans : 4.5 km/h
+ *   - > 65 ans : 4.0 km/h
+ */
+function estimateWalkingMinutes(
+  steps: number,
+  heightCm: number | null,
+  age: number | null,
+  speedKmh: number | null,
+): { minutes: number; distanceKm: number } {
+  // Longueur de foulée en cm
+  const strideCm = heightCm && heightCm > 50 ? heightCm * 0.414 : 70;
+  const distanceKm = (steps * strideCm) / 100_000;
+
+  // Vitesse de marche
+  let speed = speedKmh;
+  if (!speed || speed <= 0) {
+    if (!age || age < 30) speed = 5.0;
+    else if (age < 50) speed = 4.8;
+    else if (age < 65) speed = 4.5;
+    else speed = 4.0;
+  }
+
+  const hours = distanceKm / speed;
+  return { minutes: Math.round(hours * 60), distanceKm: Math.round(distanceKm * 100) / 100 };
+}
 
 export default function SportPage() {
   const todayIso = useMemo(
@@ -77,6 +113,37 @@ export default function SportPage() {
     { name: "", sets: 0, reps: 0, weight: 0 },
   ]);
 
+  // Walking specific
+  const [walkMode, setWalkMode] = useState<"outdoor" | "treadmill">("outdoor");
+  const [walkSpeed, setWalkSpeed] = useState("");
+  const [treadmillSpeed, setTreadmillSpeed] = useState("");
+  const [treadmillDuration, setTreadmillDuration] = useState("");
+  const [treadmillIncline, setTreadmillIncline] = useState("");
+
+  // Client profile for walk estimation
+  const [clientHeight, setClientHeight] = useState<number | null>(null);
+  const [clientAge, setClientAge] = useState<number | null>(null);
+
+  // Fetch client profile for height/age
+  useEffect(() => {
+    fetch("/api/client/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!data) return;
+        if (data.height) {
+          let h = Number(data.height);
+          if (h < 3) h = Math.round(h * 100);
+          setClientHeight(h);
+        }
+        if (data.birthDate) {
+          const birth = new Date(data.birthDate);
+          const ageDiff = Date.now() - birth.getTime();
+          setClientAge(Math.floor(ageDiff / (365.25 * 24 * 60 * 60 * 1000)));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   const mapApiToSession = useCallback(
     (e: {
       id: string;
@@ -96,6 +163,8 @@ export default function SportPage() {
           reps: number;
           weight: number;
         }[];
+        treadmill?: { speed: number; incline: number };
+        walkSpeed?: number;
       } | null;
       return {
         id: e.id,
@@ -106,6 +175,8 @@ export default function SportPage() {
         steps: e.steps ?? undefined,
         distance: e.distance ?? undefined,
         exercises: d?.exercises,
+        treadmill: d?.treadmill,
+        walkSpeed: d?.walkSpeed,
         notes: e.notes ?? "",
       };
     },
@@ -154,13 +225,47 @@ export default function SportPage() {
 
   async function addSession() {
     const typeInfo = sportTypes.find((s) => s.value === sportType);
-    if (!typeInfo || !duration) return;
+    if (!typeInfo) return;
 
-    const dur = parseInt(duration, 10) || 0;
-    const ex =
-      sportType === "MUSCULATION"
-        ? exercises.filter((e) => e.name.trim())
-        : undefined;
+    let dur = parseInt(duration, 10) || 0;
+    let sessionSteps: number | null = steps ? parseInt(steps, 10) : null;
+    let sessionDistance: number | null = distance ? parseFloat(distance) : null;
+    let details: Record<string, unknown> | null = null;
+
+    if (sportType === "MARCHE") {
+      if (walkMode === "treadmill") {
+        // Tapis : durée et vitesse fournies par l'utilisateur
+        const speed = parseFloat(treadmillSpeed) || 5;
+        dur = parseInt(treadmillDuration, 10) || dur;
+        const incline = parseFloat(treadmillIncline) || 0;
+        sessionDistance = Math.round((speed * dur / 60) * 100) / 100;
+
+        // Estimation pas sur tapis : cadence ~110 pas/min en marche normale
+        const strideCm = clientHeight && clientHeight > 50 ? clientHeight * 0.414 : 70;
+        const strideKm = strideCm / 100_000;
+        sessionSteps = Math.round(sessionDistance / strideKm);
+
+        details = { treadmill: { speed, incline } };
+      } else {
+        // Marche en ville : estimer durée à partir des pas
+        const speedVal = parseFloat(walkSpeed) || 0;
+        if (sessionSteps && sessionSteps > 0) {
+          const est = estimateWalkingMinutes(sessionSteps, clientHeight, clientAge, speedVal || null);
+          if (!dur || dur === 0) dur = est.minutes;
+          if (!sessionDistance) sessionDistance = est.distanceKm;
+        }
+        if (speedVal > 0) {
+          details = { walkSpeed: speedVal };
+        }
+      }
+    }
+
+    if (sportType === "MUSCULATION") {
+      const ex = exercises.filter((e) => e.name.trim());
+      if (ex.length > 0) details = { ...details, exercises: ex };
+    }
+
+    if (!dur && sportType !== "MARCHE") return;
 
     try {
       const res = await fetch("/api/client/sport-entries", {
@@ -171,26 +276,15 @@ export default function SportPage() {
           sportType,
           duration: dur,
           calories: calories ? parseInt(calories, 10) : null,
-          steps: steps ? parseInt(steps, 10) : null,
-          distance: distance ? parseFloat(distance) : null,
-          details: ex && ex.length > 0 ? { exercises: ex } : null,
+          steps: sessionSteps,
+          distance: sessionDistance,
+          details,
           notes: notes || null,
         }),
       });
       if (!res.ok) throw new Error();
       const row = await res.json();
-      const session: SportSession = {
-        id: row.id,
-        type: sportType,
-        typeLabel: typeInfo.label,
-        duration: dur,
-        calories: calories ? parseInt(calories, 10) : undefined,
-        steps: steps ? parseInt(steps, 10) : undefined,
-        distance: distance ? parseFloat(distance) : undefined,
-        exercises: ex && ex.length > 0 ? ex : undefined,
-        notes,
-      };
-      setSessions((prev) => [...prev, session]);
+      setSessions((prev) => [...prev, mapApiToSession(row)]);
       setDialogOpen(false);
       resetForm();
     } catch {
@@ -204,6 +298,9 @@ export default function SportPage() {
       toast.error("Indiquez un nombre de pas");
       return;
     }
+
+    const est = estimateWalkingMinutes(n, clientHeight, clientAge, null);
+
     try {
       const res = await fetch("/api/client/sport-entries", {
         method: "POST",
@@ -211,10 +308,10 @@ export default function SportPage() {
         body: JSON.stringify({
           date: todayIso,
           sportType: "MARCHE",
-          duration: 0,
+          duration: est.minutes,
           calories: null,
           steps: n,
-          distance: null,
+          distance: est.distanceKm,
           details: null,
           notes: "Pas du jour",
         }),
@@ -226,7 +323,7 @@ export default function SportPage() {
         mapApiToSession(row),
       ]);
       setQuickSteps("");
-      toast.success("Pas enregistrés");
+      toast.success(`${n.toLocaleString()} pas ≈ ${est.minutes} min · ${est.distanceKm} km`);
     } catch {
       toast.error("Enregistrement impossible");
     }
@@ -240,6 +337,11 @@ export default function SportPage() {
     setDistance("");
     setNotes("");
     setExercises([{ name: "", sets: 0, reps: 0, weight: 0 }]);
+    setWalkMode("outdoor");
+    setWalkSpeed("");
+    setTreadmillSpeed("");
+    setTreadmillDuration("");
+    setTreadmillIncline("");
   }
 
   async function removeSession(id: string) {
@@ -258,6 +360,22 @@ export default function SportPage() {
   const totalDuration = sessions.reduce((a, s) => a + s.duration, 0);
   const totalCalories = sessions.reduce((a, s) => a + (s.calories || 0), 0);
   const totalSteps = sessions.reduce((a, s) => a + (s.steps || 0), 0);
+
+  // Live preview for quick steps
+  const quickStepsPreview = useMemo(() => {
+    const n = parseInt(quickSteps, 10);
+    if (!n || n <= 0) return null;
+    return estimateWalkingMinutes(n, clientHeight, clientAge, null);
+  }, [quickSteps, clientHeight, clientAge]);
+
+  // Live preview for walk session form
+  const walkPreview = useMemo(() => {
+    if (sportType !== "MARCHE" || walkMode !== "outdoor") return null;
+    const n = parseInt(steps, 10);
+    if (!n || n <= 0) return null;
+    const speedVal = parseFloat(walkSpeed) || null;
+    return estimateWalkingMinutes(n, clientHeight, clientAge, speedVal);
+  }, [sportType, walkMode, steps, walkSpeed, clientHeight, clientAge]);
 
   if (!ready) {
     return (
@@ -305,17 +423,150 @@ export default function SportPage() {
                 </Select>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Durée (min)</Label>
-                  <Input
-                    type="number"
-                    value={duration}
-                    onChange={(e) => setDuration(e.target.value)}
-                  />
+              {/* Walking mode selector */}
+              {sportType === "MARCHE" && (
+                <div className="space-y-3">
+                  <Label>Mode</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setWalkMode("outdoor")}
+                      className={`rounded-lg border px-3 py-2.5 text-sm text-center transition-all ${
+                        walkMode === "outdoor"
+                          ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary"
+                          : "border-warm-border hover:border-warm-primary/40"
+                      }`}
+                    >
+                      <span className="text-lg block">🚶</span>
+                      <span className="font-medium">Marche en ville</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setWalkMode("treadmill")}
+                      className={`rounded-lg border px-3 py-2.5 text-sm text-center transition-all ${
+                        walkMode === "treadmill"
+                          ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary"
+                          : "border-warm-border hover:border-warm-primary/40"
+                      }`}
+                    >
+                      <span className="text-lg block">🏃</span>
+                      <span className="font-medium">Tapis de marche</span>
+                    </button>
+                  </div>
                 </div>
+              )}
+
+              {/* Outdoor walk fields */}
+              {sportType === "MARCHE" && walkMode === "outdoor" && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Nombre de pas</Label>
+                      <Input
+                        type="number"
+                        placeholder="ex : 12 000"
+                        value={steps}
+                        onChange={(e) => setSteps(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Vitesse moy. (km/h)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="Auto selon âge"
+                        value={walkSpeed}
+                        onChange={(e) => setWalkSpeed(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {walkPreview && (
+                    <div className="rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
+                      <span className="font-medium">Estimation :</span>{" "}
+                      {walkPreview.minutes} min · {walkPreview.distanceKm} km
+                      {clientHeight && (
+                        <span className="text-xs text-muted-foreground ml-1">
+                          (foulée {Math.round(clientHeight * 0.414)} cm)
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Treadmill fields */}
+              {sportType === "MARCHE" && walkMode === "treadmill" && (
+                <div className="space-y-3">
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label>Vitesse (km/h)</Label>
+                      <Input
+                        type="number"
+                        step="0.1"
+                        placeholder="5.0"
+                        value={treadmillSpeed}
+                        onChange={(e) => setTreadmillSpeed(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Durée (min)</Label>
+                      <Input
+                        type="number"
+                        placeholder="30"
+                        value={treadmillDuration}
+                        onChange={(e) => setTreadmillDuration(e.target.value)}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Inclinaison (%)</Label>
+                      <Input
+                        type="number"
+                        step="0.5"
+                        placeholder="0"
+                        value={treadmillIncline}
+                        onChange={(e) => setTreadmillIncline(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  {treadmillSpeed && treadmillDuration && (
+                    <div className="rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
+                      <span className="font-medium">Distance :</span>{" "}
+                      {(parseFloat(treadmillSpeed) * parseInt(treadmillDuration) / 60).toFixed(2)} km
+                      {treadmillIncline && parseFloat(treadmillIncline) > 0 && (
+                        <span className="ml-2">· pente {treadmillIncline}%</span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Duration & calories — not for MARCHE outdoor (auto-calculated) */}
+              {sportType !== "MARCHE" && (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Durée (min)</Label>
+                    <Input
+                      type="number"
+                      value={duration}
+                      onChange={(e) => setDuration(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Calories brûlées</Label>
+                    <Input
+                      type="number"
+                      value={calories}
+                      onChange={(e) => setCalories(e.target.value)}
+                      placeholder="Optionnel"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Calories for MARCHE */}
+              {sportType === "MARCHE" && (
                 <div className="space-y-2">
-                  <Label>Calories brûlées</Label>
+                  <Label>Calories brûlées (optionnel)</Label>
                   <Input
                     type="number"
                     value={calories}
@@ -323,11 +574,10 @@ export default function SportPage() {
                     placeholder="Optionnel"
                   />
                 </div>
-              </div>
+              )}
 
-              {(sportType === "MARCHE" ||
-                sportType === "COURSE" ||
-                sportType === "VELO") && (
+              {/* Steps & distance for COURSE / VELO */}
+              {(sportType === "COURSE" || sportType === "VELO") && (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Nombre de pas</Label>
@@ -445,26 +695,34 @@ export default function SportPage() {
             Pas du jour
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col sm:flex-row gap-3 items-end">
-          <div className="space-y-2 flex-1 w-full">
-            <Label htmlFor="quick-steps">Nombre de pas (aperçu ou complément)</Label>
-            <Input
-              id="quick-steps"
-              type="number"
-              min={0}
-              placeholder="Ex. 8 000"
-              value={quickSteps}
-              onChange={(e) => setQuickSteps(e.target.value)}
-            />
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-3 items-end">
+            <div className="space-y-2 flex-1 w-full">
+              <Label htmlFor="quick-steps">Nombre de pas</Label>
+              <Input
+                id="quick-steps"
+                type="number"
+                min={0}
+                placeholder="Ex. 8 000"
+                value={quickSteps}
+                onChange={(e) => setQuickSteps(e.target.value)}
+              />
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              className="shrink-0 text-white bg-secondary hover:bg-secondary/90"
+              onClick={addStepsOnly}
+            >
+              Enregistrer les pas
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="secondary"
-            className="shrink-0 text-white bg-secondary hover:bg-secondary/90"
-            onClick={addStepsOnly}
-          >
-            Enregistrer les pas
-          </Button>
+          {quickStepsPreview && (
+            <div className="mt-3 rounded-lg bg-warm-primary/5 border border-warm-primary/20 px-3 py-2 text-sm">
+              <span className="font-medium">Estimation :</span>{" "}
+              ~{quickStepsPreview.minutes} min de marche · {quickStepsPreview.distanceKm} km
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -537,7 +795,13 @@ export default function SportPage() {
                 {session.steps && (
                   <p className="text-sm text-muted-foreground">
                     {session.steps.toLocaleString()} pas
-                    {session.distance && ` - ${session.distance} km`}
+                    {session.distance && ` · ${session.distance} km`}
+                  </p>
+                )}
+                {session.treadmill && (
+                  <p className="text-sm text-muted-foreground">
+                    Tapis : {session.treadmill.speed} km/h
+                    {session.treadmill.incline > 0 && ` · pente ${session.treadmill.incline}%`}
                   </p>
                 )}
                 {session.exercises && session.exercises.length > 0 && (
