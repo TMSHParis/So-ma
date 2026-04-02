@@ -87,45 +87,61 @@ const SPORT_TYPES = [
   { value: "AUTRE", label: "Autre" },
 ];
 
-const NAP_OPTIONS = [
-  { value: 1.2, label: "Sédentaire", desc: "Peu ou pas d'exercice" },
-  { value: 1.375, label: "Légèrement actif", desc: "1-2×/sem" },
-  { value: 1.55, label: "Modérément actif", desc: "3-4×/sem" },
-  { value: 1.725, label: "Très actif", desc: "5+×/sem" },
-  { value: 1.9, label: "Extrêmement actif", desc: "Athlète" },
+/** Activities for NAP calculation with their coefficients */
+const NAP_ACTIVITIES = [
+  { key: "sommeil", label: "Sommeil", coeff: 1, default: 8 },
+  { key: "toilettes", label: "Toilettes", coeff: 2, default: 0.5 },
+  { key: "repas", label: "Repas (PDJ, déj, dîner)", coeff: 1.6, default: 1.5 },
+  { key: "travailAssis", label: "Travail assis", coeff: 1.6, default: 8 },
+  { key: "deplacements", label: "Déplacements divers", coeff: 1.5, default: 1 },
+  { key: "marche", label: "Marche", coeff: 3, default: 1 },
+  { key: "sport", label: "Sport", coeff: 5, default: 1 },
+  { key: "soinsDetente", label: "Soins perso / détente", coeff: 1.35, default: 1 },
+  { key: "prepRepas", label: "Préparation des repas", coeff: 2, default: 1 },
+  { key: "voiture", label: "Temps en voiture", coeff: 1.5, default: 0.5 },
+  { key: "enfants", label: "Soins des enfants", coeff: 2, default: 0 },
+  { key: "tvRepos", label: "TV / repos", coeff: 1.35, default: 0.5 },
+  { key: "menage", label: "Activités ménagères", coeff: 2.6, default: 0 },
+  { key: "achats", label: "Achats / courses", coeff: 2.5, default: 0 },
 ];
 
-function computeBMR(sex: string, weightKg: number, heightM: number, ageYears: number): number {
+/** MB (KJ) = coeff × poids^0.48 × taille(cm)^0.50 × âge^-0.13 — Black et al. */
+function computeMB_KJ(sex: string, weightKg: number, heightCm: number, ageYears: number): number {
   const coeff = sex === "F" ? 0.963 : 1.083;
-  const bmrMJ = coeff * Math.pow(weightKg, 0.48) * Math.pow(heightM, 0.50) * Math.pow(ageYears, -0.13);
-  return Math.round(bmrMJ * 239.006);
+  return coeff * Math.pow(weightKg, 0.48) * Math.pow(heightCm, 0.50) * Math.pow(ageYears, -0.13);
 }
 
-/** Progress ring */
-function MiniProgress({ current, goal, label, color }: { current: number; goal: number | null; label: string; color: string }) {
-  if (!goal) return null;
-  const pct = Math.min(Math.round((current / goal) * 100), 100);
-  const isOver = current > goal;
-  return (
-    <div className="flex flex-col items-center gap-1 min-w-[4.5rem]">
-      <div className="relative h-11 w-11 shrink-0">
-        <svg viewBox="0 0 36 36" className="h-11 w-11 -rotate-90">
-          <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-muted/30" />
-          <circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" strokeWidth="2.5"
-            className={color}
-            strokeDasharray={`${pct * 0.942} 100`}
-            strokeLinecap="round"
-          />
-        </svg>
-        <span className={`absolute inset-0 flex items-center justify-center text-[10px] font-bold ${isOver ? "text-red-500" : ""}`}>{pct}%</span>
-      </div>
-      <div className="text-center leading-tight">
-        <p className={`text-sm font-semibold ${isOver ? "text-red-500" : ""}`}>{current}<span className="text-xs font-normal text-muted-foreground">/{goal}</span></p>
-        <p className="text-xs text-muted-foreground">{label}</p>
-      </div>
-    </div>
-  );
+/** Calculate NAP from activity hours */
+function computeNAP(activities: Record<string, number>): { nap: number; totalH: number } {
+  let totalBrut = 0;
+  let totalH = 0;
+  for (const act of NAP_ACTIVITIES) {
+    const h = activities[act.key] || 0;
+    totalBrut += h * act.coeff;
+    totalH += h;
+  }
+  return { nap: totalH > 0 ? totalBrut / 24 : 1.55, totalH };
 }
+
+/** Macros from DEJ in KJ using correct energy coefficients */
+function computeMacrosFromKJ(dejKJ: number, pctProtein: number, pctFat: number, pctCarbs: number) {
+  return {
+    proteinG: Math.round((dejKJ * pctProtein / 100) / 17),
+    fatG: Math.round((dejKJ * pctFat / 100) / 38),
+    carbsG: Math.round((dejKJ * pctCarbs / 100) / 17),
+  };
+}
+
+type CalcResult = {
+  mbKJ: number;
+  mbKcal: number;
+  nap: number;
+  dejKJ: number;
+  dejKcal: number;
+  goalKcal: number;
+  goalKJ: number;
+};
+
 
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientRow[]>([]);
@@ -146,13 +162,21 @@ export default function ClientsPage() {
   const [editSaving, setEditSaving] = useState(false);
   const [editData, setEditData] = useState<Record<string, string>>({});
 
-  // BMR calculator
+  // Protocol calculator
   const [calcSex, setCalcSex] = useState("F");
   const [calcWeight, setCalcWeight] = useState("");
-  const [calcHeight, setCalcHeight] = useState("");
+  const [calcHeight, setCalcHeight] = useState(""); // in cm
   const [calcAge, setCalcAge] = useState("");
-  const [calcNAP, setCalcNAP] = useState("1.55");
-  const [calcResult, setCalcResult] = useState<{ bmr: number; tdee: number } | null>(null);
+  const [calcActivities, setCalcActivities] = useState<Record<string, number>>(() => {
+    const init: Record<string, number> = {};
+    for (const a of NAP_ACTIVITIES) init[a.key] = a.default;
+    return init;
+  });
+  const [calcResult, setCalcResult] = useState<CalcResult | null>(null);
+  const [macroPctProtein, setMacroPctProtein] = useState(15);
+  const [macroPctFat, setMacroPctFat] = useState(35);
+  const [macroPctCarbs, setMacroPctCarbs] = useState(50);
+  const [fiberMode, setFiberMode] = useState<"auto" | "fixed">("auto");
 
   const fetchClients = useCallback(async () => {
     try {
@@ -248,42 +272,94 @@ export default function ClientsPage() {
       if (data.weight) setCalcWeight(data.weight.toString());
       if (data.height) {
         let h = Number(data.height);
-        if (h > 3) h = h / 100;
-        setCalcHeight(h.toFixed(2));
+        if (h < 3) h = h * 100; // convert m to cm
+        setCalcHeight(Math.round(h).toString());
       }
       if (data.birthDate) {
         const age = Math.floor((Date.now() - new Date(data.birthDate).getTime()) / 31557600000);
         setCalcAge(age.toString());
       }
+      // Reset activities to defaults
+      const initAct: Record<string, number> = {};
+      for (const a of NAP_ACTIVITIES) initAct[a.key] = a.default;
+      setCalcActivities(initAct);
+      setCalcResult(null);
+      setMacroPctProtein(15);
+      setMacroPctFat(35);
+      setMacroPctCarbs(50);
+      setFiberMode("auto");
     } catch { toast.error("Erreur chargement cliente"); }
     finally { setEditLoading(false); }
   }
 
-  function handleCalcBMR() {
+  function handleFullCalc() {
     const w = Number(calcWeight);
-    const h = Number(calcHeight);
+    const h = Number(calcHeight); // cm
     const a = Number(calcAge);
-    const nap = Number(calcNAP);
     if (!w || !h || !a) { toast.error("Remplis poids, taille et âge"); return; }
-    const bmr = computeBMR(calcSex, w, h, a);
-    const tdee = Math.round(bmr * nap);
-    setCalcResult({ bmr, tdee });
-    setEditData((prev) => ({ ...prev, maintenanceCalories: tdee.toString() }));
+
+    // Étape 1 — MB en KJ
+    const mbKJ = computeMB_KJ(calcSex, w, h, a);
+    const mbKcal = Math.round(mbKJ * 0.239);
+
+    // Étape 2 — NAP from activities
+    const { nap } = computeNAP(calcActivities);
+
+    // Étape 3 — DEJ = MB × NAP (KJ)
+    const dejKJ = mbKJ * nap;
+    // Étape 4 — DEJ en kcal
+    const dejKcal = Math.round(dejKJ * 0.239);
+
+    // Étape 5 — Ajustement selon objectif
+    const balance = editData.energyBalance || "MAINTENANCE";
+    const absDelta = Math.abs(parseInt(editData.caloricDeltaKcal || "0", 10));
+    let goalKcal = dejKcal;
+    if (balance === "DEFICIT") goalKcal = dejKcal - absDelta;
+    if (balance === "SURPLUS") goalKcal = dejKcal + absDelta;
+    const goalKJ = goalKcal / 0.239;
+
+    const result: CalcResult = { mbKJ, mbKcal, nap, dejKJ, dejKcal, goalKcal, goalKJ };
+    setCalcResult(result);
+
+    // Étape 6 — Macros (calculés en KJ puis convertis en g)
+    const macros = computeMacrosFromKJ(goalKJ, macroPctProtein, macroPctFat, macroPctCarbs);
+
+    // Étape 7 — Fibres
+    const fiberG = fiberMode === "auto" ? Math.round((goalKcal / 1000) * 14) : 30;
+
+    // Apply all to edit data
+    setEditData((prev) => ({
+      ...prev,
+      maintenanceCalories: dejKcal.toString(),
+      goalCalories: goalKcal.toString(),
+      goalProtein: macros.proteinG.toString(),
+      goalCarbs: macros.carbsG.toString(),
+      goalFat: macros.fatG.toString(),
+      goalFiber: fiberG.toString(),
+    }));
+
+    toast.success("Protocole complet appliqué");
   }
 
-  function applyTDEE() {
+  function recalcMacros() {
     if (!calcResult) return;
     const balance = editData.energyBalance || "MAINTENANCE";
     const absDelta = Math.abs(parseInt(editData.caloricDeltaKcal || "0", 10));
-    let goal = calcResult.tdee;
-    if (balance === "DEFICIT") goal = calcResult.tdee - absDelta;
-    if (balance === "SURPLUS") goal = calcResult.tdee + absDelta;
+    let goalKcal = calcResult.dejKcal;
+    if (balance === "DEFICIT") goalKcal = calcResult.dejKcal - absDelta;
+    if (balance === "SURPLUS") goalKcal = calcResult.dejKcal + absDelta;
+    const goalKJ = goalKcal / 0.239;
+    const macros = computeMacrosFromKJ(goalKJ, macroPctProtein, macroPctFat, macroPctCarbs);
+    const fiberG = fiberMode === "auto" ? Math.round((goalKcal / 1000) * 14) : Number(editData.goalFiber || 30);
+    setCalcResult((prev) => prev ? { ...prev, goalKcal, goalKJ } : prev);
     setEditData((prev) => ({
       ...prev,
-      maintenanceCalories: calcResult.tdee.toString(),
-      goalCalories: goal.toString(),
+      goalCalories: goalKcal.toString(),
+      goalProtein: macros.proteinG.toString(),
+      goalCarbs: macros.carbsG.toString(),
+      goalFat: macros.fatG.toString(),
+      goalFiber: fiberG.toString(),
     }));
-    toast.success("TDEE appliqué aux objectifs");
   }
 
   async function handleSaveEdit() {
@@ -565,77 +641,16 @@ export default function ClientsPage() {
                 <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : (
                 <>
-                  {/* BMR Calculator */}
-                  <Card className="border-warm-primary/20 bg-warm-primary/[0.02]">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2">
-                        <Calculator className="h-4 w-4 text-warm-primary" />
-                        <CardTitle className="text-sm">Calculateur BMR — Black et al.</CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div className="grid grid-cols-5 gap-2">
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Sexe</Label>
-                          <Select value={calcSex} onValueChange={(v) => { if (v) setCalcSex(v); }}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="F">F</SelectItem>
-                              <SelectItem value="M">M</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Poids (kg)</Label>
-                          <Input className="h-8 text-xs" type="number" step="0.1" value={calcWeight} onChange={(e) => setCalcWeight(e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Taille (m)</Label>
-                          <Input className="h-8 text-xs" type="number" step="0.01" placeholder="1.65" value={calcHeight} onChange={(e) => setCalcHeight(e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">Âge</Label>
-                          <Input className="h-8 text-xs" type="number" value={calcAge} onChange={(e) => setCalcAge(e.target.value)} />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-[10px]">NAP</Label>
-                          <Select value={calcNAP} onValueChange={(v) => { if (v) setCalcNAP(v); }}>
-                            <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {NAP_OPTIONS.map((o) => (
-                                <SelectItem key={o.value} value={o.value.toString()}>
-                                  {o.value} — {o.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Button onClick={handleCalcBMR} className="bg-warm-primary hover:bg-warm-primary/90 text-white h-8 text-xs" size="sm">
-                          <Calculator className="h-3 w-3 mr-1" />Calculer
-                        </Button>
-                        {calcResult && (
-                          <>
-                            <span className="text-xs">
-                              BMR <strong>{calcResult.bmr}</strong> · TDEE <strong>{calcResult.tdee}</strong>
-                            </span>
-                            <Button variant="outline" size="sm" className="h-7 text-xs" onClick={applyTDEE}>
-                              Appliquer
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Profil */}
+                  {/* ÉTAPE 1 — Profil & MB */}
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Profil</h3>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">1</span>
+                      Profil — Métabolisme de Base
+                    </h3>
                     <div className="grid grid-cols-4 gap-2">
                       <div className="space-y-1">
                         <Label className="text-[10px]">Sexe</Label>
-                        <Select value={editData.sex || "F"} onValueChange={(v) => { if (v) updateEdit("sex", v); }}>
+                        <Select value={editData.sex || "F"} onValueChange={(v) => { if (v) { updateEdit("sex", v); setCalcSex(v); } }}>
                           <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                           <SelectContent>
                             <SelectItem value="F">Femme</SelectItem>
@@ -645,22 +660,73 @@ export default function ClientsPage() {
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px]">Naissance</Label>
-                        <Input className="h-8 text-xs" type="date" value={editData.birthDate} onChange={(e) => updateEdit("birthDate", e.target.value)} />
+                        <Input className="h-8 text-xs" type="date" value={editData.birthDate} onChange={(e) => {
+                          updateEdit("birthDate", e.target.value);
+                          if (e.target.value) {
+                            const age = Math.floor((Date.now() - new Date(e.target.value).getTime()) / 31557600000);
+                            setCalcAge(age.toString());
+                          }
+                        }} />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px]">Poids (kg)</Label>
-                        <Input className="h-8 text-xs" type="number" step="0.1" value={editData.weight} onChange={(e) => updateEdit("weight", e.target.value)} />
+                        <Input className="h-8 text-xs" type="number" step="0.1" value={editData.weight} onChange={(e) => { updateEdit("weight", e.target.value); setCalcWeight(e.target.value); }} />
                       </div>
                       <div className="space-y-1">
                         <Label className="text-[10px]">Taille (cm)</Label>
-                        <Input className="h-8 text-xs" type="number" value={editData.height} onChange={(e) => updateEdit("height", e.target.value)} />
+                        <Input className="h-8 text-xs" type="number" value={editData.height} onChange={(e) => { updateEdit("height", e.target.value); setCalcHeight(e.target.value); }} />
                       </div>
                     </div>
+                    {calcResult && (
+                      <div className="flex items-center gap-4 text-xs bg-muted/50 rounded-lg px-3 py-2">
+                        <span>MB : <strong>{Math.round(calcResult.mbKJ)} KJ</strong> = <strong>{calcResult.mbKcal} kcal</strong></span>
+                        <span className="text-muted-foreground">Black et al. — {calcSex === "F" ? "Femme" : "Homme"}, {calcWeight} kg, {calcHeight} cm, {calcAge} ans</span>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Objectifs énergétiques */}
+                  {/* ÉTAPE 2 — NAP détaillé */}
                   <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Objectifs énergétiques</h3>
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">2</span>
+                      Activités sur 24h — NAP
+                    </h3>
+                    <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {NAP_ACTIVITIES.map((act) => (
+                        <div key={act.key} className="flex items-center gap-2">
+                          <span className="text-[10px] text-muted-foreground w-36 truncate" title={act.label}>{act.label} <span className="text-muted-foreground/50">({act.coeff})</span></span>
+                          <Input
+                            className="h-7 text-xs w-16 text-center"
+                            type="number"
+                            step="0.5"
+                            min="0"
+                            max="24"
+                            value={calcActivities[act.key] ?? 0}
+                            onChange={(e) => setCalcActivities((prev) => ({ ...prev, [act.key]: Number(e.target.value) || 0 }))}
+                          />
+                          <span className="text-[10px] text-muted-foreground">h</span>
+                        </div>
+                      ))}
+                    </div>
+                    {(() => {
+                      const { nap, totalH } = computeNAP(calcActivities);
+                      return (
+                        <div className="flex items-center gap-4 text-xs">
+                          <span className={`font-medium ${totalH !== 24 ? "text-red-500" : "text-green-600"}`}>
+                            Total : {totalH}h / 24h
+                          </span>
+                          <span>NAP calculé : <strong>{nap.toFixed(3)}</strong></span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* ÉTAPE 3-5 — Objectif énergétique */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">3</span>
+                      Objectif énergétique
+                    </h3>
                     <div className="grid grid-cols-3 gap-1.5 mb-2">
                       {([
                         { value: "DEFICIT", label: "Déficit", icon: "↓" },
@@ -682,32 +748,130 @@ export default function ClientsPage() {
                         </button>
                       ))}
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
+                    {editData.energyBalance !== "MAINTENANCE" && (
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Maintien (kcal)</Label>
-                        <Input className="h-8 text-xs" type="number" value={editData.maintenanceCalories} onChange={(e) => updateEdit("maintenanceCalories", e.target.value)} />
+                        <Label className="text-[10px]">{editData.energyBalance === "DEFICIT" ? "Déficit" : "Surplus"} (kcal/jour)</Label>
+                        <Input className="h-8 text-xs w-32" type="number" placeholder="300" value={editData.caloricDeltaKcal} onChange={(e) => updateEdit("caloricDeltaKcal", e.target.value)} />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* ÉTAPE 6 — Macros (% → KJ → g) */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">4</span>
+                      Répartition macros
+                    </h3>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-[10px]">Protéines (10-20%)</Label>
+                        <div className="flex items-center gap-1">
+                          <Input className="h-8 text-xs w-16 text-center" type="number" min={10} max={20} value={macroPctProtein} onChange={(e) => setMacroPctProtein(Number(e.target.value))} />
+                          <span className="text-[10px] text-muted-foreground">%</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Delta kcal/jour</Label>
-                        <Input className="h-8 text-xs" type="number" placeholder="300" value={editData.caloricDeltaKcal} onChange={(e) => updateEdit("caloricDeltaKcal", e.target.value)} />
+                        <Label className="text-[10px]">Lipides (35-40%)</Label>
+                        <div className="flex items-center gap-1">
+                          <Input className="h-8 text-xs w-16 text-center" type="number" min={35} max={40} value={macroPctFat} onChange={(e) => setMacroPctFat(Number(e.target.value))} />
+                          <span className="text-[10px] text-muted-foreground">%</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">1g = 38 KJ</p>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Objectif kcal</Label>
-                        <Input className="h-8 text-xs" type="number" value={editData.goalCalories} onChange={(e) => updateEdit("goalCalories", e.target.value)} />
+                        <Label className="text-[10px]">Glucides (40-55%)</Label>
+                        <div className="flex items-center gap-1">
+                          <Input className="h-8 text-xs w-16 text-center" type="number" min={40} max={55} value={macroPctCarbs} onChange={(e) => setMacroPctCarbs(Number(e.target.value))} />
+                          <span className="text-[10px] text-muted-foreground">%</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
                       </div>
+                    </div>
+                    {(() => {
+                      const total = macroPctProtein + macroPctFat + macroPctCarbs;
+                      return total !== 100 && (
+                        <p className="text-[10px] text-red-500 font-medium">Total : {total}% — doit faire 100%</p>
+                      );
+                    })()}
+                  </div>
+
+                  {/* ÉTAPE 7 — Fibres */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">5</span>
+                      Fibres
+                    </h3>
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setFiberMode("auto")}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${fiberMode === "auto" ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary" : "border-warm-border"}`}
+                      >
+                        Auto (14g / 1000 kcal)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setFiberMode("fixed")}
+                        className={`px-3 py-1.5 text-xs rounded-lg border transition-all ${fiberMode === "fixed" ? "border-warm-primary bg-warm-primary/5 ring-1 ring-warm-primary" : "border-warm-border"}`}
+                      >
+                        Fixe (ANSES)
+                      </button>
+                      {fiberMode === "fixed" && (
+                        <Input className="h-8 text-xs w-20" type="number" value={editData.goalFiber || "30"} onChange={(e) => updateEdit("goalFiber", e.target.value)} />
+                      )}
                     </div>
                   </div>
 
-                  {/* Macros */}
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-medium">Macros & Fibres (g/jour)</h3>
-                    <div className="grid grid-cols-4 gap-2">
-                      <div className="space-y-1"><Label className="text-[10px]">Protéines</Label><Input className="h-8 text-xs" type="number" value={editData.goalProtein} onChange={(e) => updateEdit("goalProtein", e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Glucides</Label><Input className="h-8 text-xs" type="number" value={editData.goalCarbs} onChange={(e) => updateEdit("goalCarbs", e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Lipides</Label><Input className="h-8 text-xs" type="number" value={editData.goalFat} onChange={(e) => updateEdit("goalFat", e.target.value)} /></div>
-                      <div className="space-y-1"><Label className="text-[10px]">Fibres</Label><Input className="h-8 text-xs" type="number" value={editData.goalFiber} onChange={(e) => updateEdit("goalFiber", e.target.value)} /></div>
-                    </div>
-                  </div>
+                  {/* BOUTON CALCUL */}
+                  <Button onClick={handleFullCalc} className="w-full bg-warm-primary hover:bg-warm-primary/90 text-white" size="sm">
+                    <Calculator className="h-4 w-4 mr-2" />
+                    Calculer tout le protocole
+                  </Button>
+
+                  {/* RÉSULTATS */}
+                  {calcResult && (
+                    <Card className="border-green-200 bg-green-50/50">
+                      <CardContent className="p-4 space-y-3">
+                        <p className="text-xs font-semibold text-green-800">Résultats du protocole</p>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 text-xs">
+                          <span className="text-muted-foreground">MB</span>
+                          <span><strong>{Math.round(calcResult.mbKJ)} KJ</strong> = {calcResult.mbKcal} kcal</span>
+                          <span className="text-muted-foreground">NAP</span>
+                          <span><strong>{calcResult.nap.toFixed(3)}</strong></span>
+                          <span className="text-muted-foreground">DEJ (maintien)</span>
+                          <span><strong>{Math.round(calcResult.dejKJ)} KJ</strong> = {calcResult.dejKcal} kcal</span>
+                          <span className="text-muted-foreground">Objectif final</span>
+                          <span className="font-bold text-green-700">{calcResult.goalKcal} kcal</span>
+                        </div>
+                        <div className="border-t border-green-200 pt-2 grid grid-cols-4 gap-2 text-xs text-center">
+                          <div>
+                            <p className="text-muted-foreground">Protéines</p>
+                            <p className="font-bold">{editData.goalProtein}g</p>
+                            <p className="text-[10px] text-muted-foreground">{macroPctProtein}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Lipides</p>
+                            <p className="font-bold">{editData.goalFat}g</p>
+                            <p className="text-[10px] text-muted-foreground">{macroPctFat}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Glucides</p>
+                            <p className="font-bold">{editData.goalCarbs}g</p>
+                            <p className="text-[10px] text-muted-foreground">{macroPctCarbs}%</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Fibres</p>
+                            <p className="font-bold">{editData.goalFiber}g</p>
+                            <p className="text-[10px] text-muted-foreground">{fiberMode === "auto" ? "14g/1000kcal" : "fixe"}</p>
+                          </div>
+                        </div>
+                        <Button variant="outline" size="sm" className="w-full text-xs" onClick={recalcMacros}>
+                          Recalculer macros (si % modifiés)
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Mode de vie */}
                   <div className="space-y-2">
