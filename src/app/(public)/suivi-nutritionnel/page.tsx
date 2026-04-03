@@ -245,14 +245,14 @@ export default function SuiviNutritionnelPage() {
             </label>
 
             <div className="mt-6 space-y-3">
-              <Link
+              <a
                 href={accepted ? "/api/stripe/checkout-public" : "#offre"}
                 onClick={(e) => { if (!accepted) e.preventDefault(); }}
                 className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-primary hover:bg-primary/90" : "bg-primary/40 cursor-not-allowed"}`}
                 aria-disabled={!accepted}
               >
                 Payer par carte bancaire
-              </Link>
+              </a>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Paiement sécurisé.

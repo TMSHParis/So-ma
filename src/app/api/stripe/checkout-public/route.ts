@@ -30,8 +30,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.redirect(checkoutSession.url);
-  } catch (error) {
-    console.error("Stripe public checkout error:", error);
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("Stripe public checkout error:", message);
     return NextResponse.redirect(new URL("/suivi-nutritionnel?error=1", request.url));
   }
 }
