@@ -44,6 +44,7 @@ type ClientRow = {
     id: string;
     phone: string | null;
     goalCalories: number | null;
+    maintenanceCalories: number | null;
     energyBalance: string | null;
   } | null;
 };
@@ -97,31 +98,31 @@ const NAP_ACTIVITIES = [
   { key: "deplacements", label: "Déplacements divers", coeff: 1.5, default: 1 },
   { key: "marche", label: "Marche", coeff: 3, default: 1 },
   { key: "sport", label: "Sport", coeff: 5, default: 1 },
-  { key: "soinsDetente", label: "Soins perso / détente", coeff: 1.35, default: 1 },
+  { key: "soinsDetente", label: "Soins perso / détente", coeff: 1.35, default: 1.5 },
   { key: "prepRepas", label: "Préparation des repas", coeff: 2, default: 1 },
   { key: "voiture", label: "Temps en voiture", coeff: 1.5, default: 0.5 },
   { key: "enfants", label: "Soins des enfants", coeff: 2, default: 0 },
-  { key: "tvRepos", label: "TV / repos", coeff: 1.35, default: 0.5 },
-  { key: "menage", label: "Activités ménagères", coeff: 2.6, default: 0 },
-  { key: "achats", label: "Achats / courses", coeff: 2.5, default: 0 },
 ];
 
-/** MB (KJ) = coeff × poids^0.48 × taille(cm)^0.50 × âge^-0.13 — Black et al. */
+/** MB (MJ/jour) = coeff × poids^0.48 × taille(m)^0.50 × âge^-0.13 — Black et al. (1996)
+ *  Résultat en MJ, × 1000 pour KJ */
 function computeMB_KJ(sex: string, weightKg: number, heightCm: number, ageYears: number): number {
   const coeff = sex === "F" ? 0.963 : 1.083;
-  return coeff * Math.pow(weightKg, 0.48) * Math.pow(heightCm, 0.50) * Math.pow(ageYears, -0.13);
+  const heightM = heightCm / 100;
+  const mbMJ = coeff * Math.pow(weightKg, 0.48) * Math.pow(heightM, 0.50) * Math.pow(ageYears, -0.13);
+  return mbMJ * 1000; // MJ → KJ
 }
 
 /** Calculate NAP from activity hours */
-function computeNAP(activities: Record<string, number>): { nap: number; totalH: number } {
-  let totalBrut = 0;
+function computeNAP(activities: Record<string, number>): { nap: number; totalH: number; weightedH: number } {
+  let weightedH = 0;
   let totalH = 0;
   for (const act of NAP_ACTIVITIES) {
     const h = activities[act.key] || 0;
-    totalBrut += h * act.coeff;
+    weightedH += h * act.coeff;
     totalH += h;
   }
-  return { nap: totalH > 0 ? totalBrut / 24 : 1.55, totalH };
+  return { nap: totalH > 0 ? totalH / 24 : 1.55, totalH, weightedH };
 }
 
 /** Macros from DEJ in KJ using correct energy coefficients */
@@ -507,6 +508,16 @@ export default function ClientsPage() {
 
                   {/* Compact summary */}
                   <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                    {c.client?.maintenanceCalories && (
+                      <span className="flex items-center gap-1" title="DEJ maintien">
+                        <span className="text-muted-foreground">{c.client.maintenanceCalories}</span>
+                      </span>
+                    )}
+                    {c.client?.goalCalories && (
+                      <span className="flex items-center gap-1 font-semibold text-foreground" title="Objectif kcal">
+                        {c.client.goalCalories} kcal
+                      </span>
+                    )}
                     {pLoading ? (
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
                     ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0) ? (
@@ -732,13 +743,25 @@ export default function ClientsPage() {
                       ))}
                     </div>
                     {(() => {
-                      const { nap, totalH } = computeNAP(calcActivities);
+                      const { nap, totalH, weightedH } = computeNAP(calcActivities);
+                      const mbKJ = (Number(calcWeight) && Number(calcHeight) && Number(calcAge))
+                        ? computeMB_KJ(calcSex, Number(calcWeight), Number(calcHeight), Number(calcAge))
+                        : 0;
+                      const dejKcal = mbKJ > 0 ? Math.round(mbKJ * nap * 0.239) : 0;
+                      const mbKcal = mbKJ > 0 ? Math.round(mbKJ * 0.239) : 0;
                       return (
-                        <div className="flex items-center gap-4 text-xs">
-                          <span className={`font-medium ${totalH !== 24 ? "text-red-500" : "text-green-600"}`}>
-                            Total : {totalH}h / 24h
-                          </span>
-                          <span>NAP calculé : <strong>{nap.toFixed(3)}</strong></span>
+                        <div className="space-y-1 text-xs">
+                          <div className="flex items-center gap-4">
+                            <span className="font-medium text-muted-foreground">
+                              Total : <strong>{totalH.toFixed(2)}h</strong>
+                            </span>
+                            <span>÷ 24 = NAP : <strong className="text-foreground">{nap.toFixed(3)}</strong></span>
+                          </div>
+                          {mbKcal > 0 && (
+                            <div className="text-muted-foreground">
+                              DEJ (sans déficit) = NAP ({nap.toFixed(2)}) × MB ({mbKcal} kcal) = <strong className="text-foreground">{dejKcal} kcal</strong>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
@@ -785,32 +808,68 @@ export default function ClientsPage() {
                       <span className="h-5 w-5 rounded-full bg-warm-primary text-white text-[10px] font-bold flex items-center justify-center">4</span>
                       Répartition macros
                     </h3>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Protéines (10-20%)</Label>
-                        <div className="flex items-center gap-1">
-                          <Input className="h-8 text-xs w-16 text-center" type="number" min={10} max={20} value={macroPctProtein} onChange={(e) => setMacroPctProtein(Number(e.target.value))} />
-                          <span className="text-[10px] text-muted-foreground">%</span>
+                    {(() => {
+                      const goalKcal = calcResult?.goalKcal || Number(editData.goalCalories || 0);
+                      const goalKJ = goalKcal > 0 ? goalKcal / 0.239 : 0;
+                      const macroCalc = (pct: number, kjPerG: number) => {
+                        if (goalKJ <= 0) return { kj: 0, kcal: 0, g: 0 };
+                        const kj = goalKJ * pct / 100;
+                        return { kj: Math.round(kj * 100) / 100, kcal: Math.round(kj * 0.239), g: Math.round((kj / kjPerG) * 10) / 10 };
+                      };
+                      const prot1 = macroCalc(15, 17);
+                      const prot2 = macroCalc(20, 17);
+                      const fat1 = macroCalc(35, 38);
+                      const fat2 = macroCalc(40, 38);
+                      const carb1 = macroCalc(40, 17);
+                      const carb2 = macroCalc(55, 17);
+                      const show = goalKJ > 0;
+                      return (
+                        <div className="grid grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Protéines (15-20%)</Label>
+                            <div className="flex items-center gap-1">
+                              <Input className="h-8 text-xs w-16 text-center" type="number" min={10} max={20} value={macroPctProtein} onChange={(e) => setMacroPctProtein(Number(e.target.value))} />
+                              <span className="text-[10px] text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
+                            {show && (
+                              <div className="text-[10px] font-medium text-foreground space-y-0.5">
+                                <p>15% → {prot1.kcal} kcal · {prot1.g}g</p>
+                                <p>20% → {prot2.kcal} kcal · {prot2.g}g</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Lipides (35-40%)</Label>
+                            <div className="flex items-center gap-1">
+                              <Input className="h-8 text-xs w-16 text-center" type="number" min={35} max={40} value={macroPctFat} onChange={(e) => setMacroPctFat(Number(e.target.value))} />
+                              <span className="text-[10px] text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">1g = 38 KJ</p>
+                            {show && (
+                              <div className="text-[10px] font-medium text-foreground space-y-0.5">
+                                <p>35% → {fat1.kcal} kcal · {fat1.g}g</p>
+                                <p>40% → {fat2.kcal} kcal · {fat2.g}g</p>
+                              </div>
+                            )}
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-[10px]">Glucides (40-55%)</Label>
+                            <div className="flex items-center gap-1">
+                              <Input className="h-8 text-xs w-16 text-center" type="number" min={40} max={55} value={macroPctCarbs} onChange={(e) => setMacroPctCarbs(Number(e.target.value))} />
+                              <span className="text-[10px] text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
+                            {show && (
+                              <div className="text-[10px] font-medium text-foreground space-y-0.5">
+                                <p>40% → {carb1.kcal} kcal · {carb1.g}g</p>
+                                <p>55% → {carb2.kcal} kcal · {carb2.g}g</p>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Lipides (35-40%)</Label>
-                        <div className="flex items-center gap-1">
-                          <Input className="h-8 text-xs w-16 text-center" type="number" min={35} max={40} value={macroPctFat} onChange={(e) => setMacroPctFat(Number(e.target.value))} />
-                          <span className="text-[10px] text-muted-foreground">%</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">1g = 38 KJ</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px]">Glucides (40-55%)</Label>
-                        <div className="flex items-center gap-1">
-                          <Input className="h-8 text-xs w-16 text-center" type="number" min={40} max={55} value={macroPctCarbs} onChange={(e) => setMacroPctCarbs(Number(e.target.value))} />
-                          <span className="text-[10px] text-muted-foreground">%</span>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground">1g = 17 KJ</p>
-                      </div>
-                    </div>
+                      );
+                    })()}
                     {(() => {
                       const total = macroPctProtein + macroPctFat + macroPctCarbs;
                       return total !== 100 && (

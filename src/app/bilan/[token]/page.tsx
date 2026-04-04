@@ -23,6 +23,7 @@ const steps = [
   "Informations personnelles",
   "Habitudes alimentaires",
   "Activité physique",
+  "Rythme de vie",
   "Santé & Bien-être",
   "Objectifs",
 ];
@@ -216,6 +217,22 @@ export default function BilanPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>Groupe sanguin</Label>
+                  <Select
+                    value={(formData.groupe_sanguin as string) || ""}
+                    onValueChange={(v) => updateField("groupe_sanguin", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Je ne sais pas"].map((g) => (
+                        <SelectItem key={g} value={g}>{g}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Profil neuroatypique (si connu)</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {["TDAH", "TSA", "HPI/HPE", "DYS", "Non diagnostiquée", "Autre"].map(
@@ -293,6 +310,51 @@ export default function BilanPage() {
                     className="border-warm-border min-h-[80px]"
                     placeholder="Compulsions, restrictions, culpabilité, plaisir..."
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>En combien de temps prenez-vous vos repas en moyenne ?</Label>
+                  <Select
+                    value={(formData.temps_repas as string) || ""}
+                    onValueChange={(v) => updateField("temps_repas", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="moins-10min">Moins de 10 min</SelectItem>
+                      <SelectItem value="10-20min">10 à 20 min</SelectItem>
+                      <SelectItem value="20-30min">20 à 30 min</SelectItem>
+                      <SelectItem value="plus-30min">Plus de 30 min</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Aimez-vous manger ?</Label>
+                  <RadioGroup
+                    value={(formData.aime_manger as string) || ""}
+                    onValueChange={(v) => updateField("aime_manger", v)}
+                  >
+                    {["Oui, beaucoup", "Oui, modérément", "C'est un besoin, pas un plaisir", "Non, pas vraiment"].map((r) => (
+                      <div key={r} className="flex items-center gap-2">
+                        <RadioGroupItem value={r} id={`manger-${r}`} />
+                        <Label htmlFor={`manger-${r}`} className="font-normal">{r}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
+                </div>
+                <div className="space-y-2">
+                  <Label>Aimez-vous cuisiner ?</Label>
+                  <RadioGroup
+                    value={(formData.aime_cuisiner as string) || ""}
+                    onValueChange={(v) => updateField("aime_cuisiner", v)}
+                  >
+                    {["Oui, j'adore", "Oui, quand j'ai le temps", "Pas spécialement", "Non, je n'aime pas"].map((r) => (
+                      <div key={r} className="flex items-center gap-2">
+                        <RadioGroupItem value={r} id={`cuisiner-${r}`} />
+                        <Label htmlFor={`cuisiner-${r}`} className="font-normal">{r}</Label>
+                      </div>
+                    ))}
+                  </RadioGroup>
                 </div>
                 <div className="space-y-2">
                   <Label>Combien d&apos;eau buvez-vous par jour ?</Label>
@@ -379,6 +441,24 @@ export default function BilanPage() {
                   </Select>
                 </div>
                 <div className="space-y-2">
+                  <Label>De combien de temps disposez-vous pour le sport par jour ?</Label>
+                  <Select
+                    value={(formData.temps_dispo_sport as string) || ""}
+                    onValueChange={(v) => updateField("temps_dispo_sport", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="moins-30min">Moins de 30 min</SelectItem>
+                      <SelectItem value="30-45min">30 à 45 min</SelectItem>
+                      <SelectItem value="45-60min">45 min à 1h</SelectItem>
+                      <SelectItem value="1-1.5h">1h à 1h30</SelectItem>
+                      <SelectItem value="plus-1.5h">Plus de 1h30</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Votre relation au sport</Label>
                   <Textarea
                     value={(formData.relation_sport as string) || ""}
@@ -391,6 +471,52 @@ export default function BilanPage() {
             )}
 
             {currentStep === 3 && (
+              <>
+                <p className="text-sm text-muted-foreground">Ces informations nous permettent de calculer vos besoins énergétiques précis. Répondez en heures par jour.</p>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous en position assise / travail par jour ?</Label>
+                  <Input type="text" placeholder="ex : 8h, 6h30..." value={(formData.temps_assis as string) || ""} onChange={(e) => updateField("temps_assis", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps durent au total vos déplacements divers par jour ?</Label>
+                  <Input type="text" placeholder="ex : 1h, 45min..." value={(formData.temps_deplacements as string) || ""} onChange={(e) => updateField("temps_deplacements", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps de marche faites-vous par jour ?</Label>
+                  <Input type="text" placeholder="ex : 30min, 1h..." value={(formData.temps_marche as string) || ""} onChange={(e) => updateField("temps_marche", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps de sport faites-vous par jour (en dehors de la marche) ?</Label>
+                  <Input type="text" placeholder="ex : 1h, 45min..." value={(formData.temps_sport as string) || ""} onChange={(e) => updateField("temps_sport", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous dans vos soins personnels et en détente par jour ?</Label>
+                  <Input type="text" placeholder="ex : 1h, 2h..." value={(formData.temps_soins_detente as string) || ""} onChange={(e) => updateField("temps_soins_detente", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous par jour à préparer les repas ?</Label>
+                  <Input type="text" placeholder="ex : 1h, 30min..." value={(formData.temps_prep_repas as string) || ""} onChange={(e) => updateField("temps_prep_repas", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous aux toilettes par jour ?</Label>
+                  <Input type="text" placeholder="ex : 30min, 1h..." value={(formData.temps_toilettes as string) || ""} onChange={(e) => updateField("temps_toilettes", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous en voiture par jour ?</Label>
+                  <Input type="text" placeholder="ex : 30min, 1h..." value={(formData.temps_voiture as string) || ""} onChange={(e) => updateField("temps_voiture", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous dans les transports par jour ?</Label>
+                  <Input type="text" placeholder="ex : 45min, 1h30..." value={(formData.temps_transports as string) || ""} onChange={(e) => updateField("temps_transports", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Combien de temps passez-vous dans les soins de vos enfants par jour ? (douche, devoirs, jeux, etc.)</Label>
+                  <Input type="text" placeholder="ex : 2h, 0, pas d'enfants..." value={(formData.temps_enfants as string) || ""} onChange={(e) => updateField("temps_enfants", e.target.value)} className="border-warm-border" />
+                </div>
+              </>
+            )}
+
+            {currentStep === 5 && (
               <>
                 <div className="space-y-2">
                   <Label>Qualité de votre sommeil</Label>
@@ -450,6 +576,41 @@ export default function BilanPage() {
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>À quelle fréquence allez-vous à la selle ?</Label>
+                  <Select
+                    value={(formData.frequence_selles as string) || ""}
+                    onValueChange={(v) => updateField("frequence_selles", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plusieurs-par-jour">Plusieurs fois par jour</SelectItem>
+                      <SelectItem value="1-par-jour">1 fois par jour</SelectItem>
+                      <SelectItem value="1-tous-les-2-jours">1 fois tous les 2 jours</SelectItem>
+                      <SelectItem value="moins-souvent">Moins souvent</SelectItem>
+                      <SelectItem value="irregulier">Très irrégulier</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>À quelle fréquence urinez-vous par jour ?</Label>
+                  <Select
+                    value={(formData.frequence_urine as string) || ""}
+                    onValueChange={(v) => updateField("frequence_urine", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="moins-4">Moins de 4 fois</SelectItem>
+                      <SelectItem value="4-6">4 à 6 fois</SelectItem>
+                      <SelectItem value="6-8">6 à 8 fois</SelectItem>
+                      <SelectItem value="plus-8">Plus de 8 fois</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label>Troubles digestifs ?</Label>
                   <div className="grid grid-cols-2 gap-2">
                     {[
@@ -473,7 +634,7 @@ export default function BilanPage() {
               </>
             )}
 
-            {currentStep === 4 && (
+            {currentStep === 5 && (
               <>
                 <div className="space-y-2">
                   <Label>Quel est votre objectif principal ?</Label>
@@ -524,6 +685,22 @@ export default function BilanPage() {
                     className="border-warm-border min-h-[80px]"
                     placeholder="Vos attentes, besoins, envies..."
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sur une échelle de 1 à 10, quelle est votre motivation ?</Label>
+                  <Select
+                    value={(formData.motivation as string) || ""}
+                    onValueChange={(v) => updateField("motivation", v)}
+                  >
+                    <SelectTrigger className="border-warm-border">
+                      <SelectValue placeholder="Sélectionnez" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[1,2,3,4,5,6,7,8,9,10].map((n) => (
+                        <SelectItem key={n} value={n.toString()}>{n}{n <= 3 ? " — Faible" : n <= 6 ? " — Moyenne" : n <= 8 ? " — Bonne" : " — Très forte"}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Quelque chose à ajouter ?</Label>
