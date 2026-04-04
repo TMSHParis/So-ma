@@ -14,6 +14,10 @@ async function getAccessToken() {
     body: "grant_type=client_credentials",
   });
   const data = await res.json();
+  if (!data.access_token) {
+    console.error("PayPal auth failed:", JSON.stringify(data));
+    throw new Error(`PayPal auth failed: ${data.error_description || data.error || "unknown"}`);
+  }
   return data.access_token as string;
 }
 
@@ -56,9 +60,9 @@ export async function GET() {
     );
 
     if (!approveLink) {
-      console.error("PayPal order error:", order);
+      console.error("PayPal order error:", JSON.stringify(order));
       return NextResponse.json(
-        { error: "Impossible de créer la commande PayPal." },
+        { error: "Impossible de créer la commande PayPal.", details: order },
         { status: 500 },
       );
     }
