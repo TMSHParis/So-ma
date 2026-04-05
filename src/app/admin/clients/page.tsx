@@ -769,14 +769,14 @@ export default function ClientsPage() {
                             </span>
                             <span>÷ 24 = NAP : <strong className="text-foreground">{nap.toFixed(3)}</strong></span>
                           </div>
-                          {mbKcal > 0 && (
+                          {mbKcal > 0 && sfVal === 1 && (
                             <div className="text-muted-foreground">
-                              DEJ (sans déficit) = NAP ({nap.toFixed(2)}) × MB ({mbKcal} kcal) = <strong className="text-foreground">{dejKcal} kcal</strong>
+                              DEJ = MB ({mbKcal}) × NAP ({nap.toFixed(2)}) = <strong className="text-foreground">{dejKcal} kcal</strong>
                             </div>
                           )}
-                          {dejKcalAdj > 0 && (
-                            <div className="text-red-600">
-                              DEJ ajusté = {dejKcal} × {sfVal} (agression) = <strong>{dejKcalAdj} kcal</strong>
+                          {mbKcal > 0 && sfVal !== 1 && (
+                            <div className="text-muted-foreground">
+                              DEJ = MB ({mbKcal}) × NAP ({nap.toFixed(2)}) × FA ({sfVal}) = <strong className="text-red-600">{dejKcalAdj} kcal</strong>
                             </div>
                           )}
                         </div>
@@ -784,20 +784,21 @@ export default function ClientsPage() {
                     })()}
                   </div>
 
-                  {/* FACTEUR DE RISQUE */}
+                  {/* FACTEUR D'AGRESSION (FA) */}
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium flex items-center gap-2">
                       <span className="h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
-                      Facteur d&apos;agression
+                      Facteur d&apos;agression (FA)
                     </h3>
-                    <p className="text-[10px] text-muted-foreground">Multiplie le DEJ. Utilisé en nutrition clinique pour ajuster les besoins en cas de pathologie, hospitalisation, agression métabolique, etc.</p>
+                    <p className="text-[10px] text-muted-foreground">DEJ = MB × NAP × FA. Utilisé en nutrition clinique. Théorique max = 1.8, en pratique clinique = 1.2-1.3.</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
-                        { value: "1", label: "Aucun", desc: "Normal" },
-                        { value: "1.1", label: "1.1", desc: "Agression légère" },
-                        { value: "1.2", label: "1.2", desc: "Agression modérée" },
-                        { value: "1.3", label: "1.3", desc: "Agression sévère" },
-                        { value: "1.5", label: "1.5", desc: "Polytraumatisme" },
+                        { value: "1", label: "1.0", desc: "Aucun" },
+                        { value: "1.2", label: "1.2", desc: "Pathologies chroniques (réalité clinique)" },
+                        { value: "1.3", label: "1.3", desc: "Inflammatoire (MICI, cancer, IC)" },
+                        { value: "1.4", label: "1.4", desc: "État fébrile / infection" },
+                        { value: "1.5", label: "1.5", desc: "Infection sévère" },
+                        { value: "1.8", label: "1.8", desc: "Trauma / grands brûlés / réa" },
                       ].map((sf) => (
                         <button
                           key={sf.value}
@@ -984,11 +985,11 @@ export default function ClientsPage() {
                           <span><strong>{calcResult.nap.toFixed(3)}</strong></span>
                           {calcResult.stressFactor !== 1 && (
                             <>
-                              <span className="text-muted-foreground">Facteur d&apos;agression</span>
+                              <span className="text-muted-foreground">FA (agression)</span>
                               <span className="text-red-600 font-semibold">×{calcResult.stressFactor}</span>
                             </>
                           )}
-                          <span className="text-muted-foreground">DEJ (maintien)</span>
+                          <span className="text-muted-foreground">DEJ {calcResult.stressFactor !== 1 ? "(MB × NAP × FA)" : "(MB × NAP)"}</span>
                           <span><strong>{Math.round(calcResult.dejKJ)} KJ</strong> = {calcResult.dejKcal} kcal</span>
                           <span className="text-muted-foreground">Objectif final</span>
                           <span className="font-bold text-green-700">{calcResult.goalKcal} kcal</span>
