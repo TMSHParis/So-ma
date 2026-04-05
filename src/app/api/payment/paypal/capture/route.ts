@@ -55,7 +55,12 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      return NextResponse.redirect(`${baseUrl}/paiement-confirme`, 303);
+      const email = payer?.email_address ?? "";
+      const name = payer?.name ? `${payer.name.given_name} ${payer.name.surname}` : "";
+      return NextResponse.redirect(
+        `${baseUrl}/api/post-payment/redirect?provider=paypal&email=${encodeURIComponent(email)}&name=${encodeURIComponent(name)}`,
+        303
+      );
     }
 
     console.error("PayPal capture failed:", capture);

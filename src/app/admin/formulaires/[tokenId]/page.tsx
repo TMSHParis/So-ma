@@ -16,6 +16,7 @@ import {
   Zap,
   Droplets,
   Wheat,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -110,6 +111,8 @@ export default function BilanValidationPage() {
   const [validating, setValidating] = useState(false);
   const [validated, setValidated] = useState(false);
   const [tempPassword, setTempPassword] = useState<string | null>(null);
+  const [sendingCredentials, setSendingCredentials] = useState(false);
+  const [credentialsSent, setCredentialsSent] = useState(false);
 
   // Editable calculation results
   const [calc, setCalc] = useState<NutritionResult | null>(null);
@@ -243,6 +246,30 @@ export default function BilanValidationPage() {
     }
   }
 
+  async function handleSendCredentials() {
+    if (!tempPassword || !tokenData?.response) return;
+    const bilanData = tokenData.response.data;
+    setSendingCredentials(true);
+    try {
+      const res = await fetch("/api/admin/send-credentials", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: bilanData.email,
+          firstName: bilanData.prenom || tokenData.name,
+          password: tempPassword,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      setCredentialsSent(true);
+      toast.success("Accès envoyés par email !");
+    } catch {
+      toast.error("Erreur lors de l'envoi");
+    } finally {
+      setSendingCredentials(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -317,6 +344,22 @@ export default function BilanValidationPage() {
               Transmettez ce mot de passe à la cliente. Elle pourra le changer
               après connexion.
             </p>
+            <div className="mt-3">
+              <Button
+                onClick={handleSendCredentials}
+                disabled={sendingCredentials || credentialsSent}
+                size="sm"
+                className={credentialsSent ? "bg-green-700 text-white" : "bg-primary hover:bg-primary/90 text-white"}
+              >
+                {credentialsSent ? (
+                  <><CheckCircle2 className="h-4 w-4 mr-1" /> Accès envoyés</>
+                ) : sendingCredentials ? (
+                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Envoi en cours...</>
+                ) : (
+                  <><Mail className="h-4 w-4 mr-1" /> Envoyer les accès par email</>
+                )}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

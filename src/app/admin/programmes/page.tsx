@@ -61,6 +61,7 @@ export default function ProgrammesPage() {
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchAll = useCallback(async () => {
@@ -94,15 +95,11 @@ export default function ProgrammesPage() {
     if (fileInputRef.current) fileInputRef.current.value = "";
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  async function handleFileProcess(file: File) {
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Fichier trop volumineux (max 10 Mo)");
       return;
     }
-
     setUploading(true);
     try {
       const formData = new FormData();
@@ -122,6 +119,31 @@ export default function ProgrammesPage() {
     } finally {
       setUploading(false);
     }
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) handleFileProcess(file);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleFileProcess(file);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(true);
+  }
+
+  function handleDragLeave(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
   }
 
   function removeFile() {
@@ -398,8 +420,15 @@ export default function ProgrammesPage() {
                 </div>
               ) : (
                 <div
-                  className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-warm-primary/40 transition-colors py-6 px-4 cursor-pointer"
+                  className={`flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed transition-colors py-6 px-4 cursor-pointer ${
+                    dragActive
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25 hover:border-warm-primary/40"
+                  }`}
                   onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
                 >
                   {uploading ? (
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -407,7 +436,7 @@ export default function ProgrammesPage() {
                     <Upload className="h-6 w-6 text-muted-foreground" />
                   )}
                   <p className="text-sm text-muted-foreground">
-                    {uploading ? "Upload en cours..." : "Cliquez pour uploader un fichier"}
+                    {uploading ? "Upload en cours..." : dragActive ? "Déposez le fichier ici" : "Glissez-déposez un fichier ou cliquez"}
                   </p>
                   <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 10 Mo</p>
                 </div>

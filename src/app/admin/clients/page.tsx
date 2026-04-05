@@ -142,6 +142,7 @@ type CalcResult = {
   dejKcal: number;
   goalKcal: number;
   goalKJ: number;
+  stressFactor: number;
 };
 
 
@@ -273,6 +274,7 @@ export default function ClientsPage() {
         sessionTypes: (data.sessionTypes || []).join(","),
         startWeight: data.startWeight?.toString() || "",
         goalWeight: data.goalWeight?.toString() || "",
+        stressFactor: data.stressFactor?.toString() || "1",
       });
       setCalcSex(data.sex || "F");
       if (data.weight) setCalcWeight(data.weight.toString());
@@ -285,9 +287,10 @@ export default function ClientsPage() {
         const age = Math.floor((Date.now() - new Date(data.birthDate).getTime()) / 31557600000);
         setCalcAge(age.toString());
       }
-      // Reset activities to defaults
+      // Load saved NAP activities or use defaults
+      const savedAct = data.napActivities as Record<string, number> | null;
       const initAct: Record<string, number> = {};
-      for (const a of NAP_ACTIVITIES) initAct[a.key] = a.default;
+      for (const a of NAP_ACTIVITIES) initAct[a.key] = savedAct?.[a.key] ?? a.default;
       setCalcActivities(initAct);
       setCalcResult(null);
       setMacroPctProtein(15);
@@ -312,7 +315,10 @@ export default function ClientsPage() {
     const { nap } = computeNAP(calcActivities);
 
     // Étape 3 — DEJ = MB × NAP (KJ)
-    const dejKJ = mbKJ * nap;
+    const dejKJRaw = mbKJ * nap;
+    // Étape 3b — Facteur de stress / pathologie
+    const sf = Number(editData.stressFactor || "1");
+    const dejKJ = dejKJRaw * sf;
     // Étape 4 — DEJ en kcal
     const dejKcal = Math.round(dejKJ * 0.239);
 
@@ -324,7 +330,7 @@ export default function ClientsPage() {
     if (balance === "SURPLUS") goalKcal = dejKcal + absDelta;
     const goalKJ = goalKcal / 0.239;
 
-    const result: CalcResult = { mbKJ, mbKcal, nap, dejKJ, dejKcal, goalKcal, goalKJ };
+    const result: CalcResult = { mbKJ, mbKcal, nap, dejKJ, dejKcal, goalKcal, goalKJ, stressFactor: sf };
     setCalcResult(result);
 
     // Étape 6 — Macros (calculés en KJ puis convertis en g)
@@ -351,9 +357,11 @@ export default function ClientsPage() {
     if (!calcResult) return;
     const balance = editData.energyBalance || "MAINTENANCE";
     const absDelta = Math.abs(parseInt(editData.caloricDeltaKcal || "0", 10));
-    let goalKcal = calcResult.dejKcal;
-    if (balance === "DEFICIT") goalKcal = calcResult.dejKcal - absDelta;
-    if (balance === "SURPLUS") goalKcal = calcResult.dejKcal + absDelta;
+    const sf = Number(editData.stressFactor || "1");
+    const adjustedDej = Math.round(calcResult.dejKcal * (sf / (calcResult.stressFactor || 1)));
+    let goalKcal = adjustedDej;
+    if (balance === "DEFICIT") goalKcal = adjustedDej - absDelta;
+    if (balance === "SURPLUS") goalKcal = adjustedDej + absDelta;
     const goalKJ = goalKcal / 0.239;
     const macros = computeMacrosFromKJ(goalKJ, macroPctProtein, macroPctFat, macroPctCarbs);
     const fiberG = fiberMode === "auto" ? Math.round((goalKcal / 1000) * 14) : Number(editData.goalFiber || 30);
@@ -377,6 +385,7 @@ export default function ClientsPage() {
         "weight", "height", "goalCalories", "goalProtein", "goalCarbs", "goalFat",
         "goalFiber", "maintenanceCalories", "caloricDeltaKcal", "goalWaterL",
         "goalSteps", "sessionsPerWeek", "startWeight", "goalWeight",
+        "stressFactor",
       ];
       for (const f of numFields) {
         if (editData[f] !== undefined) {
@@ -387,6 +396,7 @@ export default function ClientsPage() {
       body.energyBalance = editData.energyBalance || null;
       body.sessionTypes = editData.sessionTypes ? editData.sessionTypes.split(",").filter(Boolean) : [];
       body.birthDate = editData.birthDate || null;
+      body.napActivities = calcActivities;
 
       const res = await fetch(`/api/admin/clients/${editClientId}`, {
         method: "PATCH",
@@ -660,17 +670,17 @@ export default function ClientsPage() {
       {editClientId && (
         <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setEditClientId(null)}>
           <div
-            className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background shadow-xl overflow-y-auto"
+            className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background shadow-xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="sticky top-0 bg-background z-10 border-b border-warm-border px-6 py-4 flex items-center justify-between">
+            <div className="shrink-0 border-b border-warm-border px-6 py-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold">Objectifs cliente</h2>
               <Button variant="ghost" size="icon" onClick={() => setEditClientId(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            <div className="p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {editLoading ? (
                 <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : (
@@ -749,6 +759,8 @@ export default function ClientsPage() {
                         : 0;
                       const dejKcal = mbKJ > 0 ? Math.round(mbKJ * nap * 0.239) : 0;
                       const mbKcal = mbKJ > 0 ? Math.round(mbKJ * 0.239) : 0;
+                      const sfVal = Number(editData.stressFactor || "1");
+                      const dejKcalAdj = sfVal !== 1 && dejKcal > 0 ? Math.round(dejKcal * sfVal) : 0;
                       return (
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center gap-4">
@@ -762,9 +774,58 @@ export default function ClientsPage() {
                               DEJ (sans déficit) = NAP ({nap.toFixed(2)}) × MB ({mbKcal} kcal) = <strong className="text-foreground">{dejKcal} kcal</strong>
                             </div>
                           )}
+                          {dejKcalAdj > 0 && (
+                            <div className="text-red-600">
+                              DEJ ajusté = {dejKcal} × {sfVal} (stress) = <strong>{dejKcalAdj} kcal</strong>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
+                  </div>
+
+                  {/* FACTEUR DE RISQUE */}
+                  <div className="space-y-2">
+                    <h3 className="text-sm font-medium flex items-center gap-2">
+                      <span className="h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
+                      Facteur de stress / pathologie
+                    </h3>
+                    <p className="text-[10px] text-muted-foreground">Multiplie le DEJ. Utilisé en nutrition clinique pour ajuster les besoins en cas de pathologie, hospitalisation, etc.</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { value: "1", label: "Aucun", desc: "Normal" },
+                        { value: "1.1", label: "1.1", desc: "Stress léger" },
+                        { value: "1.2", label: "1.2", desc: "Stress modéré" },
+                        { value: "1.3", label: "1.3", desc: "Stress sévère" },
+                        { value: "1.5", label: "1.5", desc: "Polytraumatisme" },
+                      ].map((sf) => (
+                        <button
+                          key={sf.value}
+                          type="button"
+                          onClick={() => updateEdit("stressFactor", sf.value)}
+                          className={`px-2.5 py-1.5 text-[10px] rounded-lg border transition-all ${
+                            editData.stressFactor === sf.value || (!editData.stressFactor && sf.value === "1")
+                              ? "border-red-400 bg-red-50 ring-1 ring-red-400 text-red-700"
+                              : "border-warm-border hover:border-red-300"
+                          }`}
+                        >
+                          <span className="font-semibold">{sf.label}</span>
+                          <span className="ml-1 text-muted-foreground">{sf.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Label className="text-[10px]">Personnalisé :</Label>
+                      <Input
+                        className="h-7 text-xs w-20 text-center"
+                        type="number"
+                        step="0.05"
+                        min="1"
+                        max="2"
+                        value={editData.stressFactor || "1"}
+                        onChange={(e) => updateEdit("stressFactor", e.target.value)}
+                      />
+                    </div>
                   </div>
 
                   {/* ÉTAPE 3-5 — Objectif énergétique */}
@@ -921,6 +982,12 @@ export default function ClientsPage() {
                           <span><strong>{Math.round(calcResult.mbKJ)} KJ</strong> = {calcResult.mbKcal} kcal</span>
                           <span className="text-muted-foreground">NAP</span>
                           <span><strong>{calcResult.nap.toFixed(3)}</strong></span>
+                          {calcResult.stressFactor !== 1 && (
+                            <>
+                              <span className="text-muted-foreground">Facteur stress</span>
+                              <span className="text-red-600 font-semibold">×{calcResult.stressFactor}</span>
+                            </>
+                          )}
                           <span className="text-muted-foreground">DEJ (maintien)</span>
                           <span><strong>{Math.round(calcResult.dejKJ)} KJ</strong> = {calcResult.dejKcal} kcal</span>
                           <span className="text-muted-foreground">Objectif final</span>
@@ -996,16 +1063,19 @@ export default function ClientsPage() {
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex gap-3 pt-2 border-t border-warm-border">
-                    <Button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 bg-warm-primary hover:bg-warm-primary/90 text-white">
-                      {editSaving ? "Enregistrement..." : "Enregistrer"}
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditClientId(null)}>Fermer</Button>
-                  </div>
                 </>
               )}
             </div>
+
+            {/* Fixed bottom bar — always visible */}
+            {!editLoading && (
+              <div className="shrink-0 bg-background border-t border-warm-border px-6 py-4 flex gap-3">
+                <Button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 bg-warm-primary hover:bg-warm-primary/90 text-white">
+                  {editSaving ? "Enregistrement..." : "Enregistrer"}
+                </Button>
+                <Button variant="outline" onClick={() => setEditClientId(null)}>Fermer</Button>
+              </div>
+            )}
           </div>
         </div>
       )}

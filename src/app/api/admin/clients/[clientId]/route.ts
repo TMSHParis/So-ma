@@ -35,6 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
     "goalFiber", "maintenanceCalories", "caloricDeltaKcal", "goalWaterL",
     "goalSteps", "sessionsPerWeek", "startWeight", "goalWeight",
     "waistCm", "hipCm", "thighCm", "buttCm",
+    "stressFactor",
   ];
 
   for (const field of numFields) {
@@ -50,6 +51,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
   if (body.birthDate !== undefined) {
     data.birthDate = body.birthDate ? new Date(body.birthDate) : null;
   }
+  if (body.napActivities !== undefined) data.napActivities = body.napActivities;
 
   // Auto-compute goalCalories from maintenance + delta
   const client = await prisma.client.findUnique({ where: { id: clientId } });

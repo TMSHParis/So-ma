@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
           quantity: 1,
         },
       ],
-      success_url: `${origin}/suivi-nutritionnel?success=1`,
+      success_url: `${origin}/api/post-payment/redirect?session_id={CHECKOUT_SESSION_ID}&provider=stripe`,
       cancel_url: `${origin}/suivi-nutritionnel?cancelled=1`,
     });
 

@@ -117,6 +117,9 @@ model Client {
   /// Poids objectif
   goalWeight      Float?   @map("goal_weight")
   notes           String?
+  napActivities   Json?     @map("nap_activities")
+  /// Facteur de stress/pathologie (nutrition clinique) : 1.0 = aucun, 1.1-1.5+ = pathologie
+  stressFactor    Float?   @default(1.0) @map("stress_factor")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
 

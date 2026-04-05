@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { sendAdminBilanNotification } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,7 +53,17 @@ export async function POST(request: NextRequest) {
       }),
     ]);
 
-    // TODO: Send email notification to admin with Resend
+    // Send email notification to admin (non-blocking — don't fail the request)
+    try {
+      const name = [data.prenom, data.nom].filter(Boolean).join(" ") || "Inconnu";
+      await sendAdminBilanNotification({
+        name,
+        email: data.email || "non renseigné",
+        submittedAt: new Date(),
+      });
+    } catch (emailError) {
+      console.error("Failed to send admin notification email:", emailError);
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
