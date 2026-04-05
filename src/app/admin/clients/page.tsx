@@ -316,7 +316,7 @@ export default function ClientsPage() {
 
     // Étape 3 — DEJ = MB × NAP (KJ)
     const dejKJRaw = mbKJ * nap;
-    // Étape 3b — Facteur de stress / pathologie
+    // Étape 3b — Facteur d'agression
     const sf = Number(editData.stressFactor || "1");
     const dejKJ = dejKJRaw * sf;
     // Étape 4 — DEJ en kcal
@@ -776,7 +776,7 @@ export default function ClientsPage() {
                           )}
                           {dejKcalAdj > 0 && (
                             <div className="text-red-600">
-                              DEJ ajusté = {dejKcal} × {sfVal} (stress) = <strong>{dejKcalAdj} kcal</strong>
+                              DEJ ajusté = {dejKcal} × {sfVal} (agression) = <strong>{dejKcalAdj} kcal</strong>
                             </div>
                           )}
                         </div>
@@ -788,15 +788,15 @@ export default function ClientsPage() {
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium flex items-center gap-2">
                       <span className="h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
-                      Facteur de stress / pathologie
+                      Facteur d&apos;agression
                     </h3>
-                    <p className="text-[10px] text-muted-foreground">Multiplie le DEJ. Utilisé en nutrition clinique pour ajuster les besoins en cas de pathologie, hospitalisation, etc.</p>
+                    <p className="text-[10px] text-muted-foreground">Multiplie le DEJ. Utilisé en nutrition clinique pour ajuster les besoins en cas de pathologie, hospitalisation, agression métabolique, etc.</p>
                     <div className="flex flex-wrap gap-1.5">
                       {[
                         { value: "1", label: "Aucun", desc: "Normal" },
-                        { value: "1.1", label: "1.1", desc: "Stress léger" },
-                        { value: "1.2", label: "1.2", desc: "Stress modéré" },
-                        { value: "1.3", label: "1.3", desc: "Stress sévère" },
+                        { value: "1.1", label: "1.1", desc: "Agression légère" },
+                        { value: "1.2", label: "1.2", desc: "Agression modérée" },
+                        { value: "1.3", label: "1.3", desc: "Agression sévère" },
                         { value: "1.5", label: "1.5", desc: "Polytraumatisme" },
                       ].map((sf) => (
                         <button
@@ -984,7 +984,7 @@ export default function ClientsPage() {
                           <span><strong>{calcResult.nap.toFixed(3)}</strong></span>
                           {calcResult.stressFactor !== 1 && (
                             <>
-                              <span className="text-muted-foreground">Facteur stress</span>
+                              <span className="text-muted-foreground">Facteur d&apos;agression</span>
                               <span className="text-red-600 font-semibold">×{calcResult.stressFactor}</span>
                             </>
                           )}
@@ -1069,11 +1069,11 @@ export default function ClientsPage() {
 
             {/* Fixed bottom bar — always visible */}
             {!editLoading && (
-              <div className="shrink-0 bg-background border-t border-warm-border px-6 py-4 flex gap-3">
-                <Button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 bg-warm-primary hover:bg-warm-primary/90 text-white">
-                  {editSaving ? "Enregistrement..." : "Enregistrer"}
+              <div className="shrink-0 bg-background border-t border-warm-border px-6 py-4 flex gap-3 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+                <Button onClick={handleSaveEdit} disabled={editSaving} className="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium text-sm py-5">
+                  {editSaving ? "Enregistrement..." : "Enregistrer les modifications"}
                 </Button>
-                <Button variant="outline" onClick={() => setEditClientId(null)}>Fermer</Button>
+                <Button variant="outline" onClick={() => setEditClientId(null)} className="py-5">Fermer</Button>
               </div>
             )}
           </div>
