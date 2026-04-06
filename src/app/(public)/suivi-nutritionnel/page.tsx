@@ -264,16 +264,7 @@ export default function SuiviNutritionnelPage() {
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Paiement sécurisé.
-            </p>
-
-            {/* TEST ONLY — à supprimer en production */}
-            <a
-              href="/api/post-payment/test?email=test@test.com&name=Test%20Cliente"
-              className="flex items-center justify-center w-full h-10 text-xs text-muted-foreground border border-dashed border-muted-foreground/30 rounded-full mt-3 hover:bg-muted/30 transition-colors"
-            >
-              Simuler un paiement (test)
-            </a>
-          </div>
+            </p>          </div>
         </section>
 
         {/* FAQ */}

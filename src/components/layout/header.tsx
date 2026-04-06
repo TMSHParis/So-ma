@@ -11,6 +11,7 @@ const navLinks = [
   { href: "/#methode", label: "Méthode" },
   { href: "/#a-propos", label: "À propos" },
   { href: "/suivi-nutritionnel", label: "Accompagnement" },
+  { href: "/blog", label: "Blog" },
   { href: "/#contact", label: "Contact" },
 ];
 
