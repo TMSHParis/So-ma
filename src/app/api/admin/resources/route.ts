@@ -17,7 +17,7 @@ export async function GET() {
   const resources = await prisma.resource.findMany({
     orderBy: { createdAt: "desc" },
     include: {
-      assignments: {
+      clients: {
         include: {
           client: {
             include: { user: { select: { firstName: true, lastName: true, email: true } } },

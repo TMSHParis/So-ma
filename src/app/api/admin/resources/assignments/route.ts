@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const resourceId = request.nextUrl.searchParams.get("resourceId");
   if (!resourceId) return NextResponse.json({ message: "resourceId requis" }, { status: 400 });
 
-  const assignments = await prisma.resourceAssignment.findMany({
+  const assignments = await prisma.clientResource.findMany({
     where: { resourceId },
     include: { client: { include: { user: { select: { firstName: true, lastName: true, email: true } } } } },
   });
@@ -37,8 +37,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "resourceId et clientIds requis" }, { status: 400 });
   }
 
-  // Upsert : on ignore les doublons
-  await prisma.resourceAssignment.createMany({
+  await prisma.clientResource.createMany({
     data: clientIds.map((clientId) => ({ resourceId, clientId })),
     skipDuplicates: true,
   });
@@ -58,7 +57,7 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ message: "resourceId et clientId requis" }, { status: 400 });
   }
 
-  await prisma.resourceAssignment.deleteMany({
+  await prisma.clientResource.deleteMany({
     where: { resourceId, clientId },
   });
 
