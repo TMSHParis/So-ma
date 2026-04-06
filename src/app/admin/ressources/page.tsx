@@ -29,11 +29,11 @@ import {
   Upload,
   FileText,
   X,
-  ExternalLink,
   Users,
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FileViewer } from "@/components/file-viewer";
 
 type Resource = {
   id: string;
@@ -69,8 +69,15 @@ export default function AdminRessourcesPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Detail / assign dialog
-  const [detailResource, setDetailResource] = useState<Resource | null>(null);
+  // Detail dialog (view resource)
+  const [viewResource, setViewResource] = useState<Resource | null>(null);
+  const [viewerFile, setViewerFile] = useState<{
+    url: string;
+    name: string;
+  } | null>(null);
+
+  // Assign dialog
+  const [assignResource, setAssignResource] = useState<Resource | null>(null);
   const [allClients, setAllClients] = useState<ClientUser[]>([]);
   const [assignedClientIds, setAssignedClientIds] = useState<string[]>([]);
   const [loadingAssign, setLoadingAssign] = useState(false);
@@ -91,8 +98,9 @@ export default function AdminRessourcesPage() {
     fetchResources();
   }, [fetchResources]);
 
-  async function openDetail(resource: Resource) {
-    setDetailResource(resource);
+  // --- Assign logic ---
+  async function openAssign(resource: Resource) {
+    setAssignResource(resource);
     setLoadingAssign(true);
     try {
       const [clientsRes, assignedRes] = await Promise.all([
@@ -128,11 +136,11 @@ export default function AdminRessourcesPage() {
   }
 
   async function saveAssignments() {
-    if (!detailResource) return;
+    if (!assignResource) return;
     setSavingAssign(true);
     try {
       const res = await fetch(
-        `/api/admin/resources/${detailResource.id}/clients`,
+        `/api/admin/resources/${assignResource.id}/clients`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -141,7 +149,7 @@ export default function AdminRessourcesPage() {
       );
       if (res.ok) {
         toast.success("Assignations mises à jour");
-        setDetailResource(null);
+        setAssignResource(null);
       } else {
         toast.error("Erreur lors de la sauvegarde");
       }
@@ -152,15 +160,14 @@ export default function AdminRessourcesPage() {
     }
   }
 
+  // --- File upload ---
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-
     if (file.size > 10 * 1024 * 1024) {
       toast.error("Fichier trop volumineux (max 10 Mo)");
       return;
     }
-
     setUploading(true);
     try {
       const formData = new FormData();
@@ -283,13 +290,14 @@ export default function AdminRessourcesPage() {
       ) : (
         <div className="space-y-3">
           {resources.map((r) => (
-            <Card key={r.id} className="border-warm-border">
+            <Card
+              key={r.id}
+              className="border-warm-border hover:shadow-md transition-shadow cursor-pointer"
+              onClick={() => setViewResource(r)}
+            >
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-center justify-between">
-                  <div
-                    className="min-w-0 flex-1 cursor-pointer"
-                    onClick={() => openDetail(r)}
-                  >
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-medium truncate">{r.title}</p>
                       <Badge
@@ -316,16 +324,22 @@ export default function AdminRessourcesPage() {
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => openDetail(r)}
-                      title="Voir & assigner"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openAssign(r);
+                      }}
+                      title="Assigner aux clientes"
                     >
-                      <Eye className="h-4 w-4" />
+                      <Users className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteResource(r.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteResource(r.id);
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -335,6 +349,97 @@ export default function AdminRessourcesPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* View resource detail dialog */}
+      <Dialog
+        open={!!viewResource}
+        onOpenChange={(open) => {
+          if (!open) setViewResource(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewResource?.title}
+              {viewResource && (
+                <Badge variant="secondary" className="text-xs">
+                  {viewResource.category}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+
+          {viewResource && (
+            <div className="space-y-4">
+              {/* Text content */}
+              {viewResource.content && (
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {viewResource.content}
+                  </p>
+                </div>
+              )}
+
+              {/* File */}
+              {viewResource.fileUrl && (
+                <div className="space-y-3">
+                  <button
+                    onClick={() =>
+                      setViewerFile({
+                        url: viewResource.fileUrl!,
+                        name:
+                          viewResource.fileName || viewResource.title,
+                      })
+                    }
+                    className="w-full flex items-center gap-3 rounded-lg border border-warm-primary/30 bg-warm-primary/5 px-4 py-3 hover:bg-warm-primary/10 transition-colors text-left"
+                  >
+                    <Eye className="h-5 w-5 text-warm-primary shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium truncate">
+                        {viewResource.fileName || "Document joint"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Cliquer pour ouvrir le document
+                      </p>
+                    </div>
+                  </button>
+                </div>
+              )}
+
+              {!viewResource.content && !viewResource.fileUrl && (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Cette ressource n&apos;a pas de contenu.
+                </p>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2 border-t">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setViewResource(null);
+                    openAssign(viewResource);
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Assigner aux clientes
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* File viewer */}
+      {viewerFile && (
+        <FileViewer
+          open
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.name}
+        />
       )}
 
       {/* Create dialog */}
@@ -377,7 +482,6 @@ export default function AdminRessourcesPage() {
               </Select>
             </div>
 
-            {/* File upload */}
             <div className="space-y-2">
               <Label>Fichier (PDF, image, etc.)</Label>
               {uploadedFileName ? (
@@ -444,113 +548,82 @@ export default function AdminRessourcesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Detail / assign dialog */}
+      {/* Assign dialog */}
       <Dialog
-        open={!!detailResource}
+        open={!!assignResource}
         onOpenChange={(open) => {
-          if (!open) setDetailResource(null);
+          if (!open) setAssignResource(null);
         }}
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {detailResource?.title}
-              {detailResource && (
-                <Badge variant="secondary" className="text-xs">
-                  {detailResource.category}
-                </Badge>
-              )}
+              <Users className="h-5 w-5" />
+              Assigner : {assignResource?.title}
             </DialogTitle>
           </DialogHeader>
 
-          {detailResource && (
+          {assignResource && (
             <div className="space-y-4">
-              {/* Resource content preview */}
-              {detailResource.content && (
-                <div className="rounded-lg bg-muted/50 p-3">
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                    {detailResource.content}
-                  </p>
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Sélectionnez les clientes qui auront accès à cette ressource.
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={selectAll}
+                    disabled={loadingAssign}
+                  >
+                    Toutes
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={deselectAll}
+                    disabled={loadingAssign}
+                  >
+                    Aucune
+                  </Button>
                 </div>
-              )}
-              {detailResource.fileUrl && (
-                <a
-                  href={detailResource.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-warm-primary hover:underline"
-                >
-                  <FileText className="h-4 w-4" />
-                  {detailResource.fileName || "Fichier joint"}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-
-              {/* Client assignment */}
-              <div className="border-t pt-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <Users className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-sm font-medium">
-                      Assigner aux clientes
-                    </Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={selectAll}
-                      disabled={loadingAssign}
-                    >
-                      Toutes
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 text-xs"
-                      onClick={deselectAll}
-                      disabled={loadingAssign}
-                    >
-                      Aucune
-                    </Button>
-                  </div>
-                </div>
-
-                {loadingAssign ? (
-                  <div className="flex items-center justify-center py-6">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : allClients.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Aucune cliente enregistrée.
-                  </p>
-                ) : (
-                  <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
-                    {allClients
-                      .filter((c) => c.client)
-                      .map((c) => (
-                        <label
-                          key={c.client!.id}
-                          className="flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
-                        >
-                          <Checkbox
-                            checked={assignedClientIds.includes(c.client!.id)}
-                            onCheckedChange={() => toggleClient(c.client!.id)}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium truncate">
-                              {c.firstName} {c.lastName}
-                            </p>
-                            <p className="text-xs text-muted-foreground truncate">
-                              {c.email}
-                            </p>
-                          </div>
-                        </label>
-                      ))}
-                  </div>
-                )}
               </div>
+
+              {loadingAssign ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : allClients.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Aucune cliente enregistrée.
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-[320px] overflow-y-auto pr-1">
+                  {allClients
+                    .filter((c) => c.client)
+                    .map((c) => (
+                      <label
+                        key={c.client!.id}
+                        className="flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                      >
+                        <Checkbox
+                          checked={assignedClientIds.includes(c.client!.id)}
+                          onCheckedChange={() => toggleClient(c.client!.id)}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium truncate">
+                            {c.firstName} {c.lastName}
+                          </p>
+                          <p className="text-xs text-muted-foreground truncate">
+                            {c.email}
+                          </p>
+                        </div>
+                      </label>
+                    ))}
+                </div>
+              )}
 
               <Button
                 onClick={saveAssignments}
