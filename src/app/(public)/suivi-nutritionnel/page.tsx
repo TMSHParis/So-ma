@@ -253,14 +253,6 @@ export default function SuiviNutritionnelPage() {
               >
                 Payer par carte bancaire
               </a>
-              <a
-                href={accepted ? "/api/payment/paypal" : "#offre"}
-                onClick={(e) => { if (!accepted) e.preventDefault(); }}
-                className={`flex items-center justify-center w-full h-12 text-white text-[15px] font-normal rounded-full transition-colors ${accepted ? "bg-[#0070BA] hover:bg-[#0070BA]/90" : "bg-[#0070BA]/40 cursor-not-allowed"}`}
-                aria-disabled={!accepted}
-              >
-                Payer avec PayPal
-              </a>
             </div>
             <p className="text-xs text-muted-foreground mt-4">
               Paiement sécurisé.
