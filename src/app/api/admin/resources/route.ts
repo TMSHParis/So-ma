@@ -16,6 +16,15 @@ export async function GET() {
 
   const resources = await prisma.resource.findMany({
     orderBy: { createdAt: "desc" },
+    include: {
+      assignments: {
+        include: {
+          client: {
+            include: { user: { select: { firstName: true, lastName: true, email: true } } },
+          },
+        },
+      },
+    },
   });
 
   return NextResponse.json(resources);

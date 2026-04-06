@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Utensils, Loader2, FileText, Download } from "lucide-react";
+import { Utensils, Loader2, FileText, Eye } from "lucide-react";
+import { FileViewer } from "@/components/file-viewer";
 
 type MealPlan = {
   id: string;
@@ -18,6 +19,7 @@ type MealPlan = {
 export default function ProgrammeAlimentairePage() {
   const [plans, setPlans] = useState<MealPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewerFile, setViewerFile] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/client/meal-plans")
@@ -91,18 +93,21 @@ export default function ProgrammeAlimentairePage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   {plan.fileUrl && (
-                    <a
-                      href={plan.fileUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
+                    <button
+                      onClick={() =>
+                        setViewerFile({
+                          url: plan.fileUrl!,
+                          name: plan.fileName || plan.title,
+                        })
+                      }
+                      className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors w-full text-left"
                     >
                       <FileText className="h-5 w-5 text-primary shrink-0" />
                       <span className="text-sm font-medium flex-1 truncate">
                         {plan.fileName || "Programme joint"}
                       </span>
-                      <Download className="h-4 w-4 text-primary shrink-0" />
-                    </a>
+                      <Eye className="h-4 w-4 text-primary shrink-0" />
+                    </button>
                   )}
                   {text && (
                     <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed bg-muted/30 rounded-lg p-4">
@@ -124,6 +129,15 @@ export default function ProgrammeAlimentairePage() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {viewerFile && (
+        <FileViewer
+          open
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.name}
+        />
       )}
     </div>
   );

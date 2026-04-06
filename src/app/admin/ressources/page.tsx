@@ -20,8 +20,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Lightbulb, Loader2, Upload, FileText, X, ExternalLink } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Plus,
+  Trash2,
+  Lightbulb,
+  Loader2,
+  Upload,
+  FileText,
+  X,
+  Eye,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
+import { FileViewer } from "@/components/file-viewer";
+
+type ClientUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  client: { id: string } | null;
+};
+
+type Assignment = {
+  id: string;
+  clientId: string;
+  client: {
+    id: string;
+    user: { firstName: string; lastName: string; email: string };
+  };
+};
 
 type Resource = {
   id: string;
@@ -31,14 +60,17 @@ type Resource = {
   fileUrl: string | null;
   fileName: string | null;
   createdAt: string;
+  assignments: Assignment[];
 };
 
 export default function AdminRessourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
+  const [clients, setClients] = useState<ClientUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // Create form
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
   const [content, setContent] = useState("");
@@ -48,6 +80,13 @@ export default function AdminRessourcesPage() {
   const [uploadedFileName, setUploadedFileName] = useState("");
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // File viewer
+  const [viewerFile, setViewerFile] = useState<{ url: string; name: string } | null>(null);
+
+  // Assign dialog
+  const [assignResource, setAssignResource] = useState<Resource | null>(null);
+  const [assignSaving, setAssignSaving] = useState(false);
 
   const fetchResources = useCallback(async () => {
     try {
@@ -60,9 +99,19 @@ export default function AdminRessourcesPage() {
     }
   }, []);
 
+  const fetchClients = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/clients");
+      if (res.ok) setClients(await res.json());
+    } catch {
+      /* silent */
+    }
+  }, []);
+
   useEffect(() => {
     fetchResources();
-  }, [fetchResources]);
+    fetchClients();
+  }, [fetchResources, fetchClients]);
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -152,6 +201,28 @@ export default function AdminRessourcesPage() {
     }
   }
 
+  async function toggleAssignment(resourceId: string, clientId: string, isAssigned: boolean) {
+    setAssignSaving(true);
+    try {
+      if (isAssigned) {
+        await fetch(`/api/admin/resources/assignments?resourceId=${resourceId}&clientId=${clientId}`, {
+          method: "DELETE",
+        });
+      } else {
+        await fetch("/api/admin/resources/assignments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resourceId, clientIds: [clientId] }),
+        });
+      }
+      await fetchResources();
+    } catch {
+      toast.error("Erreur");
+    } finally {
+      setAssignSaving(false);
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -159,6 +230,10 @@ export default function AdminRessourcesPage() {
       </div>
     );
   }
+
+  const assignedClientIds = assignResource
+    ? new Set(assignResource.assignments.map((a) => a.clientId))
+    : new Set<string>();
 
   return (
     <div>
@@ -192,9 +267,9 @@ export default function AdminRessourcesPage() {
           {resources.map((r) => (
             <Card key={r.id} className="border-warm-border">
               <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
                       <p className="font-medium truncate">{r.title}</p>
                       <Badge variant="secondary" className="text-xs flex-shrink-0">
                         {r.category}
@@ -206,26 +281,46 @@ export default function AdminRessourcesPage() {
                       </p>
                     )}
                     {r.fileUrl && (
-                      <a
-                        href={r.fileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => setViewerFile({ url: r.fileUrl!, name: r.fileName || "Fichier" })}
                         className="inline-flex items-center gap-1.5 mt-2 text-sm text-warm-primary hover:underline"
                       >
-                        <FileText className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                         {r.fileName || "Fichier joint"}
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                      </button>
                     )}
+                    {/* Assignations */}
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      {r.assignments.length > 0 ? (
+                        r.assignments.map((a) => (
+                          <Badge key={a.id} variant="outline" className="text-xs">
+                            {a.client.user.firstName} {a.client.user.lastName}
+                          </Badge>
+                        ))
+                      ) : (
+                        <span className="text-xs text-muted-foreground/60">Non assignée</span>
+                      )}
+                    </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0 ml-2"
-                    onClick={() => deleteResource(r.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-primary"
+                      onClick={() => setAssignResource(r)}
+                      title="Assigner aux clientes"
+                    >
+                      <Users className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                      onClick={() => deleteResource(r.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -233,6 +328,7 @@ export default function AdminRessourcesPage() {
         </div>
       )}
 
+      {/* Dialog création */}
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) { setDialogOpen(false); resetForm(); } }}>
         <DialogContent>
           <DialogHeader>
@@ -319,6 +415,62 @@ export default function AdminRessourcesPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Dialog assignation */}
+      <Dialog open={!!assignResource} onOpenChange={(open) => { if (!open) setAssignResource(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              Assigner « {assignResource?.title} »
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-2">
+            Cochez les clientes qui doivent avoir accès à cette ressource.
+          </p>
+          <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+            {clients
+              .filter((c) => c.client)
+              .map((c) => {
+                const isAssigned = assignedClientIds.has(c.client!.id);
+                return (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-3 rounded-lg border px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                  >
+                    <Checkbox
+                      checked={isAssigned}
+                      disabled={assignSaving}
+                      onCheckedChange={() =>
+                        assignResource && toggleAssignment(assignResource.id, c.client!.id, isAssigned)
+                      }
+                    />
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium">
+                        {c.firstName} {c.lastName}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                    </div>
+                  </label>
+                );
+              })}
+            {clients.filter((c) => c.client).length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                Aucune cliente enregistrée.
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* File viewer */}
+      {viewerFile && (
+        <FileViewer
+          open
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.name}
+        />
+      )}
     </div>
   );
 }

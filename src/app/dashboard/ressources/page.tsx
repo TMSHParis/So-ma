@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Lightbulb, FileText, Heart, Loader2, ExternalLink } from "lucide-react";
+import { Lightbulb, FileText, Heart, Loader2, Eye } from "lucide-react";
+import { FileViewer } from "@/components/file-viewer";
 
 type Resource = {
   id: string;
@@ -12,6 +12,7 @@ type Resource = {
   category: string;
   content: string | null;
   fileUrl: string | null;
+  fileName: string | null;
   createdAt: string;
 };
 
@@ -24,6 +25,7 @@ const categoryConfig: Record<string, { label: string; icon: typeof Lightbulb }> 
 export default function RessourcesPage() {
   const [resources, setResources] = useState<Resource[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewerFile, setViewerFile] = useState<{ url: string; name: string } | null>(null);
 
   useEffect(() => {
     fetch("/api/client/resources")
@@ -109,15 +111,18 @@ export default function RessourcesPage() {
                           </p>
                         )}
                         {resource.fileUrl && (
-                          <a
-                            href={resource.fileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-sm text-primary hover:underline mt-2"
+                          <button
+                            onClick={() =>
+                              setViewerFile({
+                                url: resource.fileUrl!,
+                                name: resource.fileName || resource.title,
+                              })
+                            }
+                            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline mt-2"
                           >
-                            <ExternalLink className="h-3.5 w-3.5" />
+                            <Eye className="h-3.5 w-3.5" />
                             Ouvrir le document
-                          </a>
+                          </button>
                         )}
                       </CardContent>
                     </Card>
@@ -126,6 +131,15 @@ export default function RessourcesPage() {
             </TabsContent>
           ))}
         </Tabs>
+      )}
+
+      {viewerFile && (
+        <FileViewer
+          open
+          onClose={() => setViewerFile(null)}
+          fileUrl={viewerFile.url}
+          fileName={viewerFile.name}
+        />
       )}
     </div>
   );

@@ -132,6 +132,7 @@ model Client {
   bilanResponses    BilanResponse[]
   weightEntries     WeightEntry[]
   measurementEntries MeasurementEntry[]
+  resourceAssignments ResourceAssignment[]
 
   @@map("clients")
 }
@@ -299,9 +300,23 @@ model Resource {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  author    User     @relation(fields: [createdBy], references: [id])
+  author      User                 @relation(fields: [createdBy], references: [id])
+  assignments ResourceAssignment[]
 
   @@map("resources")
+}
+
+model ResourceAssignment {
+  id         String   @id @default(cuid())
+  resourceId String   @map("resource_id")
+  clientId   String   @map("client_id")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  resource   Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  client     Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([resourceId, clientId])
+  @@map("resource_assignments")
 }
 
 model Payment {
