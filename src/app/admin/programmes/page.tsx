@@ -96,8 +96,8 @@ export default function ProgrammesPage() {
   }
 
   async function handleFileProcess(file: File) {
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 10 Mo)");
+    if (file.size > 25 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 25 Mo)");
       return;
     }
     setUploading(true);
@@ -438,7 +438,7 @@ export default function ProgrammesPage() {
                   <p className="text-sm text-muted-foreground">
                     {uploading ? "Upload en cours..." : dragActive ? "Déposez le fichier ici" : "Glissez-déposez un fichier ou cliquez"}
                   </p>
-                  <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 10 Mo</p>
+                  <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 25 Mo</p>
                 </div>
               )}
               <input

@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Aucun fichier fourni" }, { status: 400 });
   }
 
-  // Limit 10MB
-  if (file.size > 10 * 1024 * 1024) {
-    return NextResponse.json({ message: "Fichier trop volumineux (max 10 Mo)" }, { status: 400 });
+  // Limit 25MB
+  if (file.size > 25 * 1024 * 1024) {
+    return NextResponse.json({ message: "Fichier trop volumineux (max 25 Mo)" }, { status: 400 });
   }
 
   const blob = await put(`soma/${Date.now()}-${file.name}`, file, {

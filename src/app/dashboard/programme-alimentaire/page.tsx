@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Utensils, Loader2 } from "lucide-react";
+import { Utensils, Loader2, FileText, Download } from "lucide-react";
 
 type MealPlan = {
   id: string;
   title: string;
   description: string | null;
   content: { text?: string } | string;
+  fileUrl: string | null;
+  fileName: string | null;
   createdAt: string;
 };
 
@@ -87,10 +89,26 @@ export default function ProgrammeAlimentairePage() {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent>
-                  <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed bg-muted/30 rounded-lg p-4">
-                    {text}
-                  </div>
+                <CardContent className="space-y-3">
+                  {plan.fileUrl && (
+                    <a
+                      href={plan.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors"
+                    >
+                      <FileText className="h-5 w-5 text-primary shrink-0" />
+                      <span className="text-sm font-medium flex-1 truncate">
+                        {plan.fileName || "Programme joint"}
+                      </span>
+                      <Download className="h-4 w-4 text-primary shrink-0" />
+                    </a>
+                  )}
+                  {text && (
+                    <div className="whitespace-pre-wrap text-sm text-foreground leading-relaxed bg-muted/30 rounded-lg p-4">
+                      {text}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
