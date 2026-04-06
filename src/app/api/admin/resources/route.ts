@@ -54,6 +54,27 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(resource);
 }
 
+export async function PATCH(request: NextRequest) {
+  const user = await requireAdmin();
+  if (!user) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
+
+  const { id, title, category, content, fileUrl, fileName } = await request.json();
+  if (!id) return NextResponse.json({ message: "id requis" }, { status: 400 });
+
+  const resource = await prisma.resource.update({
+    where: { id },
+    data: {
+      ...(title !== undefined && { title }),
+      ...(category !== undefined && { category }),
+      ...(content !== undefined && { content: content || null }),
+      ...(fileUrl !== undefined && { fileUrl: fileUrl || null }),
+      ...(fileName !== undefined && { fileName: fileName || null }),
+    },
+  });
+
+  return NextResponse.json(resource);
+}
+
 export async function DELETE(request: NextRequest) {
   const user = await requireAdmin();
   if (!user) return NextResponse.json({ message: "Non autorisé" }, { status: 401 });

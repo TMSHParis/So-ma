@@ -31,6 +31,7 @@ import {
   X,
   Users,
   Eye,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FileViewer } from "@/components/file-viewer";
@@ -69,8 +70,17 @@ export default function AdminRessourcesPage() {
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Detail dialog (view resource)
+  // Detail / edit dialog
   const [viewResource, setViewResource] = useState<Resource | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editTitle, setEditTitle] = useState("");
+  const [editCategory, setEditCategory] = useState("");
+  const [editContent, setEditContent] = useState("");
+  const [editFileUrl, setEditFileUrl] = useState("");
+  const [editFileName, setEditFileName] = useState("");
+  const [editUploading, setEditUploading] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const editFileInputRef = useRef<HTMLInputElement>(null);
   const [viewerFile, setViewerFile] = useState<{
     url: string;
     name: string;
@@ -157,6 +167,81 @@ export default function AdminRessourcesPage() {
       toast.error("Erreur");
     } finally {
       setSavingAssign(false);
+    }
+  }
+
+  // --- Edit logic ---
+  function startEdit(r: Resource) {
+    setEditTitle(r.title);
+    setEditCategory(r.category);
+    setEditContent(r.content || "");
+    setEditFileUrl(r.fileUrl || "");
+    setEditFileName(r.fileName || "");
+    setEditing(true);
+  }
+
+  async function handleEditFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 10 Mo)");
+      return;
+    }
+    setEditUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/admin/upload", {
+        method: "POST",
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setEditFileUrl(data.url);
+        setEditFileName(data.fileName);
+        toast.success(`${data.fileName} uploadé`);
+      } else {
+        const err = await res.json();
+        toast.error(err.message || "Erreur upload");
+      }
+    } catch {
+      toast.error("Erreur upload");
+    } finally {
+      setEditUploading(false);
+    }
+  }
+
+  async function handleSaveEdit() {
+    if (!viewResource || !editTitle || !editCategory) return;
+    setEditSaving(true);
+    try {
+      const res = await fetch("/api/admin/resources", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: viewResource.id,
+          title: editTitle,
+          category: editCategory,
+          content: editContent || null,
+          fileUrl: editFileUrl || null,
+          fileName: editFileName || null,
+        }),
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setResources((prev) =>
+          prev.map((r) => (r.id === updated.id ? { ...r, ...updated } : r))
+        );
+        setViewResource({ ...viewResource, ...updated });
+        setEditing(false);
+        toast.success("Ressource mise à jour");
+      } else {
+        toast.error("Erreur lors de la sauvegarde");
+      }
+    } catch {
+      toast.error("Erreur");
+    } finally {
+      setEditSaving(false);
     }
   }
 
@@ -351,18 +436,21 @@ export default function AdminRessourcesPage() {
         </div>
       )}
 
-      {/* View resource detail dialog */}
+      {/* View / Edit resource dialog */}
       <Dialog
         open={!!viewResource}
         onOpenChange={(open) => {
-          if (!open) setViewResource(null);
+          if (!open) {
+            setViewResource(null);
+            setEditing(false);
+          }
         }}
       >
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              {viewResource?.title}
-              {viewResource && (
+              {editing ? "Modifier la ressource" : viewResource?.title}
+              {!editing && viewResource && (
                 <Badge variant="secondary" className="text-xs">
                   {viewResource.category}
                 </Badge>
@@ -370,7 +458,7 @@ export default function AdminRessourcesPage() {
             </DialogTitle>
           </DialogHeader>
 
-          {viewResource && (
+          {viewResource && !editing && (
             <div className="space-y-4">
               {/* Text content */}
               {viewResource.content && (
@@ -383,38 +471,49 @@ export default function AdminRessourcesPage() {
 
               {/* File */}
               {viewResource.fileUrl && (
-                <div className="space-y-3">
-                  <button
-                    onClick={() =>
-                      setViewerFile({
-                        url: viewResource.fileUrl!,
-                        name:
-                          viewResource.fileName || viewResource.title,
-                      })
-                    }
-                    className="w-full flex items-center gap-3 rounded-lg border border-warm-primary/30 bg-warm-primary/5 px-4 py-3 hover:bg-warm-primary/10 transition-colors text-left"
-                  >
-                    <Eye className="h-5 w-5 text-warm-primary shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {viewResource.fileName || "Document joint"}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Cliquer pour ouvrir le document
-                      </p>
-                    </div>
-                  </button>
-                </div>
+                <button
+                  onClick={() =>
+                    setViewerFile({
+                      url: viewResource.fileUrl!,
+                      name: viewResource.fileName || viewResource.title,
+                    })
+                  }
+                  className="w-full flex items-center gap-3 rounded-lg border border-warm-primary/30 bg-warm-primary/5 px-4 py-3 hover:bg-warm-primary/10 transition-colors text-left"
+                >
+                  <Eye className="h-5 w-5 text-warm-primary shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">
+                      {viewResource.fileName || "Document joint"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Cliquer pour ouvrir le document
+                    </p>
+                  </div>
+                </button>
               )}
 
               {!viewResource.content && !viewResource.fileUrl && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Cette ressource n&apos;a pas de contenu.
-                </p>
+                <div className="rounded-lg border-2 border-dashed border-muted-foreground/20 p-6 text-center">
+                  <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">
+                    Aucun contenu ni fichier.
+                  </p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">
+                    Cliquez sur &quot;Modifier&quot; pour ajouter du contenu ou un fichier.
+                  </p>
+                </div>
               )}
 
               {/* Actions */}
               <div className="flex gap-2 pt-2 border-t">
+                <Button
+                  variant="default"
+                  className="flex-1"
+                  onClick={() => startEdit(viewResource)}
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Modifier
+                </Button>
                 <Button
                   variant="outline"
                   className="flex-1"
@@ -424,7 +523,127 @@ export default function AdminRessourcesPage() {
                   }}
                 >
                   <Users className="h-4 w-4 mr-2" />
-                  Assigner aux clientes
+                  Assigner
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {viewResource && editing && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Titre</Label>
+                <Input
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Catégorie</Label>
+                <Select
+                  value={editCategory}
+                  onValueChange={(v) => v !== null && setEditCategory(v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nutrition">Nutrition</SelectItem>
+                    <SelectItem value="sport">Sport</SelectItem>
+                    <SelectItem value="bienetre">Bien-être</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* File upload / replace */}
+              <div className="space-y-2">
+                <Label>Fichier</Label>
+                {editFileName ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-warm-primary/30 bg-warm-primary/5 px-3 py-2.5">
+                    <FileText className="h-5 w-5 text-warm-primary shrink-0" />
+                    <span className="text-sm font-medium truncate flex-1">
+                      {editFileName}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs shrink-0"
+                      onClick={() => editFileInputRef.current?.click()}
+                    >
+                      Remplacer
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 shrink-0"
+                      onClick={() => {
+                        setEditFileUrl("");
+                        setEditFileName("");
+                      }}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div
+                    className="flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-warm-primary/40 transition-colors py-6 px-4 cursor-pointer"
+                    onClick={() => editFileInputRef.current?.click()}
+                  >
+                    {editUploading ? (
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    ) : (
+                      <Upload className="h-6 w-6 text-muted-foreground" />
+                    )}
+                    <p className="text-sm text-muted-foreground">
+                      {editUploading
+                        ? "Upload en cours..."
+                        : "Cliquez pour uploader un fichier"}
+                    </p>
+                    <p className="text-xs text-muted-foreground/60">
+                      PDF, image, doc — max 10 Mo
+                    </p>
+                  </div>
+                )}
+                <input
+                  ref={editFileInputRef}
+                  type="file"
+                  className="hidden"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.gif,.webp"
+                  onChange={handleEditFileUpload}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Contenu texte (optionnel)</Label>
+                <Textarea
+                  value={editContent}
+                  onChange={(e) => setEditContent(e.target.value)}
+                  className="min-h-[120px]"
+                  placeholder="Rédigez le contenu de la ressource..."
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => setEditing(false)}
+                >
+                  Annuler
+                </Button>
+                <Button
+                  onClick={handleSaveEdit}
+                  disabled={editSaving || editUploading || !editTitle || !editCategory}
+                  className="flex-1 bg-primary hover:bg-primary/90 text-white"
+                >
+                  {editSaving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Sauvegarde...
+                    </>
+                  ) : (
+                    "Enregistrer"
+                  )}
                 </Button>
               </div>
             </div>
