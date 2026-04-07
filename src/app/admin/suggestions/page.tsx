@@ -4,7 +4,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Check, Loader2, MessageSquare } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Trash2, Check, Loader2, MessageSquare, Eye } from "lucide-react";
 import { toast } from "sonner";
 
 type Suggestion = {
@@ -19,6 +25,7 @@ type Suggestion = {
 export default function SuggestionsPage() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selected, setSelected] = useState<Suggestion | null>(null);
 
   const fetchSuggestions = useCallback(async () => {
     try {
@@ -38,6 +45,21 @@ export default function SuggestionsPage() {
     fetchSuggestions();
   }, [fetchSuggestions]);
 
+  async function markDone(id: string) {
+    try {
+      const res = await fetch(`/api/admin/suggestions?id=${id}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        setSuggestions((prev) => prev.filter((s) => s.id !== id));
+        setSelected(null);
+        toast.success("Pris en compte !");
+      }
+    } catch {
+      toast.error("Erreur");
+    }
+  }
+
   async function deleteSuggestion(id: string) {
     try {
       const res = await fetch(`/api/admin/suggestions?id=${id}`, {
@@ -45,6 +67,7 @@ export default function SuggestionsPage() {
       });
       if (res.ok) {
         setSuggestions((prev) => prev.filter((s) => s.id !== id));
+        setSelected(null);
         toast.success("Suggestion supprimée");
       }
     } catch {
@@ -62,13 +85,18 @@ export default function SuggestionsPage() {
 
   return (
     <div>
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-          Suggestions d&apos;aliments
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Suggestions envoyées par les clientes depuis le suivi alimentaire.
-        </p>
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
+            Suggestions d&apos;aliments
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Suggestions envoyées par les clientes depuis le suivi alimentaire.
+          </p>
+        </div>
+        <Badge variant="secondary" className="text-sm">
+          {suggestions.length} suggestion{suggestions.length !== 1 ? "s" : ""}
+        </Badge>
       </div>
 
       {suggestions.length === 0 ? (
@@ -83,7 +111,11 @@ export default function SuggestionsPage() {
       ) : (
         <div className="space-y-3">
           {suggestions.map((s) => (
-            <Card key={s.id} className="border-warm-border">
+            <Card
+              key={s.id}
+              className="border-warm-border cursor-pointer hover:shadow-md transition-shadow"
+              onClick={() => setSelected(s)}
+            >
               <CardContent className="pt-4 pb-4">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
@@ -105,35 +137,78 @@ export default function SuggestionsPage() {
                       </span>
                     </div>
                   </div>
-                  <div className="flex gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
-                      onClick={() => {
-                        deleteSuggestion(s.id);
-                        toast.success("Pris en compte !");
-                      }}
-                      title="Pris en compte"
-                    >
-                      <Check className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteSuggestion(s.id)}
-                      title="Supprimer"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelected(s);
+                    }}
+                    title="Voir le détail"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
       )}
+
+      {/* Detail dialog */}
+      <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Suggestion d&apos;aliment</DialogTitle>
+          </DialogHeader>
+          {selected && (
+            <div className="space-y-4">
+              <div className="p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-foreground whitespace-pre-wrap">
+                  {selected.text}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <p className="text-sm font-medium">
+                  {selected.client.user.firstName} {selected.client.user.lastName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {selected.client.user.email}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {new Date(selected.createdAt).toLocaleDateString("fr-FR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => markDone(selected.id)}
+                >
+                  <Check className="h-4 w-4 mr-2" />
+                  Pris en compte
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  onClick={() => deleteSuggestion(selected.id)}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Supprimer
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

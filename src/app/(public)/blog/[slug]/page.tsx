@@ -106,14 +106,25 @@ export default async function ArticlePage({ params }: Props) {
   const nextArticle = allArticles[currentIndex + 1] ?? null;
 
   const allBlocks = renderMarkdown(article.content);
-  // Skip first paragraph if it duplicates the excerpt
-  const normalize = (s: string) => s.toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, "").trim();
-  const excerptNorm = normalize(article.excerpt);
-  const blocks = allBlocks.filter((block, i) => {
-    if (i > 1 || block.type !== "paragraph") return true;
-    const blockNorm = normalize(block.content);
-    // Skip if block starts with same words as excerpt
-    return !excerptNorm.startsWith(blockNorm.slice(0, 40)) && !blockNorm.startsWith(excerptNorm.slice(0, 40));
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-zà-ÿ0-9]/g, "").trim();
+  const titleNorm = norm(article.title);
+  const excerptNorm = norm(article.excerpt);
+  const signaturePattern = /so-?ma\.?fr.*elie.*conseill/i;
+
+  const blocks = allBlocks.filter((block) => {
+    const text = block.type === "list" ? "" : (block.content || "");
+    const textNorm = norm(text);
+    // Skip if matches the title
+    if (textNorm === titleNorm) return false;
+    // Skip if matches or closely resembles the excerpt
+    if (textNorm.length > 20 && excerptNorm.length > 20) {
+      if (textNorm.startsWith(excerptNorm.slice(0, 30)) || excerptNorm.startsWith(textNorm.slice(0, 30))) return false;
+    }
+    // Skip signature (already in template)
+    if (signaturePattern.test(text)) return false;
+    // Skip metadata lines
+    if (/^(BLOG|Par\s|sur\s\d|admin\d)/i.test(text.trim())) return false;
+    return true;
   });
 
   return (

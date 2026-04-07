@@ -335,8 +335,8 @@ export default function CyclePage() {
               <div className="space-y-2">
                 <Label>Dans quelle phase de ton cycle es-tu ?</Label>
                 <Select
-                  value={phase}
-                  onValueChange={(v) => v !== null && setPhase(v)}
+                  value={phase || undefined}
+                  onValueChange={(v) => { if (v) setPhase(v); }}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionne ta phase" />
@@ -355,8 +355,8 @@ export default function CyclePage() {
                 <div className="space-y-2">
                   <Label>Intensité du flux</Label>
                   <Select
-                    value={flowIntensity}
-                    onValueChange={(v) => v !== null && setFlowIntensity(v)}
+                    value={flowIntensity || undefined}
+                    onValueChange={(v) => { if (v) setFlowIntensity(v); }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionne" />
