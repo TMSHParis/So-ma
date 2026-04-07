@@ -84,9 +84,16 @@ export default function ConnexionPage() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-muted-foreground mt-8">
+        <p className="text-center text-xs text-muted-foreground mt-6">
+          Pas encore de compte ?{" "}
+          <Link href="/inscription" className="text-primary hover:text-primary/80 transition-colors">
+            Cr&eacute;er un compte
+          </Link>
+        </p>
+
+        <p className="text-center text-xs text-muted-foreground mt-3">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Retour à l&apos;accueil
+            Retour &agrave; l&apos;accueil
           </Link>
         </p>
       </div>

@@ -21,8 +21,8 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL("/connexion", request.url));
   }
 
-  // Redirect logged-in users away from login page
-  if (pathname === "/connexion" && isLoggedIn) {
+  // Redirect logged-in users away from login/register pages
+  if ((pathname === "/connexion" || pathname === "/inscription") && isLoggedIn) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
@@ -30,5 +30,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/connexion"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/connexion", "/inscription"],
 };
