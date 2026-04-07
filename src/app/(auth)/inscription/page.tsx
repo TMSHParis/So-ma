@@ -2,11 +2,22 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Suspense } from "react";
 
-export default function InscriptionPage() {
+function InscriptionForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const bilanToken = searchParams.get("bilan");
+  const prefillEmail = searchParams.get("email") || "";
+  const prefillName = searchParams.get("name") || "";
+
+  // Split prefilled name into first/last
+  const nameParts = prefillName.split(" ");
+  const prefillFirstName = nameParts[0] || "";
+  const prefillLastName = nameParts.slice(1).join(" ") || "";
+
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -61,7 +72,12 @@ export default function InscriptionPage() {
         return;
       }
 
-      router.push("/dashboard");
+      // If bilan token present, redirect to bilan form
+      if (bilanToken) {
+        router.push(`/bilan/${bilanToken}`);
+      } else {
+        router.push("/dashboard");
+      }
       router.refresh();
     } catch {
       setError("Erreur de connexion au serveur");
@@ -80,7 +96,9 @@ export default function InscriptionPage() {
             Cr&eacute;er mon compte
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Acc&egrave;de &agrave; ton espace personnalis&eacute;
+            {bilanToken
+              ? "Cr\u00e9e ton compte pour acc\u00e9der \u00e0 ton bilan et \u00e0 ton espace"
+              : "Acc\u00e8de \u00e0 ton espace personnalis\u00e9"}
           </p>
         </div>
 
@@ -89,7 +107,8 @@ export default function InscriptionPage() {
             <input
               name="firstName"
               type="text"
-              placeholder="Prénom"
+              placeholder="Pr&eacute;nom"
+              defaultValue={prefillFirstName}
               required
               className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
             />
@@ -97,6 +116,7 @@ export default function InscriptionPage() {
               name="lastName"
               type="text"
               placeholder="Nom"
+              defaultValue={prefillLastName}
               required
               className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
             />
@@ -105,13 +125,14 @@ export default function InscriptionPage() {
             name="email"
             type="email"
             placeholder="Email"
+            defaultValue={prefillEmail}
             required
             className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
           />
           <input
             name="password"
             type="password"
-            placeholder="Mot de passe (min. 8 caractères)"
+            placeholder="Mot de passe (min. 8 caract&egrave;res)"
             required
             minLength={8}
             className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
@@ -133,13 +154,20 @@ export default function InscriptionPage() {
             disabled={loading}
             className="w-full h-12 bg-primary text-white text-[15px] font-normal rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {loading ? "Création en cours..." : "Créer mon compte"}
+            {loading
+              ? "Cr\u00e9ation en cours..."
+              : bilanToken
+                ? "Cr\u00e9er mon compte et remplir le bilan"
+                : "Cr\u00e9er mon compte"}
           </button>
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
           D&eacute;j&agrave; un compte ?{" "}
-          <Link href="/connexion" className="text-primary hover:text-primary/80 transition-colors">
+          <Link
+            href={bilanToken ? `/connexion?redirect=/bilan/${bilanToken}` : "/connexion"}
+            className="text-primary hover:text-primary/80 transition-colors"
+          >
             Se connecter
           </Link>
         </p>
@@ -151,5 +179,17 @@ export default function InscriptionPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function InscriptionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FBFAF8]">
+        <div className="animate-pulse text-muted-foreground">Chargement...</div>
+      </div>
+    }>
+      <InscriptionForm />
+    </Suspense>
   );
 }

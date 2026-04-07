@@ -56,7 +56,11 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.redirect(`${baseUrl}/bilan/${bilanToken.token}`, 303);
+    // Redirect to registration with bilan token (and pre-fill email/name)
+    const params = new URLSearchParams({ bilan: bilanToken.token });
+    if (email) params.set("email", email);
+    if (name) params.set("name", name);
+    return NextResponse.redirect(`${baseUrl}/inscription?${params.toString()}`, 303);
   } catch (err) {
     console.error("Post-payment redirect error:", err);
     return NextResponse.redirect(`${baseUrl}/suivi-nutritionnel?error=1`, 303);

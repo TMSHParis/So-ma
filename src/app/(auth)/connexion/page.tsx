@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function ConnexionPage() {
+function ConnexionForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -30,7 +32,7 @@ export default function ConnexionPage() {
     if (result?.error) {
       if (result.code === "service_unavailable") {
         setError(
-          "Le serveur n'arrive pas à joindre la base de données. Vérifiez que PostgreSQL tourne, que DATABASE_URL dans .env est correct, puis relancez « npm run dev ». Ensuite exécutez « npm run db:seed » si vous n'avez pas encore créé le compte test."
+          "Le serveur n'arrive pas à joindre la base de données."
         );
       } else {
         setError("Email ou mot de passe incorrect");
@@ -38,7 +40,7 @@ export default function ConnexionPage() {
       return;
     }
 
-    router.push("/dashboard");
+    router.push(redirect || "/dashboard");
     router.refresh();
   }
 
@@ -98,5 +100,17 @@ export default function ConnexionPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function ConnexionPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-[#FBFAF8]">
+        <div className="animate-pulse text-muted-foreground">Chargement...</div>
+      </div>
+    }>
+      <ConnexionForm />
+    </Suspense>
   );
 }

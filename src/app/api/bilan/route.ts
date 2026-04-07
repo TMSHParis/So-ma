@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { sendAdminBilanNotification } from "@/lib/email";
+import { auth } from "@/lib/auth";
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,11 +40,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Link to client if logged in
+    let clientId: string | null = null;
+    try {
+      const session = await auth();
+      if (session?.user) {
+        const client = await prisma.client.findUnique({
+          where: { userId: (session.user as { id: string }).id },
+        });
+        if (client) clientId = client.id;
+      }
+    } catch {}
+
     // Save response and mark token as used
     await prisma.$transaction([
       prisma.bilanResponse.create({
         data: {
           tokenId: bilanToken.id,
+          clientId,
           data,
         },
       }),
