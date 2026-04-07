@@ -6,6 +6,7 @@ import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -95,6 +96,8 @@ export default function NutritionPage() {
   const [selectedMealType, setSelectedMealType] = useState("PETIT_DEJEUNER");
   const [quantity, setQuantity] = useState("100");
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [suggestion, setSuggestion] = useState("");
+  const [sendingSuggestion, setSendingSuggestion] = useState(false);
 
   // Debounce ref
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -254,6 +257,28 @@ export default function NutritionPage() {
       }));
     } catch {
       toast.error("Suppression impossible");
+    }
+  }
+
+  async function sendSuggestion() {
+    if (!suggestion.trim()) return;
+    setSendingSuggestion(true);
+    try {
+      const res = await fetch("/api/client/food-suggestions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: suggestion.trim() }),
+      });
+      if (res.ok) {
+        toast.success("Suggestion envoyée, merci !");
+        setSuggestion("");
+      } else {
+        toast.error("Erreur lors de l'envoi");
+      }
+    } catch {
+      toast.error("Erreur de connexion");
+    } finally {
+      setSendingSuggestion(false);
     }
   }
 
@@ -477,6 +502,31 @@ export default function NutritionPage() {
           </Card>
         ))}
       </div>
+
+      {/* Suggestions d'aliments */}
+      <Card className="border-warm-border mt-8">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Suggérer un aliment</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">
+            Un aliment que vous mangez souvent n&apos;est pas dans la liste ? Dites-le nous et on l&apos;ajoutera.
+          </p>
+          <Textarea
+            value={suggestion}
+            onChange={(e) => setSuggestion(e.target.value)}
+            placeholder="Ex : couscous marocain, talbina, mssemen..."
+            className="border-warm-border mb-3"
+          />
+          <Button
+            onClick={sendSuggestion}
+            disabled={sendingSuggestion || !suggestion.trim()}
+            variant="outline"
+          >
+            {sendingSuggestion ? "Envoi..." : "Envoyer la suggestion"}
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

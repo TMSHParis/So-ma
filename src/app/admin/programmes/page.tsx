@@ -23,6 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { upload } from "@vercel/blob/client";
 
 type ClientOption = {
   id: string;
@@ -96,24 +97,20 @@ export default function ProgrammesPage() {
   }
 
   async function handleFileProcess(file: File) {
-    if (file.size > 25 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 25 Mo)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 50 Mo)");
       return;
     }
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      if (res.ok) {
-        const data = await res.json();
-        setUploadedFileUrl(data.url);
-        setUploadedFileName(data.fileName);
-        toast.success(`${data.fileName} uploadé`);
-      } else {
-        const err = await res.json();
-        toast.error(err.message || "Erreur upload");
-      }
+      const blob = await upload(`soma/${Date.now()}-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+        multipart: true,
+      });
+      setUploadedFileUrl(blob.url);
+      setUploadedFileName(file.name);
+      toast.success(`${file.name} uploadé`);
     } catch {
       toast.error("Erreur upload");
     } finally {
@@ -438,7 +435,7 @@ export default function ProgrammesPage() {
                   <p className="text-sm text-muted-foreground">
                     {uploading ? "Upload en cours..." : dragActive ? "Déposez le fichier ici" : "Glissez-déposez un fichier ou cliquez"}
                   </p>
-                  <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 25 Mo</p>
+                  <p className="text-xs text-muted-foreground/60">PDF, image, doc — max 50 Mo</p>
                 </div>
               )}
               <input

@@ -3,21 +3,18 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { articles, getArticleBySlug } from "@/lib/articles";
-import type { ArticleBlock } from "@/lib/articles";
+import { prisma } from "@/lib/db";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
 type Props = {
   params: Promise<{ slug: string }>;
 };
 
-export async function generateStaticParams() {
-  return articles.map((article) => ({ slug: article.slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await prisma.article.findUnique({ where: { slug } });
   if (!article) return {};
   return {
     title: `${article.title} | So-ma`,
@@ -25,96 +22,90 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-function BlockRenderer({ block }: { block: ArticleBlock }) {
-  switch (block.type) {
-    case "heading":
-      return (
-        <h2 className="text-[22px] md:text-[26px] font-semibold leading-[1.2] tracking-tight text-foreground mt-12 mb-4">
-          {block.text}
-        </h2>
-      );
-    case "subheading":
-      return (
-        <h3 className="text-[18px] md:text-[20px] font-semibold leading-[1.25] tracking-tight text-foreground mt-8 mb-3">
-          {block.text}
-        </h3>
-      );
-    case "paragraph":
-      return (
-        <p className="text-[16px] leading-[1.75] text-muted-foreground mb-4">
-          {block.text}
-        </p>
-      );
-    case "bold-paragraph":
-      return (
-        <p className="text-[16px] leading-[1.75] text-foreground font-medium mb-4">
-          {block.text}
-        </p>
-      );
-    case "italic-paragraph":
-      return (
-        <p className="text-[16px] leading-[1.75] text-muted-foreground italic mb-4">
-          {block.text}
-        </p>
-      );
-    case "quote":
-      return (
-        <blockquote className="border-l-[3px] border-primary/30 pl-5 py-1 my-6">
-          <p className="text-[17px] leading-[1.6] text-foreground/80 italic">
-            {block.text}
-          </p>
-        </blockquote>
-      );
-    case "list":
-      return (
-        <ul className="space-y-2.5 my-5 ml-1">
-          {block.items.map((item, i) => (
-            <li key={i} className="flex gap-3 text-[15px] leading-[1.7] text-muted-foreground">
-              <span className="shrink-0 mt-[9px] w-1.5 h-1.5 rounded-full bg-primary/40" />
-              <span>{item}</span>
-            </li>
-          ))}
-        </ul>
-      );
-    case "callout":
-      return (
-        <div className="bg-[#f5f5f7] rounded-2xl px-6 py-5 my-6">
-          <p className="text-[14px] leading-[1.7] text-muted-foreground">
-            {block.text}
-          </p>
-        </div>
-      );
-    case "separator":
-      return <hr className="border-black/[0.06] my-10" />;
-    case "sources":
-      return (
-        <div className="mt-12 pt-8 border-t border-black/[0.06]">
-          <p className="text-xs font-semibold text-foreground uppercase tracking-wide mb-3">
-            Sources
-          </p>
-          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            {block.items.map((source, i) => (
-              <span key={i} className="text-[12px] text-muted-foreground/70">
-                {source}
-              </span>
-            ))}
-          </div>
-        </div>
-      );
-    default:
-      return null;
+function renderMarkdown(content: string) {
+  const lines = content.split("\n");
+  const elements: { type: string; content: string; items?: string[] }[] = [];
+  let currentList: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // Flush list if we hit a non-list line
+    if (currentList.length > 0 && !line.startsWith("- ") && !line.startsWith("* ")) {
+      elements.push({ type: "list", content: "", items: [...currentList] });
+      currentList = [];
+    }
+
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    if (trimmed.startsWith("## ")) {
+      elements.push({ type: "heading", content: trimmed.slice(3) });
+    } else if (trimmed.startsWith("### ")) {
+      elements.push({ type: "subheading", content: trimmed.slice(4) });
+    } else if (trimmed.startsWith("> ")) {
+      elements.push({ type: "quote", content: trimmed.slice(2) });
+    } else if (trimmed.startsWith("- ") || trimmed.startsWith("* ")) {
+      currentList.push(trimmed.slice(2));
+    } else if (trimmed.startsWith("---")) {
+      elements.push({ type: "separator", content: "" });
+    } else if (trimmed.startsWith("**") && trimmed.endsWith("**")) {
+      elements.push({ type: "bold", content: trimmed.slice(2, -2) });
+    } else if (trimmed.startsWith("*") && trimmed.endsWith("*") && !trimmed.startsWith("**")) {
+      elements.push({ type: "italic", content: trimmed.slice(1, -1) });
+    } else {
+      elements.push({ type: "paragraph", content: trimmed });
+    }
   }
+
+  if (currentList.length > 0) {
+    elements.push({ type: "list", content: "", items: [...currentList] });
+  }
+
+  return elements;
+}
+
+function InlineFormatted({ text }: { text: string }) {
+  // Handle **bold** and *italic* inline
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g);
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (part.startsWith("**") && part.endsWith("**")) {
+          return (
+            <strong key={i} className="font-medium text-foreground">
+              {part.slice(2, -2)}
+            </strong>
+          );
+        }
+        if (part.startsWith("*") && part.endsWith("*")) {
+          return <em key={i}>{part.slice(1, -1)}</em>;
+        }
+        return <span key={i}>{part}</span>;
+      })}
+    </>
+  );
 }
 
 export default async function ArticlePage({ params }: Props) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await prisma.article.findUnique({
+    where: { slug },
+  });
 
-  if (!article) notFound();
+  if (!article || !article.published) notFound();
 
-  const currentIndex = articles.findIndex((a) => a.slug === slug);
-  const nextArticle = articles[currentIndex + 1] ?? null;
-  const prevArticle = articles[currentIndex - 1] ?? null;
+  // Get prev/next
+  const allArticles = await prisma.article.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" },
+    select: { slug: true, title: true },
+  });
+  const currentIndex = allArticles.findIndex((a) => a.slug === slug);
+  const prevArticle = allArticles[currentIndex - 1] ?? null;
+  const nextArticle = allArticles[currentIndex + 1] ?? null;
+
+  const blocks = renderMarkdown(article.content);
 
   return (
     <>
@@ -122,21 +113,23 @@ export default async function ArticlePage({ params }: Props) {
 
       <main className="flex-1">
         {/* Article image */}
-        <section className="bg-[#FBFAF8]">
-          <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-16 md:pt-24">
-            <div className="relative w-full h-[280px] md:h-[420px] rounded-[24px] overflow-hidden bg-[#f5f5f7]">
-              <img
-                src={article.imageUrl}
-                alt={article.title}
-                className="w-full h-full object-cover"
-              />
+        {article.imageUrl && (
+          <section className="bg-[#FBFAF8]">
+            <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-16 md:pt-24">
+              <div className="relative w-full h-[280px] md:h-[420px] rounded-[24px] overflow-hidden bg-[#f5f5f7]">
+                <img
+                  src={article.imageUrl}
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
         {/* Article header */}
         <section className="bg-[#FBFAF8]">
-          <div className="max-w-[680px] mx-auto px-4 lg:px-0 pt-10 pb-10 md:pt-14 md:pb-14">
+          <div className={`max-w-[680px] mx-auto px-4 lg:px-0 ${article.imageUrl ? "pt-10" : "pt-16 md:pt-24"} pb-10 md:pb-14`}>
             <Link
               href="/blog"
               className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8"
@@ -158,36 +151,91 @@ export default async function ArticlePage({ params }: Props) {
             <p className="text-[17px] text-muted-foreground leading-[1.5] mt-4">
               {article.excerpt}
             </p>
-            <div className="flex items-center gap-3 mt-8 pt-6 border-t border-black/[0.06]">
-              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                <span className="text-sm font-semibold text-primary">E</span>
-              </div>
-              <div>
-                <p className="text-[13px] font-medium text-foreground">Elie</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Conseill&egrave;re en nutrition & bien-&ecirc;tre
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
         {/* Article content */}
         <section className="bg-white">
           <article className="max-w-[680px] mx-auto px-4 lg:px-0 py-12 md:py-16">
-            {article.content.map((block, i) => (
-              <BlockRenderer key={i} block={block} />
-            ))}
+            {blocks.map((block, i) => {
+              switch (block.type) {
+                case "heading":
+                  return (
+                    <h2
+                      key={i}
+                      className="text-[22px] md:text-[26px] font-semibold leading-[1.2] tracking-tight text-foreground mt-12 mb-4"
+                    >
+                      {block.content}
+                    </h2>
+                  );
+                case "subheading":
+                  return (
+                    <h3
+                      key={i}
+                      className="text-[18px] md:text-[20px] font-semibold leading-[1.25] tracking-tight text-foreground mt-8 mb-3"
+                    >
+                      {block.content}
+                    </h3>
+                  );
+                case "quote":
+                  return (
+                    <blockquote
+                      key={i}
+                      className="border-l-[3px] border-primary/30 pl-5 py-1 my-6"
+                    >
+                      <p className="text-[17px] leading-[1.6] text-foreground/80 italic">
+                        <InlineFormatted text={block.content} />
+                      </p>
+                    </blockquote>
+                  );
+                case "list":
+                  return (
+                    <ul key={i} className="space-y-2.5 my-5 ml-1">
+                      {block.items?.map((item, j) => (
+                        <li
+                          key={j}
+                          className="flex gap-3 text-[15px] leading-[1.7] text-muted-foreground"
+                        >
+                          <span className="shrink-0 mt-[9px] w-1.5 h-1.5 rounded-full bg-primary/40" />
+                          <span>
+                            <InlineFormatted text={item} />
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  );
+                case "separator":
+                  return <hr key={i} className="border-black/[0.06] my-10" />;
+                case "bold":
+                  return (
+                    <p
+                      key={i}
+                      className="text-[16px] leading-[1.75] text-foreground font-medium mb-4"
+                    >
+                      {block.content}
+                    </p>
+                  );
+                case "italic":
+                  return (
+                    <p
+                      key={i}
+                      className="text-[16px] leading-[1.75] text-muted-foreground italic mb-4"
+                    >
+                      {block.content}
+                    </p>
+                  );
+                default:
+                  return (
+                    <p
+                      key={i}
+                      className="text-[16px] leading-[1.75] text-muted-foreground mb-4"
+                    >
+                      <InlineFormatted text={block.content} />
+                    </p>
+                  );
+              }
+            })}
 
-            {/* Author signature */}
-            <div className="mt-12 pt-8 border-t border-black/[0.06]">
-              <p className="text-[15px] text-foreground font-medium">
-                So-ma.fr &mdash; Elie
-              </p>
-              <p className="text-[13px] text-muted-foreground mt-0.5">
-                Ta conseill&egrave;re en nutrition & bien-&ecirc;tre, sp&eacute;cialis&eacute;e pour les neuroatypiques.
-              </p>
-            </div>
           </article>
         </section>
 

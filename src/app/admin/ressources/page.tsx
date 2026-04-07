@@ -34,6 +34,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
+import { upload } from "@vercel/blob/client";
 import { FileViewer } from "@/components/file-viewer";
 
 type Resource = {
@@ -183,27 +184,20 @@ export default function AdminRessourcesPage() {
   async function handleEditFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 10 Mo)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 50 Mo)");
       return;
     }
     setEditUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
+      const blob = await upload(`soma/${Date.now()}-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+        multipart: true,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setEditFileUrl(data.url);
-        setEditFileName(data.fileName);
-        toast.success(`${data.fileName} uploadé`);
-      } else {
-        const err = await res.json();
-        toast.error(err.message || "Erreur upload");
-      }
+      setEditFileUrl(blob.url);
+      setEditFileName(file.name);
+      toast.success(`${file.name} uploadé`);
     } catch {
       toast.error("Erreur upload");
     } finally {
@@ -249,27 +243,20 @@ export default function AdminRessourcesPage() {
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error("Fichier trop volumineux (max 10 Mo)");
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error("Fichier trop volumineux (max 50 Mo)");
       return;
     }
     setUploading(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
+      const blob = await upload(`soma/${Date.now()}-${file.name}`, file, {
+        access: "public",
+        handleUploadUrl: "/api/admin/upload",
+        multipart: true,
       });
-      if (res.ok) {
-        const data = await res.json();
-        setUploadedFileUrl(data.url);
-        setUploadedFileName(data.fileName);
-        toast.success(`${data.fileName} uploadé`);
-      } else {
-        const err = await res.json();
-        toast.error(err.message || "Erreur upload");
-      }
+      setUploadedFileUrl(blob.url);
+      setUploadedFileName(file.name);
+      toast.success(`${file.name} uploadé`);
     } catch {
       toast.error("Erreur upload");
     } finally {
@@ -600,7 +587,7 @@ export default function AdminRessourcesPage() {
                         : "Cliquez pour uploader un fichier"}
                     </p>
                     <p className="text-xs text-muted-foreground/60">
-                      PDF, image, doc — max 10 Mo
+                      PDF, image, doc — max 50 Mo
                     </p>
                   </div>
                 )}
@@ -734,7 +721,7 @@ export default function AdminRessourcesPage() {
                       : "Cliquez pour uploader un fichier"}
                   </p>
                   <p className="text-xs text-muted-foreground/60">
-                    PDF, image, doc — max 10 Mo
+                    PDF, image, doc — max 50 Mo
                   </p>
                 </div>
               )}

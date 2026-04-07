@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -198,6 +198,7 @@ export default function CyclePage() {
   const [flowIntensity, setFlowIntensity] = useState("");
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
+  const formRef = useRef<HTMLDivElement>(null);
 
   const fetchEntries = useCallback(async () => {
     try {
@@ -298,13 +299,110 @@ export default function CyclePage() {
           </p>
         </div>
         <Button
-          onClick={() => setShowForm(!showForm)}
+          onClick={() => {
+            setShowForm(!showForm);
+            if (!showForm) {
+              setTimeout(() => {
+                formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }, 100);
+            }
+          }}
           className="bg-accent hover:bg-accent/90 text-accent-foreground"
         >
           <Plus className="h-4 w-4 mr-2" />
           Enregistrer aujourd&apos;hui
         </Button>
       </div>
+
+      {/* Journal form - appears right after header */}
+      {showForm && (
+        <div ref={formRef}>
+          <Card className="border-warm-border mb-8">
+            <CardHeader>
+              <CardTitle className="text-base">
+                Mon journal du{" "}
+                {new Date().toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Dans quelle phase de ton cycle es-tu ?</Label>
+                <Select
+                  value={phase}
+                  onValueChange={(v) => v !== null && setPhase(v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionne ta phase" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {phases.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {phase === "MENSTRUATION" && (
+                <div className="space-y-2">
+                  <Label>Intensité du flux</Label>
+                  <Select
+                    value={flowIntensity}
+                    onValueChange={(v) => v !== null && setFlowIntensity(v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Sélectionne" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="LEGER">Léger</SelectItem>
+                      <SelectItem value="MOYEN">Moyen</SelectItem>
+                      <SelectItem value="ABONDANT">Abondant</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label>Comment te sens-tu aujourd&apos;hui ?</Label>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {symptomsList.map((s) => (
+                    <div key={s} className="flex items-center gap-2">
+                      <Checkbox
+                        checked={symptoms.includes(s)}
+                        onCheckedChange={() => toggleSymptom(s)}
+                      />
+                      <span className="text-sm">{s}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Ton ressenti du jour (journal)</Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Comment te sens-tu ? Énergie, humeur, alimentation, sommeil..."
+                  className="border-warm-border min-h-[100px]"
+                />
+              </div>
+
+              <Button
+                onClick={addEntry}
+                disabled={saving || !phase}
+                className="bg-accent hover:bg-accent/90 text-accent-foreground"
+              >
+                {saving ? "Enregistrement..." : "Enregistrer"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Current phase info */}
       {currentPhase && (
@@ -364,94 +462,6 @@ export default function CyclePage() {
           ))}
         </div>
       </div>
-
-      {/* Add entry form */}
-      {showForm && (
-        <Card className="border-warm-border mb-8">
-          <CardHeader>
-            <CardTitle className="text-base">
-              Enregistrement du{" "}
-              {new Date().toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Phase actuelle</Label>
-              <Select
-                value={phase}
-                onValueChange={(v) => v !== null && setPhase(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez la phase" />
-                </SelectTrigger>
-                <SelectContent>
-                  {phases.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {phase === "MENSTRUATION" && (
-              <div className="space-y-2">
-                <Label>Intensité du flux</Label>
-                <Select
-                  value={flowIntensity}
-                  onValueChange={(v) => v !== null && setFlowIntensity(v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sélectionnez" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="LEGER">Léger</SelectItem>
-                    <SelectItem value="MOYEN">Moyen</SelectItem>
-                    <SelectItem value="ABONDANT">Abondant</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <Label>Symptômes</Label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {symptomsList.map((s) => (
-                  <div key={s} className="flex items-center gap-2">
-                    <Checkbox
-                      checked={symptoms.includes(s)}
-                      onCheckedChange={() => toggleSymptom(s)}
-                    />
-                    <span className="text-sm">{s}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Notes</Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Humeur, énergie, alimentation..."
-                className="border-warm-border"
-              />
-            </div>
-
-            <Button
-              onClick={addEntry}
-              disabled={saving || !phase}
-              className="bg-accent hover:bg-accent/90 text-accent-foreground"
-            >
-              {saving ? "Enregistrement..." : "Enregistrer"}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
 
       {/* History */}
       <h2 className="font-semibold text-foreground mb-4">Historique</h2>

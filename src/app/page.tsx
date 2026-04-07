@@ -190,8 +190,7 @@ export default function HomePage() {
                 <div className="hidden sm:block w-px h-12 bg-black/[0.06]" />
                 <div className="text-center">
                   <p className="text-[18px] font-semibold tracking-tight text-secondary leading-tight">Certifiée QUALIOPI</p>
-                  <p className="text-xs text-muted-foreground mt-1">Conseillère en nutrition scientifique</p>
-                  <p className="text-xs text-muted-foreground">Option sportive &middot; Médecine prophétique</p>
+                  <p className="text-xs text-muted-foreground mt-1">Diététique et sport selon la médecine prophétique</p>
                 </div>
               </div>
             </div>
