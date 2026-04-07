@@ -17,6 +17,8 @@ import {
   LogOut,
   Menu,
   Shield,
+  PenSquare,
+  MessageSquare,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -25,8 +27,10 @@ const sidebarLinks = [
   { href: "/admin/clients", label: "Clientes", icon: Users },
   { href: "/admin/formulaires", label: "Formulaires", icon: FileText },
   { href: "/admin/programmes", label: "Programmes", icon: ClipboardList },
+  { href: "/admin/articles", label: "Articles", icon: PenSquare },
   { href: "/admin/ressources", label: "Ressources", icon: Lightbulb },
   { href: "/admin/paiements", label: "Paiements", icon: CreditCard },
+  { href: "/admin/suggestions", label: "Suggestions", icon: MessageSquare },
 ];
 
 function SidebarContent({ pathname }: { pathname: string }) {

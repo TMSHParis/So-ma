@@ -227,7 +227,10 @@ export default function CyclePage() {
   }
 
   async function addEntry() {
-    if (!phase) return;
+    if (!phase) {
+      toast.error("Sélectionne d'abord ta phase du cycle");
+      return;
+    }
     setSaving(true);
     try {
       const res = await fetch("/api/client/cycle-entries", {
@@ -394,7 +397,7 @@ export default function CyclePage() {
 
               <Button
                 onClick={addEntry}
-                disabled={saving || !phase}
+                disabled={saving}
                 className="bg-accent hover:bg-accent/90 text-accent-foreground"
               >
                 {saving ? "Enregistrement..." : "Enregistrer"}

@@ -105,7 +105,16 @@ export default async function ArticlePage({ params }: Props) {
   const prevArticle = allArticles[currentIndex - 1] ?? null;
   const nextArticle = allArticles[currentIndex + 1] ?? null;
 
-  const blocks = renderMarkdown(article.content);
+  const allBlocks = renderMarkdown(article.content);
+  // Skip first paragraph if it duplicates the excerpt
+  const normalize = (s: string) => s.toLowerCase().replace(/[^a-zà-ÿ0-9 ]/g, "").trim();
+  const excerptNorm = normalize(article.excerpt);
+  const blocks = allBlocks.filter((block, i) => {
+    if (i > 1 || block.type !== "paragraph") return true;
+    const blockNorm = normalize(block.content);
+    // Skip if block starts with same words as excerpt
+    return !excerptNorm.startsWith(blockNorm.slice(0, 40)) && !blockNorm.startsWith(excerptNorm.slice(0, 40));
+  });
 
   return (
     <>
@@ -236,6 +245,12 @@ export default async function ArticlePage({ params }: Props) {
               }
             })}
 
+            {/* Signature */}
+            <div className="mt-12 pt-8 border-t border-black/[0.06]">
+              <p className="text-[15px] text-muted-foreground">
+                So-ma.fr &ndash; Elie. Ta conseill&egrave;re en nutrition &amp; bien-&ecirc;tre, sp&eacute;cialis&eacute;e pour les neuroatypiques.
+              </p>
+            </div>
           </article>
         </section>
 
