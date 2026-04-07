@@ -54,7 +54,7 @@ export default function HomePage() {
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="text-center mb-16">
               <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.12] tracking-tight text-foreground max-w-[700px] mx-auto">
-                Ma méthode est une approche intégrative et fonctionnelle, ancrée dans la science et dans le respect de ta physionomie &mdash; pas de protocole générique.
+                Ma méthode est une approche intégrative et fonctionnelle, ancrée dans la science et dans le respect de ta physiologie &mdash; pas de protocole générique.
               </h2>
             </div>
 
@@ -85,7 +85,7 @@ export default function HomePage() {
                   </h3>
                 </div>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
-                  Des séances faites pour toi, ta réalité, ta physionomie, et ton mode de vie. De façon progressive et durable.
+                  Des séances faites pour toi, ta réalité, ta physiologie, et ton mode de vie. De façon progressive et durable.
                 </p>
               </div>
 
