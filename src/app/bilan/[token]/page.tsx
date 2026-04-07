@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,11 +57,54 @@ export default function BilanPage() {
   async function handleSubmit() {
     setLoading(true);
     setError(null);
+
+    const password = formData.password as string;
+    const confirmPassword = formData.confirmPassword as string;
+    const email = formData.email as string;
+    const firstName = formData.prenom as string;
+    const lastName = formData.nom as string;
+
+    // Validate password
+    if (password && password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères.");
+      setLoading(false);
+      return;
+    }
+    if (password && password !== confirmPassword) {
+      setError("Les mots de passe ne correspondent pas.");
+      setLoading(false);
+      return;
+    }
+
     try {
+      // Create account if password provided
+      if (password && email && firstName && lastName) {
+        const registerRes = await fetch("/api/auth/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, firstName, lastName, password }),
+        });
+
+        if (!registerRes.ok) {
+          const data = await registerRes.json().catch(() => null);
+          // If account already exists, that's OK - continue with bilan
+          if (registerRes.status !== 409) {
+            setError(data?.message || "Erreur lors de la création du compte.");
+            setLoading(false);
+            return;
+          }
+        }
+
+        // Auto-login
+        await signIn("credentials", { email, password, redirect: false });
+      }
+
+      // Submit bilan (password fields stripped from data sent to API)
+      const { password: _p, confirmPassword: _cp, ...bilanData } = formData;
       const res = await fetch("/api/bilan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token: params.token, data: formData }),
+        body: JSON.stringify({ token: params.token, data: bilanData }),
       });
       if (res.ok) {
         setSubmitted(true);
@@ -87,9 +131,15 @@ export default function BilanPage() {
               Merci !
             </h1>
             <p className="text-muted-foreground">
-              Votre bilan a bien été envoyé. Vous serez contactée très
-              prochainement pour votre consultation personnalisée.
+              Ton bilan a bien &eacute;t&eacute; envoy&eacute;. Tu seras contact&eacute;e tr&egrave;s
+              prochainement pour ta consultation personnalis&eacute;e.
             </p>
+            <Button
+              onClick={() => router.push("/dashboard")}
+              className="mt-4 bg-primary hover:bg-primary/90 text-white"
+            >
+              Acc&eacute;der &agrave; mon espace
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -158,6 +208,30 @@ export default function BilanPage() {
                     className="border-warm-border"
                   />
                 </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Mot de passe</Label>
+                    <Input
+                      type="password"
+                      placeholder="Min. 8 caractères"
+                      value={(formData.password as string) || ""}
+                      onChange={(e) => updateField("password", e.target.value)}
+                      className="border-warm-border"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Confirmer le mot de passe</Label>
+                    <Input
+                      type="password"
+                      value={(formData.confirmPassword as string) || ""}
+                      onChange={(e) => updateField("confirmPassword", e.target.value)}
+                      className="border-warm-border"
+                    />
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Ce mot de passe te permettra de te connecter &agrave; ton espace client apr&egrave;s le bilan.
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Age</Label>
