@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, TrendingUp, Plus, Loader2, Send } from "lucide-react";
+import { CreditCard, TrendingUp, Plus, Loader2, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Payment = {
@@ -39,6 +39,8 @@ export default function PaiementsPage() {
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const fetchPayments = useCallback(async () => {
     try {
@@ -85,6 +87,58 @@ export default function PaiementsPage() {
       toast.success("Lien de paiement ouvert dans un nouvel onglet");
     } catch { toast.error("Erreur lors de la création du paiement"); }
     finally { setSending(false); }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selected.size === payments.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(payments.map((p) => p.id)));
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!confirm("Supprimer ce paiement ?")) return;
+    try {
+      const res = await fetch(`/api/stripe/payments/${id}`, { method: "DELETE" });
+      if (res.ok) {
+        toast.success("Paiement supprimé");
+        fetchPayments();
+      } else {
+        toast.error("Erreur lors de la suppression");
+      }
+    } catch {
+      toast.error("Erreur de connexion");
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selected.size === 0) return;
+    if (!confirm(`Supprimer ${selected.size} paiement(s) ?`)) return;
+    setDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selected).map((id) =>
+          fetch(`/api/stripe/payments/${id}`, { method: "DELETE" })
+        )
+      );
+      toast.success(`${selected.size} paiement(s) supprimé(s)`);
+      setSelected(new Set());
+      fetchPayments();
+    } catch {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
+    }
   }
 
   const completedPayments = payments.filter((p) => p.status === "COMPLETED");
@@ -149,6 +203,35 @@ export default function PaiementsPage() {
           <CardTitle className="text-base">Historique</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          {payments.length > 0 && (
+            <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-black/[0.04]">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selected.size === payments.length && payments.length > 0}
+                  onChange={toggleAll}
+                  className="rounded border-gray-300 accent-primary h-4 w-4"
+                />
+                Tout sélectionner
+              </label>
+              {selected.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={handleBulkDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <Trash2 className="h-3 w-3 mr-1" />
+                  )}
+                  Supprimer ({selected.size})
+                </Button>
+              )}
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -162,16 +245,26 @@ export default function PaiementsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead className="w-10"></TableHead>
                   <TableHead>Nom</TableHead>
                   <TableHead>Email</TableHead>
                   <TableHead>Montant</TableHead>
                   <TableHead>Statut</TableHead>
                   <TableHead>Date</TableHead>
+                  <TableHead className="w-10"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {payments.map((p) => (
                   <TableRow key={p.id}>
+                    <TableCell>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p.id)}
+                        onChange={() => toggleSelect(p.id)}
+                        className="rounded border-gray-300 accent-primary h-4 w-4 cursor-pointer"
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{p.name || "—"}</TableCell>
                     <TableCell>{p.email}</TableCell>
                     <TableCell>{p.amount.toFixed(2)} {p.currency}</TableCell>
@@ -187,6 +280,17 @@ export default function PaiementsPage() {
                     </TableCell>
                     <TableCell className="text-muted-foreground text-sm">
                       {new Date(p.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                        onClick={() => handleDelete(p.id)}
+                        title="Supprimer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))}

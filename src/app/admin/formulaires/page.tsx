@@ -39,6 +39,8 @@ export default function FormulairesPage() {
   const [detailDialog, setDetailDialog] = useState<TokenRow | null>(null);
   const [generatedLink, setGeneratedLink] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const fetchTokens = useCallback(async () => {
     try {
@@ -107,6 +109,43 @@ export default function FormulairesPage() {
       }
     } catch {
       toast.error("Erreur de connexion");
+    }
+  }
+
+  function toggleSelect(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    if (selected.size === tokens.length) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(tokens.map((t) => t.id)));
+    }
+  }
+
+  async function handleBulkDelete() {
+    if (selected.size === 0) return;
+    if (!confirm(`Supprimer ${selected.size} formulaire(s) ?`)) return;
+    setDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selected).map((id) =>
+          fetch(`/api/admin/bilan-tokens/${id}`, { method: "DELETE" })
+        )
+      );
+      toast.success(`${selected.size} formulaire(s) supprimé(s)`);
+      setSelected(new Set());
+      fetchTokens();
+    } catch {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -210,6 +249,35 @@ export default function FormulairesPage() {
           <CardTitle className="text-base">Liens générés</CardTitle>
         </CardHeader>
         <CardContent>
+          {tokens.length > 0 && (
+            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-black/[0.04]">
+              <label className="flex items-center gap-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selected.size === tokens.length && tokens.length > 0}
+                  onChange={toggleAll}
+                  className="rounded border-gray-300 accent-primary h-4 w-4"
+                />
+                Tout sélectionner
+              </label>
+              {selected.size > 0 && (
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-7 text-xs"
+                  onClick={handleBulkDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? (
+                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                  ) : (
+                    <Trash2 className="h-3 w-3 mr-1" />
+                  )}
+                  Supprimer ({selected.size})
+                </Button>
+              )}
+            </div>
+          )}
           {loading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -230,6 +298,12 @@ export default function FormulairesPage() {
                     key={token.id}
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                   >
+                    <input
+                      type="checkbox"
+                      checked={selected.has(token.id)}
+                      onChange={() => toggleSelect(token.id)}
+                      className="rounded border-gray-300 accent-primary h-4 w-4 mr-3 flex-shrink-0 cursor-pointer"
+                    />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
                         {token.name || "Sans nom"}
