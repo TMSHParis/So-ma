@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AnimatedClouds } from "@/components/illustrations/clouds";
+import { TestimonialsCarousel } from "@/components/testimonials-carousel";
 
 export default function HomePage() {
   return (
@@ -239,6 +240,9 @@ export default function HomePage() {
             </div>
           </div>
         </section>
+
+        {/* Avis Google */}
+        <TestimonialsCarousel />
 
         {/* CTA */}
         <section id="contact" className="bg-[#1d1d1f]">

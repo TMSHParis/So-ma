@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendClientProfileUpdated } from "@/lib/email";
 
 async function requireAdmin() {
   const session = await auth();
@@ -67,6 +68,18 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
   }
 
   const updated = await prisma.client.update({ where: { id: clientId }, data });
+
+  // Notify client by email
+  const user = await prisma.user.findUnique({
+    where: { id: client.userId },
+    select: { email: true, firstName: true },
+  });
+  if (user?.email) {
+    sendClientProfileUpdated({
+      to: user.email,
+      firstName: user.firstName || "Cliente",
+    }).catch(() => {});
+  }
 
   return NextResponse.json(updated);
 }
