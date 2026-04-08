@@ -19,6 +19,7 @@ import {
   Shield,
   PenSquare,
   MessageSquare,
+  Globe,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -31,6 +32,7 @@ const sidebarLinks = [
   { href: "/admin/ressources", label: "Ressources", icon: Lightbulb },
   { href: "/admin/paiements", label: "Paiements", icon: CreditCard },
   { href: "/admin/suggestions", label: "Suggestions", icon: MessageSquare },
+  { href: "/admin/contenu", label: "Contenu du site", icon: Globe },
 ];
 
 function SidebarContent({ pathname }: { pathname: string }) {

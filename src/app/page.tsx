@@ -4,8 +4,23 @@ import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { AnimatedClouds } from "@/components/illustrations/clouds";
 import { TestimonialsCarousel } from "@/components/testimonials-carousel";
+import { getAllSections } from "@/lib/site-content";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const content = await getAllSections([
+    "hero",
+    "method",
+    "about",
+    "steps",
+    "cta",
+  ]);
+
+  const hero = content.hero;
+  const method = content.method;
+  const about = content.about;
+  const steps = content.steps;
+  const cta = content.cta;
+
   return (
     <>
       <Header />
@@ -15,13 +30,13 @@ export default function HomePage() {
         <section className="bg-[#FBFAF8] overflow-hidden">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 pt-20 pb-16 md:pt-28 md:pb-20 text-center">
             <p className="text-primary text-sm font-medium tracking-wide uppercase mb-4">
-              Nutrition &middot; Neuroatypie &middot; Mouvement fonctionnel
+              {hero.badge}
             </p>
             <h1 className="text-[40px] md:text-[56px] lg:text-[64px] font-semibold leading-[1.05] tracking-tight text-foreground max-w-[780px] mx-auto">
-              Un accompagnement fait sur mesure, pour des cerveaux neurodivergents.
+              {hero.title}
             </h1>
             <p className="text-[17px] md:text-[21px] font-normal leading-[1.4] text-muted-foreground mt-4 max-w-[580px] mx-auto">
-              Suivi nutritionnel et sportif, conçu pour des femmes neuroatypiques, par une femme neuroatypique.
+              {hero.subtitle}
             </p>
             <div className="flex items-center justify-center gap-4 mt-8">
               <Link
@@ -55,7 +70,7 @@ export default function HomePage() {
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="text-center mb-16">
               <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.12] tracking-tight text-foreground max-w-[700px] mx-auto">
-                Ma méthode est une approche intégrative et fonctionnelle, ancrée dans la science et dans le respect de ta physiologie — pas de protocole générique.
+                {method.title}
               </h2>
             </div>
 
@@ -67,11 +82,11 @@ export default function HomePage() {
                     Nutrition
                   </p>
                   <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
-                    Un plan alimentaire qui respecte tes hormones et tes besoins, sans restriction extrême.
+                    {method.nutrition_title}
                   </h3>
                 </div>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
-                  Calcul de ton métabolisme de base, recettes équilibrées que tes hormones vont kiffer, et organisation des repas en fonction de tes objectifs.
+                  {method.nutrition_desc}
                 </p>
               </div>
 
@@ -82,11 +97,11 @@ export default function HomePage() {
                     Mouvement
                   </p>
                   <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
-                    Des programmes qui s'adaptent à toi, et non l'inverse.
+                    {method.movement_title}
                   </h3>
                 </div>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
-                  Des séances faites pour toi, ta réalité, ta physiologie, et ton mode de vie. De façon progressive et durable.
+                  {method.movement_desc}
                 </p>
               </div>
 
@@ -96,10 +111,10 @@ export default function HomePage() {
                   Neuroatypie, TND…
                 </p>
                 <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground max-w-[600px]">
-                  Chaque profil est unique.
+                  {method.neuro_title}
                 </h3>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-4 max-w-[640px]">
-                  Les méthodes classiques ne tiennent pas compte de nos spécificités neurologiques et cognitives, alors j'ai construit une approche adaptée à notre fonctionnement.
+                  {method.neuro_desc}
                 </p>
               </div>
             </div>
@@ -115,12 +130,8 @@ export default function HomePage() {
               </p>
 
               <div className="text-[17px] text-muted-foreground leading-[1.6] space-y-5">
-                <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3] italic">
-                  Pensées en arborescences,<br />
-                  Créativité débordante,<br />
-                  Soif de connaissance insatiable et besoins constants d'évolution,<br />
-                  Énergie foisonnante,<br />
-                  Mais surtout, aussi décalée et fière que les rayures du zèbre…
+                <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3] italic whitespace-pre-line">
+                  {about.poem}
                 </p>
 
                 <p>
@@ -140,7 +151,7 @@ export default function HomePage() {
                 </p>
 
                 <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.2]">
-                  Seulement, quand tu forces un arbre à agir comme une pierre, il en perd ses racines.
+                  {about.quote}
                 </p>
 
                 <p>
@@ -172,7 +183,7 @@ export default function HomePage() {
 
                 <div className="mt-8 space-y-4">
                   <p className="text-foreground font-medium">
-                    Ta singularité mérite une approche sur mesure : nutrition consciente, programmes sportifs adaptés, et un accompagnement qui te ressemble !
+                    {about.conclusion}
                   </p>
                   <p>
                     Ici, pas besoin de rentrer dans une case : ton fonctionnement exceptionnel est la base d'un chemin unique vers ta santé et ton équilibre.
@@ -185,13 +196,13 @@ export default function HomePage() {
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-10 mt-12 pt-8 border-t border-warm-border">
                 <div className="text-center">
-                  <p className="text-[36px] font-semibold tracking-tight text-primary">Plusieurs</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">femmes déjà accompagnées</p>
+                  <p className="text-[36px] font-semibold tracking-tight text-primary">{about.stat_label}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{about.stat_desc}</p>
                 </div>
                 <div className="hidden sm:block w-px h-12 bg-black/[0.06]" />
                 <div className="text-center">
-                  <p className="text-[18px] font-semibold tracking-tight text-secondary leading-tight">Certifiée QUALIOPI</p>
-                  <p className="text-xs text-muted-foreground mt-1">Diététique et sport selon la médecine prophétique</p>
+                  <p className="text-[18px] font-semibold tracking-tight text-secondary leading-tight">{about.cert_label}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{about.cert_desc}</p>
                 </div>
               </div>
             </div>
@@ -203,27 +214,15 @@ export default function HomePage() {
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="text-center mb-16">
               <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-foreground">
-                Trois étapes <span className="relative inline-block">seulement<span className="absolute bottom-1 left-0 w-full h-[6px] md:h-[8px] bg-[#C4B5FD]/50 rounded-full -z-10" /></span>.
+                {steps.title}
               </h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
               {[
-                {
-                  num: "1",
-                  title: "Bilan personnalisé",
-                  desc: "Un questionnaire détaillé pour comprendre ton profil métabolique, tes habitudes de vie et tes objectifs.",
-                },
-                {
-                  num: "2",
-                  title: "Consultation individuelle",
-                  desc: "Tu as droit à un échange en visio, afin que j\u2019apprenne à mieux te connaître et que je confectionne un programme qui matche avec tes objectifs.",
-                },
-                {
-                  num: "3",
-                  title: "Ton espace personnalisé",
-                  desc: "Tableau de bord avec programme alimentaire, sportif, suivi quotidien et ressources utiles.",
-                },
+                { num: "1", title: steps.step1_title, desc: steps.step1_desc },
+                { num: "2", title: steps.step2_title, desc: steps.step2_desc },
+                { num: "3", title: steps.step3_title, desc: steps.step3_desc },
               ].map((step) => (
                 <div key={step.num} className="text-center">
                   <div className="w-14 h-14 rounded-full bg-[#f5f5f7] flex items-center justify-center mx-auto mb-5">
@@ -248,17 +247,17 @@ export default function HomePage() {
         <section id="contact" className="bg-[#1d1d1f]">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28 text-center">
             <h2 className="text-[32px] md:text-[48px] font-semibold leading-[1.08] tracking-tight text-white">
-              Prête à commencer ?
+              {cta.title}
             </h2>
             <p className="text-[17px] text-white/60 mt-4 max-w-[480px] mx-auto">
-              Rejoins les femmes qui ont choisi d'exploiter à fond leurs potentiels.
+              {cta.subtitle}
             </p>
             <div className="flex items-center justify-center gap-4 mt-8">
               <Link
                 href="/suivi-nutritionnel"
                 className="inline-flex items-center justify-center h-11 px-6 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors"
               >
-                Découvre l'accompagnement
+                {cta.button}
               </Link>
               <a
                 href="https://www.instagram.com/so_masav"

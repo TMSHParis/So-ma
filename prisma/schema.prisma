@@ -347,6 +347,20 @@ model Article {
   @@map("articles")
 }
 
+model SiteContent {
+  id        String   @id @default(cuid())
+  section   String
+  key       String
+  value     String   @db.Text
+  type      String   @default("text") // text, textarea, image
+  label     String
+  position  Int      @default(0)
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@unique([section, key])
+  @@map("site_content")
+}
+
 model Payment {
   id            String          @id @default(cuid())
   email         String
