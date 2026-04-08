@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 const testimonials = [
   {
     name: "Dentaire Cabinet",
-    text: "Je voulais vous remercier pour votre professionnalisme, vous avez effectué de vrais recherches me concernant, mon poids actuel et cible, mais pas seulement, vous vous êtes intéressé à mon mode de vie, mon sommeil, le temps libre que j'ai (avec un bébé en bas âge) etc afin d'établir un réel plan sur mesure, adapté qui, par conséquent, devient facile à suivre.\nMerci beaucoup pour votre accompagnement, votre gentillesse et votre humanisme.",
+    text: "Je voulais vous remercier pour votre professionnalisme, vous avez effectué de vrais recherches me concernant, mon poids actuel et cible, mais pas seulement, vous vous êtes intéressée à mon mode de vie, mon sommeil, le temps libre que j'ai (avec un bébé en bas âge) etc afin d'établir un réel plan sur mesure, adapté qui, par conséquent, devient facile à suivre.\nMerci beaucoup pour votre accompagnement, votre gentillesse et votre humanisme.",
     source: "Google",
   },
   {
