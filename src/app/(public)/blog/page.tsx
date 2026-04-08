@@ -27,7 +27,7 @@ export default function BlogPage() {
               Articles & Ressources
             </h1>
             <p className="text-[17px] md:text-[21px] font-normal leading-[1.4] text-muted-foreground mt-4 max-w-[540px] mx-auto">
-              Nutrition, neuroatypie, physiologie, et r&eacute;flexions &mdash; pour comprendre avant d&apos;agir.
+              Nutrition, neuroatypie, physiologie, et réflexions — pour comprendre avant d'agir.
             </p>
           </div>
         </section>
@@ -62,7 +62,7 @@ export default function BlogPage() {
                     {articles[0].excerpt}
                   </p>
                   <span className="inline-flex items-center gap-1.5 text-sm font-medium text-white mt-5 group-hover:gap-2.5 transition-all">
-                    Lire l&apos;article <ArrowRight className="h-3.5 w-3.5" />
+                    Lire l'article <ArrowRight className="h-3.5 w-3.5" />
                   </span>
                 </div>
               </div>
@@ -118,16 +118,16 @@ export default function BlogPage() {
         <section className="bg-white">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-16 md:py-24 text-center">
             <h2 className="text-[28px] md:text-[36px] font-semibold leading-[1.12] tracking-tight text-foreground">
-              Envie d&apos;\u00eatre accompagn&eacute;e ?
+              Envie d'\u00eatre accompagnée ?
             </h2>
             <p className="text-[15px] text-muted-foreground mt-3 max-w-[420px] mx-auto">
-              D&eacute;couvre un accompagnement sur mesure, adapt&eacute; &agrave; ton fonctionnement.
+              Découvre un accompagnement sur mesure, adapté à ton fonctionnement.
             </p>
             <Link
               href="/suivi-nutritionnel"
               className="inline-flex items-center justify-center h-11 px-6 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors mt-6"
             >
-              D&eacute;couvrir l&apos;accompagnement
+              Découvrir l'accompagnement
             </Link>
           </div>
         </section>

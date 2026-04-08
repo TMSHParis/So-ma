@@ -365,7 +365,7 @@ export default function NutritionPage() {
                   )}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  La recherche tolère les fautes d&apos;orthographe et les accents manquants.
+                  La recherche tolère les fautes d'orthographe et les accents manquants.
                 </p>
               </div>
 
@@ -510,7 +510,7 @@ export default function NutritionPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
-            Un aliment que vous mangez souvent n&apos;est pas dans la liste ? Dites-le nous et on l&apos;ajoutera.
+            Un aliment que vous mangez souvent n'est pas dans la liste ? Dites-le nous et on l'ajoutera.
           </p>
           <Textarea
             value={suggestion}

@@ -656,7 +656,7 @@ export default function ClientsPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="ml-14 text-xs text-muted-foreground py-1">Aucune donnée aujourd&apos;hui</p>
+                      <p className="ml-14 text-xs text-muted-foreground py-1">Aucune donnée aujourd'hui</p>
                     )}
                   </div>
                 )}
@@ -788,7 +788,7 @@ export default function ClientsPage() {
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium flex items-center gap-2">
                       <span className="h-5 w-5 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">!</span>
-                      Facteur d&apos;agression (FA)
+                      Facteur d'agression (FA)
                     </h3>
                     <p className="text-[10px] text-muted-foreground">DEJ = MB × NAP × FA. Utilisé en nutrition clinique. Théorique max = 1.8, en pratique clinique = 1.2-1.3.</p>
                     <div className="flex flex-wrap gap-1.5">

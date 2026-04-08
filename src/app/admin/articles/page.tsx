@@ -494,7 +494,7 @@ export default function AdminArticlesPage() {
 
             {/* Content */}
             <div className="space-y-2">
-              <Label>Contenu de l&apos;article *</Label>
+              <Label>Contenu de l'article *</Label>
               <p className="text-[11px] text-muted-foreground">
                 Utilisez le formatage Markdown : **gras**, *italique*, ## Titre, - liste, &gt; citation
               </p>
@@ -515,7 +515,7 @@ export default function AdminArticlesPage() {
                 className="h-4 w-4 rounded border-border text-primary accent-primary"
               />
               <span className="text-sm text-foreground">
-                Publier l&apos;article (visible sur le blog)
+                Publier l'article (visible sur le blog)
               </span>
             </label>
 

@@ -89,13 +89,13 @@ function ConnexionForm() {
         <p className="text-center text-xs text-muted-foreground mt-6">
           Pas encore de compte ?{" "}
           <Link href="/inscription" className="text-primary hover:text-primary/80 transition-colors">
-            Cr&eacute;er un compte
+            Créer un compte
           </Link>
         </p>
 
         <p className="text-center text-xs text-muted-foreground mt-3">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Retour &agrave; l&apos;accueil
+            Retour à l'accueil
           </Link>
         </p>
       </div>

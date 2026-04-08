@@ -313,7 +313,7 @@ export default function CyclePage() {
           className="bg-accent hover:bg-accent/90 text-accent-foreground"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Enregistrer aujourd&apos;hui
+          Enregistrer aujourd'hui
         </Button>
       </div>
 
@@ -371,7 +371,7 @@ export default function CyclePage() {
               )}
 
               <div className="space-y-2">
-                <Label>Comment te sens-tu aujourd&apos;hui ?</Label>
+                <Label>Comment te sens-tu aujourd'hui ?</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {symptomsList.map((s) => (
                     <div key={s} className="flex items-center gap-2">
@@ -426,7 +426,7 @@ export default function CyclePage() {
       <div className="mb-8">
         <h2 className="font-semibold text-foreground mb-2">Comprendre ton cycle</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Plus tu avances dans le cycle, plus ton corps brûle — pic en phase lutéale (+100 à +300 kcal/j grâce à la progestérone), plancher en phase menstruelle. La rétention d&apos;eau de la phase lutéale n&apos;a rien à voir avec ta balance réelle.
+          Plus tu avances dans le cycle, plus ton corps brûle — pic en phase lutéale (+100 à +300 kcal/j grâce à la progestérone), plancher en phase menstruelle. La rétention d'eau de la phase lutéale n'a rien à voir avec ta balance réelle.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {phaseDetails.map((p) => (
@@ -473,7 +473,7 @@ export default function CyclePage() {
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Aucun enregistrement pour l&apos;instant
+              Aucun enregistrement pour l'instant
             </p>
           </CardContent>
         </Card>

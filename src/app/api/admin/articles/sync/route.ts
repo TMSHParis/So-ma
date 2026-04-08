@@ -107,19 +107,19 @@ function htmlToMarkdown(html: string): string {
   text = text.replace(/<[^>]*>/g, "");
 
   // Clean up HTML entities
-  text = text.replace(/&nbsp;/g, " ");
+  text = text.replace(/ /g, " ");
   text = text.replace(/&#8217;/g, "'");
   text = text.replace(/&#8220;/g, "\u201C");
   text = text.replace(/&#8221;/g, "\u201D");
   text = text.replace(/&amp;/g, "&");
   text = text.replace(/&lt;/g, "<");
   text = text.replace(/&gt;/g, ">");
-  text = text.replace(/&hellip;/g, "\u2026");
+  text = text.replace(/…/g, "\u2026");
   text = text.replace(/&rsquo;/g, "\u2019");
   text = text.replace(/&lsquo;/g, "\u2018");
   text = text.replace(/&rdquo;/g, "\u201D");
   text = text.replace(/&ldquo;/g, "\u201C");
-  text = text.replace(/&mdash;/g, "\u2014");
+  text = text.replace(/—/g, "\u2014");
   text = text.replace(/&ndash;/g, "\u2013");
   text = text.replace(/&#8211;/g, "\u2013");
   text = text.replace(/&#8212;/g, "\u2014");

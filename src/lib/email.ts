@@ -61,7 +61,7 @@ export async function sendClientProfileUpdated(data: {
           </a>
         </p>
         <p style="color: #999; font-size: 13px; line-height: 1.5; margin-top: 20px;">
-          So-ma.fr &ndash; Elie. Ta conseill&egrave;re en nutrition &amp; bien-&ecirc;tre.
+          So-ma.fr &ndash; Elie. Ta conseillère en nutrition &amp; bien-être.
         </p>
       </div>
     `,

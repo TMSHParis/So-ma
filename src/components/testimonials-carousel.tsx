@@ -49,7 +49,7 @@ export function TestimonialsCarousel() {
             ))}
           </div>
           <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.12] tracking-tight text-foreground">
-            Ce qu&apos;elles en disent
+            Ce qu'elles en disent
           </h2>
           <a
             href="https://www.google.com/maps/place/So-ma/data=!4m2!3m1!1s0x0:0x69198e682e3bbb82?sa=X&ved=1t:2428&hl=fr&gl=ma&ictx=111"
@@ -57,7 +57,7 @@ export function TestimonialsCarousel() {
             rel="noopener noreferrer"
             className="text-sm text-muted-foreground mt-2 underline hover:text-foreground transition-colors inline-block"
           >
-            Voir tous les avis certifi&eacute;s Google &rsaquo;
+            Voir tous les avis certifiés Google &rsaquo;
           </a>
         </div>
 

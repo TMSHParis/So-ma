@@ -27,32 +27,32 @@ export default function SuiviNutritionnelPage() {
           <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
             <div className="space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
               <p>Tu te motives.</p>
-              <p>Tu regardes des contenus généraux en boucle, que tu consommes, avant d&apos;enfin essayer de les appliquer.</p>
+              <p>Tu regardes des contenus généraux en boucle, que tu consommes, avant d'enfin essayer de les appliquer.</p>
               <p>Tu manges mieux.</p>
-              <p>Mais sans bonne direction, tu t&apos;épuises et tu finis par lâcher&hellip; À chaque fois c&apos;est le même schéma.</p>
+              <p>Mais sans bonne direction, tu t'épuises et tu finis par lâcher… À chaque fois c'est le même schéma.</p>
               <p className="text-foreground font-medium">
-                Tu craques. Tu culpabilises. Tu t&apos;en veux&hellip; et tu finis par penser que le code erreur c&apos;est toi.
+                Tu craques. Tu culpabilises. Tu t'en veux… et tu finis par penser que le code erreur c'est toi.
               </p>
             </div>
 
             <div className="mt-12 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[20px] p-8 md:p-10">
               <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3]">
-                Et si le vrai problème, ce n&apos;était pas toi, mais que tu utilises des méthodes qui n&apos;ont jamais été faites pour ton cerveau&nbsp;?
+                Et si le vrai problème, ce n'était pas toi, mais que tu utilises des méthodes qui n'ont jamais été faites pour ton cerveau ?
               </p>
             </div>
 
             <div className="mt-10 space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
               <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.2]">
-                Tu ne réagis pas comme la masse, alors pourquoi suivre les mêmes méthodes&nbsp;?
+                Tu ne réagis pas comme la masse, alors pourquoi suivre les mêmes méthodes ?
               </p>
               <p>
-                Ce n&apos;est pas toujours un problème de discipline. Ce n&apos;est pas que &laquo;&nbsp;tu fais mal&nbsp;&raquo; ou pas assez. Au contraire, tu fais beaucoup, mais à contresens.
+                Ce n'est pas toujours un problème de discipline. Ce n'est pas que &laquo; tu fais mal &raquo; ou pas assez. Au contraire, tu fais beaucoup, mais à contresens.
               </p>
               <p>
-                Car tu appliques des méthodes qui n&apos;ont jamais été pensées pour ton fonctionnement.
+                Car tu appliques des méthodes qui n'ont jamais été pensées pour ton fonctionnement.
               </p>
               <p className="italic">
-                Est-ce que tu arrives facilement à destination, toi, si la carte que tu suis n&apos;est pas dans le bon sens&nbsp;?
+                Est-ce que tu arrives facilement à destination, toi, si la carte que tu suis n'est pas dans le bon sens ?
               </p>
             </div>
           </div>
@@ -62,10 +62,10 @@ export default function SuiviNutritionnelPage() {
         <section className="bg-[#FBFAF8]">
           <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
             <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground mb-6">
-              Ce que beaucoup ignorent, c&apos;est que les personnes neuroatypiques ne sont pas juste &laquo;&nbsp;différentes&nbsp;&raquo;.
+              Ce que beaucoup ignorent, c'est que les personnes neuroatypiques ne sont pas juste &laquo; différentes &raquo;.
             </h2>
             <p className="text-[17px] text-muted-foreground leading-[1.6] mb-8">
-              Elles sont aussi plus exposées à de vraies fragilités physiques et mentales (si elles ne sont pas prises en charge)&nbsp;:
+              Elles sont aussi plus exposées à de vraies fragilités physiques et mentales (si elles ne sont pas prises en charge) :
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {[
@@ -88,10 +88,10 @@ export default function SuiviNutritionnelPage() {
         <section className="bg-white">
           <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
             <h2 className="text-[24px] md:text-[32px] font-semibold leading-[1.15] tracking-tight text-foreground mb-4">
-              Peut-on écrire un livre lorsqu&apos;on ne nous donne qu&apos;une seule feuille&nbsp;?
+              Peut-on écrire un livre lorsqu'on ne nous donne qu'une seule feuille ?
             </h2>
             <p className="text-[17px] text-muted-foreground leading-[1.6] mb-8">
-              Les méthodes standardisées sont construites pour&nbsp;:
+              Les méthodes standardisées sont construites pour :
             </p>
             <div className="space-y-3 mb-8">
               {[
@@ -109,7 +109,7 @@ export default function SuiviNutritionnelPage() {
               ))}
             </div>
             <p className="text-[17px] text-foreground font-medium">
-              Ce qui ne correspond pas à la réalité de beaucoup de personnes neuroatypiques&nbsp;!
+              Ce qui ne correspond pas à la réalité de beaucoup de personnes neuroatypiques !
             </p>
           </div>
         </section>
@@ -122,16 +122,16 @@ export default function SuiviNutritionnelPage() {
             </h2>
             <div className="space-y-5 text-[17px] text-muted-foreground leading-[1.6]">
               <p>
-                Le corps, le mental et le système nerveux fonctionnent ensemble (ainsi que d&apos;autres particularités abordées dans mes carrousels).
+                Le corps, le mental et le système nerveux fonctionnent ensemble (ainsi que d'autres particularités abordées dans mes carrousels).
               </p>
               <p>
-                Et quand on y ajoute un profil métabolique féminin, encore plus contraint chez les femmes neurodivergentes, si on ne prend pas tous les facteurs en compte, on s&apos;épuise. On se rigidifie, et on finit par abandonner.
+                Et quand on y ajoute un profil métabolique féminin, encore plus contraint chez les femmes neurodivergentes, si on ne prend pas tous les facteurs en compte, on s'épuise. On se rigidifie, et on finit par abandonner.
               </p>
               <p className="text-foreground font-medium">
-                S&apos;imposer un cadre inadapté n&apos;est pas le bon objectif. En plus, c&apos;est très souvent la cause de régression.
+                S'imposer un cadre inadapté n'est pas le bon objectif. En plus, c'est très souvent la cause de régression.
               </p>
               <p>
-                C&apos;est pour ça que j&apos;ai créé mon accompagnement&nbsp;: pour t&apos;aider à comprendre ton fonctionnement, et t&apos;accompagner avec un cadre construit pour toi.
+                C'est pour ça que j'ai créé mon accompagnement : pour t'aider à comprendre ton fonctionnement, et t'accompagner avec un cadre construit pour toi.
               </p>
               <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3]">
                 Progressif, adapté, et pensé pour réussir sur la durée.
@@ -144,17 +144,17 @@ export default function SuiviNutritionnelPage() {
         <section className="bg-white">
           <div className="max-w-[680px] mx-auto px-4 lg:px-0 py-16 md:py-24">
             <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.1] tracking-tight text-foreground text-center mb-4">
-              Ce type d&apos;accompagnement n&apos;est pas pour tout le monde.
+              Ce type d'accompagnement n'est pas pour tout le monde.
             </h2>
             <p className="text-[17px] text-muted-foreground text-center mb-12">
-              Car, avec moi&nbsp;: pas de flagellation, mais de l&apos;introspection et des remises en question.
+              Car, avec moi : pas de flagellation, mais de l'introspection et des remises en question.
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Pas pour */}
               <div className="bg-[#fef2f2] rounded-[20px] p-8">
                 <p className="text-sm font-medium uppercase tracking-wide text-destructive mb-4">
-                  Il n&apos;est pas fait pour celles
+                  Il n'est pas fait pour celles
                 </p>
                 <p className="text-[15px] text-foreground leading-relaxed">
                   Qui veulent une méthode miracle et qui cherchent un plan générique, conçu pour la masse.
@@ -174,10 +174,10 @@ export default function SuiviNutritionnelPage() {
 
             <div className="mt-10 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[20px] p-8 md:p-10 space-y-4 text-[17px] text-muted-foreground leading-[1.6]">
               <p>
-                Nous sommes une équipe. Ce qui veut dire que si je m&apos;investis pour toi, toi tu dois aussi t&apos;investir pour toi-même, en retour.
+                Nous sommes une équipe. Ce qui veut dire que si je m'investis pour toi, toi tu dois aussi t'investir pour toi-même, en retour.
               </p>
               <p>
-                Je n&apos;impose pas des règles impossibles, mais elles doivent être respectées. Parce qu&apos;un accompagnement juste n&apos;est pas moins efficace&hellip; il est simplement plus durable.
+                Je n'impose pas des règles impossibles, mais elles doivent être respectées. Parce qu'un accompagnement juste n'est pas moins efficace… il est simplement plus durable.
               </p>
             </div>
           </div>
@@ -205,7 +205,7 @@ export default function SuiviNutritionnelPage() {
 
             {/* Déroulement après paiement */}
             <div className="mt-6 bg-white rounded-[16px] p-6 border border-warm-border text-left">
-              <p className="text-sm font-semibold text-foreground mb-4">Comment ça se passe&nbsp;?</p>
+              <p className="text-sm font-semibold text-foreground mb-4">Comment ça se passe ?</p>
               <div className="space-y-4">
                 <div className="flex gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -217,7 +217,7 @@ export default function SuiviNutritionnelPage() {
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
                     <span className="text-xs font-semibold text-primary">2</span>
                   </div>
-                  <p className="text-[15px] text-muted-foreground">Tu remplis <strong className="text-foreground">ton questionnaire de bilan personnalisé</strong> pour que j&apos;apprenne à te connaître.</p>
+                  <p className="text-[15px] text-muted-foreground">Tu remplis <strong className="text-foreground">ton questionnaire de bilan personnalisé</strong> pour que j'apprenne à te connaître.</p>
                 </div>
                 <div className="flex gap-3">
                   <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -237,7 +237,7 @@ export default function SuiviNutritionnelPage() {
                 className="mt-1 h-4 w-4 rounded border-border text-primary focus:ring-primary/20 accent-primary"
               />
               <span className="text-xs text-muted-foreground leading-relaxed">
-                J&apos;atteste avoir lu et accepté les{" "}
+                J'atteste avoir lu et accepté les{" "}
                 <Link href="/mentions-legales" className="text-primary underline hover:text-primary/80">
                   conditions générales de vente et mentions légales
                 </Link>.

@@ -93,7 +93,7 @@ function InscriptionForm() {
             <img src="/logo-soma.png" alt="So-ma" className="h-10 w-auto mx-auto mix-blend-multiply" />
           </Link>
           <h1 className="text-[22px] font-semibold tracking-tight text-foreground mt-6">
-            Cr&eacute;er mon compte
+            Créer mon compte
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {bilanToken
@@ -107,7 +107,7 @@ function InscriptionForm() {
             <input
               name="firstName"
               type="text"
-              placeholder="Pr&eacute;nom"
+              placeholder="Prénom"
               defaultValue={prefillFirstName}
               required
               className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
@@ -132,7 +132,7 @@ function InscriptionForm() {
           <input
             name="password"
             type="password"
-            placeholder="Mot de passe (min. 8 caract&egrave;res)"
+            placeholder="Mot de passe (min. 8 caractères)"
             required
             minLength={8}
             className="w-full h-12 px-4 bg-white border border-black/[0.08] rounded-xl text-[15px] text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary/40 focus:ring-2 focus:ring-primary/10 transition-all"
@@ -163,7 +163,7 @@ function InscriptionForm() {
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
-          D&eacute;j&agrave; un compte ?{" "}
+          Déjà un compte ?{" "}
           <Link
             href={bilanToken ? `/connexion?redirect=/bilan/${bilanToken}` : "/connexion"}
             className="text-primary hover:text-primary/80 transition-colors"
@@ -174,7 +174,7 @@ function InscriptionForm() {
 
         <p className="text-center text-xs text-muted-foreground mt-3">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Retour &agrave; l&apos;accueil
+            Retour à l'accueil
           </Link>
         </p>
       </div>

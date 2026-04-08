@@ -282,7 +282,7 @@ export default function BilanValidationPage() {
     return (
       <div className="text-center py-20">
         <p className="text-muted-foreground">
-          Ce bilan n&apos;a pas encore été rempli.
+          Ce bilan n'a pas encore été rempli.
         </p>
         <Button
           variant="outline"
@@ -433,7 +433,7 @@ export default function BilanValidationPage() {
 
                 {/* NAP selector */}
                 <div className="space-y-2">
-                  <Label className="text-xs">NAP (niveau d&apos;activité physique)</Label>
+                  <Label className="text-xs">NAP (niveau d'activité physique)</Label>
                   <div className="grid grid-cols-1 gap-1.5">
                     {NAP_OPTIONS.map((o) => (
                       <button

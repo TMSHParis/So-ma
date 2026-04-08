@@ -43,7 +43,7 @@ export default function ProgrammeSportifPage() {
           Programme sportif
         </h1>
         <p className="text-muted-foreground mt-1">
-          Votre planning d&apos;entraînement personnalisé.
+          Votre planning d'entraînement personnalisé.
         </p>
       </div>
 
@@ -52,7 +52,7 @@ export default function ProgrammeSportifPage() {
           <CardContent className="py-12 text-center">
             <Dumbbell className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Votre programme sportif n&apos;a pas encore été créé.
+              Votre programme sportif n'a pas encore été créé.
             </p>
             <p className="text-sm text-muted-foreground/60 mt-1">
               Il sera disponible après votre consultation avec So-ma.

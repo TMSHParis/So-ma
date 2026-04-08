@@ -72,7 +72,7 @@ export default async function AdminDashboardPage() {
           Dashboard administrateur
         </h1>
         <p className="text-muted-foreground mt-1">
-          Vue d&apos;ensemble de votre activité.
+          Vue d'ensemble de votre activité.
         </p>
       </div>
 

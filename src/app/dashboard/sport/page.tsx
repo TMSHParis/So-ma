@@ -820,7 +820,7 @@ export default function SportPage() {
           <CardContent className="py-10 text-center">
             <Dumbbell className="h-10 w-10 text-muted-foreground/20 mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              Aucune séance aujourd&apos;hui
+              Aucune séance aujourd'hui
             </p>
           </CardContent>
         </Card>

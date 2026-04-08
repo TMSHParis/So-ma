@@ -55,7 +55,7 @@ export default function HomePage() {
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-20 md:py-28">
             <div className="text-center mb-16">
               <h2 className="text-[28px] md:text-[40px] font-semibold leading-[1.12] tracking-tight text-foreground max-w-[700px] mx-auto">
-                Ma méthode est une approche intégrative et fonctionnelle, ancrée dans la science et dans le respect de ta physiologie &mdash; pas de protocole générique.
+                Ma méthode est une approche intégrative et fonctionnelle, ancrée dans la science et dans le respect de ta physiologie — pas de protocole générique.
               </h2>
             </div>
 
@@ -82,7 +82,7 @@ export default function HomePage() {
                     Mouvement
                   </p>
                   <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground">
-                    Des programmes qui s&apos;adaptent à toi, et non l&apos;inverse.
+                    Des programmes qui s'adaptent à toi, et non l'inverse.
                   </h3>
                 </div>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-6">
@@ -93,13 +93,13 @@ export default function HomePage() {
               {/* Card Neuroatypie - Full width */}
               <div className="md:col-span-2 bg-gradient-to-br from-[#F5F2EC] to-[#E9F1EF] rounded-[28px] p-10 md:p-12 min-h-[260px]">
                 <p className="text-accent text-sm font-medium uppercase tracking-wide mb-3">
-                  Neuroatypie, TND&hellip;
+                  Neuroatypie, TND…
                 </p>
                 <h3 className="text-[24px] md:text-[28px] font-semibold leading-[1.14] tracking-tight text-foreground max-w-[600px]">
                   Chaque profil est unique.
                 </h3>
                 <p className="text-[15px] text-muted-foreground leading-relaxed mt-4 max-w-[640px]">
-                  Les méthodes classiques ne tiennent pas compte de nos spécificités neurologiques et cognitives, alors j&apos;ai construit une approche adaptée à notre fonctionnement.
+                  Les méthodes classiques ne tiennent pas compte de nos spécificités neurologiques et cognitives, alors j'ai construit une approche adaptée à notre fonctionnement.
                 </p>
               </div>
             </div>
@@ -118,13 +118,13 @@ export default function HomePage() {
                 <p className="text-[20px] md:text-[24px] font-semibold text-foreground leading-[1.3] italic">
                   Pensées en arborescences,<br />
                   Créativité débordante,<br />
-                  Soif de connaissance insatiable et besoins constants d&apos;évolution,<br />
+                  Soif de connaissance insatiable et besoins constants d'évolution,<br />
                   Énergie foisonnante,<br />
-                  Mais surtout, aussi décalée et fière que les rayures du zèbre&hellip;
+                  Mais surtout, aussi décalée et fière que les rayures du zèbre…
                 </p>
 
                 <p>
-                  J&apos;ai essayé de me conformer à la &laquo;&nbsp;norme&nbsp;&raquo; pendant des années&hellip;
+                  J'ai essayé de me conformer à la &laquo; norme &raquo; pendant des années…
                 </p>
 
                 <div className="pl-6 border-l-2 border-primary/30 space-y-1 text-foreground/70 italic text-left mx-auto max-w-fit">
@@ -134,8 +134,8 @@ export default function HomePage() {
                 </div>
 
                 <p>
-                  Donc j&apos;ai mangé comme la masse, sans écouter mes réels besoins.
-                  J&apos;ai essayé de taire mon cerveau en l&apos;abrutissant.
+                  Donc j'ai mangé comme la masse, sans écouter mes réels besoins.
+                  J'ai essayé de taire mon cerveau en l'abrutissant.
                   Et je me suis forcée à marcher pour arrêter de courir.
                 </p>
 
@@ -144,41 +144,41 @@ export default function HomePage() {
                 </p>
 
                 <p>
-                  Je me suis dit&nbsp;: qu&apos;est-ce que &laquo;&nbsp;la norme&nbsp;&raquo; dans un monde qui déborde autant de profils que de divergences&nbsp;?
+                  Je me suis dit : qu'est-ce que &laquo; la norme &raquo; dans un monde qui déborde autant de profils que de divergences ?
                 </p>
 
                 <p className="text-foreground font-medium">
-                  C&apos;est finalement dans ma perte que je me suis retrouvée&nbsp;!
+                  C'est finalement dans ma perte que je me suis retrouvée !
                 </p>
 
                 <p>
-                  J&apos;ai donc encore lu et relu, étudié, et questionné jusqu&apos;à avoir les réponses et les acquis nécessaires pour savoir comment la développer.
+                  J'ai donc encore lu et relu, étudié, et questionné jusqu'à avoir les réponses et les acquis nécessaires pour savoir comment la développer.
                 </p>
 
                 <p className="text-foreground font-medium">
-                  Et si j&apos;ai réussi, tu le peux aussi&nbsp;!
+                  Et si j'ai réussi, tu le peux aussi !
                 </p>
 
                 <div className="bg-white rounded-2xl p-6 mt-6 border border-warm-border text-left">
                   <p className="text-sm text-muted-foreground mb-2">
-                    <span className="font-semibold text-foreground">Mais alors pourquoi ce nom de domaine&nbsp;?</span>
+                    <span className="font-semibold text-foreground">Mais alors pourquoi ce nom de domaine ?</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    C&apos;est un rappel au terme <span className="font-semibold text-foreground">SOMA</span>.
-                    Si tu es intéressée par la psychologie, je t&apos;invite vivement à consulter la définition de ce terme.
-                    Pour celles et ceux qui aiment les raccourcis, c&apos;est une référence à la <span className="italic">mémoire somatique</span>.
+                    C'est un rappel au terme <span className="font-semibold text-foreground">SOMA</span>.
+                    Si tu es intéressée par la psychologie, je t'invite vivement à consulter la définition de ce terme.
+                    Pour celles et ceux qui aiment les raccourcis, c'est une référence à la <span className="italic">mémoire somatique</span>.
                   </p>
                 </div>
 
                 <div className="mt-8 space-y-4">
                   <p className="text-foreground font-medium">
-                    Ta singularité mérite une approche sur mesure&nbsp;: nutrition consciente, programmes sportifs adaptés, et un accompagnement qui te ressemble&nbsp;!
+                    Ta singularité mérite une approche sur mesure : nutrition consciente, programmes sportifs adaptés, et un accompagnement qui te ressemble !
                   </p>
                   <p>
-                    Ici, pas besoin de rentrer dans une case&nbsp;: ton fonctionnement exceptionnel est la base d&apos;un chemin unique vers ta santé et ton équilibre.
+                    Ici, pas besoin de rentrer dans une case : ton fonctionnement exceptionnel est la base d'un chemin unique vers ta santé et ton équilibre.
                   </p>
                   <p>
-                    Parce que ta différence est ta force, je t&apos;accompagne à transformer ton quotidien avec la nutrition et le mouvement, avec une approche intégrative fonctionnelle compatible avec ton cerveau.
+                    Parce que ta différence est ta force, je t'accompagne à transformer ton quotidien avec la nutrition et le mouvement, avec une approche intégrative fonctionnelle compatible avec ton cerveau.
                   </p>
                 </div>
               </div>
@@ -251,14 +251,14 @@ export default function HomePage() {
               Prête à commencer ?
             </h2>
             <p className="text-[17px] text-white/60 mt-4 max-w-[480px] mx-auto">
-              Rejoins les femmes qui ont choisi d&apos;exploiter à fond leurs potentiels.
+              Rejoins les femmes qui ont choisi d'exploiter à fond leurs potentiels.
             </p>
             <div className="flex items-center justify-center gap-4 mt-8">
               <Link
                 href="/suivi-nutritionnel"
                 className="inline-flex items-center justify-center h-11 px-6 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors"
               >
-                Découvre l&apos;accompagnement
+                Découvre l'accompagnement
               </Link>
               <a
                 href="https://www.instagram.com/so_masav"

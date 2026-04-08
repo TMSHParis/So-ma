@@ -131,14 +131,14 @@ export default function BilanPage() {
               Merci !
             </h1>
             <p className="text-muted-foreground">
-              Ton bilan a bien &eacute;t&eacute; envoy&eacute;. Tu seras contact&eacute;e tr&egrave;s
-              prochainement pour ta consultation personnalis&eacute;e.
+              Ton bilan a bien été envoyé. Tu seras contactée très
+              prochainement pour ta consultation personnalisée.
             </p>
             <Button
               onClick={() => router.push("/dashboard")}
               className="mt-4 bg-primary hover:bg-primary/90 text-white"
             >
-              Acc&eacute;der &agrave; mon espace
+              Accéder à mon espace
             </Button>
           </CardContent>
         </Card>
@@ -157,7 +157,7 @@ export default function BilanPage() {
             Votre bilan personnalisé
           </h1>
           <p className="text-muted-foreground">
-            Prenez le temps de répondre honnêtement. Il n&apos;y a pas de bonne ou
+            Prenez le temps de répondre honnêtement. Il n'y a pas de bonne ou
             mauvaise réponse.
           </p>
         </div>
@@ -230,7 +230,7 @@ export default function BilanPage() {
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground -mt-2">
-                  Ce mot de passe te permettra de te connecter &agrave; ton espace client apr&egrave;s le bilan.
+                  Ce mot de passe te permettra de te connecter à ton espace client après le bilan.
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -431,7 +431,7 @@ export default function BilanPage() {
                   </RadioGroup>
                 </div>
                 <div className="space-y-2">
-                  <Label>Combien d&apos;eau buvez-vous par jour ?</Label>
+                  <Label>Combien d'eau buvez-vous par jour ?</Label>
                   <Select
                     value={(formData.eau as string) || ""}
                     onValueChange={(v) => updateField("eau", v)}
@@ -440,7 +440,7 @@ export default function BilanPage() {
                       <SelectValue placeholder="Sélectionnez" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="moins-1L">Moins d&apos;1L</SelectItem>
+                      <SelectItem value="moins-1L">Moins d'1L</SelectItem>
                       <SelectItem value="1-1.5L">1 à 1.5L</SelectItem>
                       <SelectItem value="1.5-2L">1.5 à 2L</SelectItem>
                       <SelectItem value="plus-2L">Plus de 2L</SelectItem>
@@ -743,7 +743,7 @@ export default function BilanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Qu&apos;avez-vous déjà essayé qui n&apos;a pas fonctionné ?</Label>
+                  <Label>Qu'avez-vous déjà essayé qui n'a pas fonctionné ?</Label>
                   <Textarea
                     value={(formData.essaye_avant as string) || ""}
                     onChange={(e) => updateField("essaye_avant", e.target.value)}
@@ -752,7 +752,7 @@ export default function BilanPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Qu&apos;attendez-vous de cet accompagnement ?</Label>
+                  <Label>Qu'attendez-vous de cet accompagnement ?</Label>
                   <Textarea
                     value={(formData.attentes as string) || ""}
                     onChange={(e) => updateField("attentes", e.target.value)}

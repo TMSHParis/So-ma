@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     return (
       <div className="rounded-xl border border-warm-border bg-white p-8 text-center">
         <p className="text-muted-foreground">
-          Votre profil cliente n&apos;est pas encore configuré. Contactez votre
+          Votre profil cliente n'est pas encore configuré. Contactez votre
           administratrice.
         </p>
       </div>

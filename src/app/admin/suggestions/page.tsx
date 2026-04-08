@@ -88,7 +88,7 @@ export default function SuggestionsPage() {
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Suggestions d&apos;aliments
+            Suggestions d'aliments
           </h1>
           <p className="text-muted-foreground mt-1">
             Suggestions envoyées par les clientes depuis le suivi alimentaire.
@@ -104,7 +104,7 @@ export default function SuggestionsPage() {
           <CardContent className="py-12 text-center">
             <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Aucune suggestion pour l&apos;instant
+              Aucune suggestion pour l'instant
             </p>
           </CardContent>
         </Card>
@@ -160,7 +160,7 @@ export default function SuggestionsPage() {
       <Dialog open={!!selected} onOpenChange={(open) => !open && setSelected(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Suggestion d&apos;aliment</DialogTitle>
+            <DialogTitle>Suggestion d'aliment</DialogTitle>
           </DialogHeader>
           {selected && (
             <div className="space-y-4">

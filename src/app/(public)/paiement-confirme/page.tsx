@@ -21,14 +21,14 @@ export default function PaiementConfirmePage() {
               informations pour la suite.
             </p>
             <p className="text-[15px] text-muted-foreground leading-[1.6] mb-8">
-              Si tu ne reçois rien d&apos;ici quelques minutes, vérifie tes
+              Si tu ne reçois rien d'ici quelques minutes, vérifie tes
               spams.
             </p>
             <Link
               href="/"
               className="inline-flex items-center justify-center h-11 px-7 bg-primary text-white text-sm font-normal rounded-full hover:bg-primary/90 transition-colors"
             >
-              Retour à l&apos;accueil
+              Retour à l'accueil
             </Link>
           </div>
         </section>

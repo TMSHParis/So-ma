@@ -259,7 +259,7 @@ export default async function ArticlePage({ params }: Props) {
             {/* Signature */}
             <div className="mt-12 pt-8 border-t border-black/[0.06]">
               <p className="text-[15px] text-muted-foreground">
-                So-ma.fr &ndash; Elie. Ta conseill&egrave;re en nutrition &amp; bien-&ecirc;tre, sp&eacute;cialis&eacute;e pour les neuroatypiques.
+                So-ma.fr &ndash; Elie. Ta conseillère en nutrition &amp; bien-être, spécialisée pour les neuroatypiques.
               </p>
             </div>
           </article>
@@ -275,7 +275,7 @@ export default async function ArticlePage({ params }: Props) {
                   className="group flex flex-col p-5 rounded-2xl border border-black/[0.06] bg-white hover:shadow-md transition-all"
                 >
                   <span className="text-[11px] text-muted-foreground/60 flex items-center gap-1 mb-2">
-                    <ArrowLeft className="h-3 w-3" /> Pr&eacute;c&eacute;dent
+                    <ArrowLeft className="h-3 w-3" /> Précédent
                   </span>
                   <span className="text-[14px] font-medium text-foreground leading-snug line-clamp-2">
                     {prevArticle.title}

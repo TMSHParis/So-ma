@@ -52,7 +52,7 @@ export default function ProgrammeAlimentairePage() {
           <CardContent className="py-12 text-center">
             <Utensils className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Votre programme alimentaire n&apos;a pas encore été créé.
+              Votre programme alimentaire n'a pas encore été créé.
             </p>
             <p className="text-sm text-muted-foreground/60 mt-1">
               Il sera disponible après votre consultation avec So-ma.
@@ -123,7 +123,7 @@ export default function ProgrammeAlimentairePage() {
             <CardContent className="pt-4 pb-4">
               <p className="text-sm text-muted-foreground text-center">
                 Ce programme est indicatif et doit être adapté selon vos envies et
-                disponibilités. L&apos;important est de respecter les grandes lignes
+                disponibilités. L'important est de respecter les grandes lignes
                 tout en gardant du plaisir.
               </p>
             </CardContent>
