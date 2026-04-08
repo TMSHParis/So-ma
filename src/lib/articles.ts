@@ -410,7 +410,7 @@ export const articles: Article[] = [
       },
       {
         type: "paragraph",
-        text: "Ignorer \u00e7a dans une approche nutritionnelle, c\u2019est soigner une fracture avec un pansement. Si tu es fatigu\u00e9(e) de courir \u00e0 contresens et que tu es pr\u00eat(e) \u00e0 te prendre en main, \u00e9cris-moi.",
+        text: "Ignorer \u00e7a dans une approche nutritionnelle, c\u2019est soigner une fracture avec un pansement. Si tu es fatigu\u00e9e de courir \u00e0 contresens et que tu es pr\u00eate \u00e0 te prendre en main, \u00e9cris-moi.",
       },
       {
         type: "sources",
