@@ -118,7 +118,7 @@ export default function BlogPage() {
         <section className="bg-white">
           <div className="max-w-[980px] mx-auto px-4 lg:px-0 py-16 md:py-24 text-center">
             <h2 className="text-[28px] md:text-[36px] font-semibold leading-[1.12] tracking-tight text-foreground">
-              Envie d'\u00eatre accompagnée ?
+              Envie d'être accompagnée ?
             </h2>
             <p className="text-[15px] text-muted-foreground mt-3 max-w-[420px] mx-auto">
               Découvre un accompagnement sur mesure, adapté à ton fonctionnement.

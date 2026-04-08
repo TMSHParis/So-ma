@@ -97,8 +97,8 @@ function InscriptionForm() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {bilanToken
-              ? "Cr\u00e9e ton compte pour acc\u00e9der \u00e0 ton bilan et \u00e0 ton espace"
-              : "Acc\u00e8de \u00e0 ton espace personnalis\u00e9"}
+              ? "Crée ton compte pour accéder à ton bilan et à ton espace"
+              : "Accède à ton espace personnalisé"}
           </p>
         </div>
 
@@ -155,10 +155,10 @@ function InscriptionForm() {
             className="w-full h-12 bg-primary text-white text-[15px] font-normal rounded-xl hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             {loading
-              ? "Cr\u00e9ation en cours..."
+              ? "Création en cours..."
               : bilanToken
-                ? "Cr\u00e9er mon compte et remplir le bilan"
-                : "Cr\u00e9er mon compte"}
+                ? "Créer mon compte et remplir le bilan"
+                : "Créer mon compte"}
           </button>
         </form>
 
