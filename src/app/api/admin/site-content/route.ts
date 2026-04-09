@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { DEFAULT_CONTENT, seedContent } from "@/lib/site-content";
@@ -67,6 +68,10 @@ export async function PUT(request: NextRequest) {
         });
       })
     );
+
+    // Invalider le cache des pages qui affichent le contenu
+    revalidatePath("/");
+    revalidatePath("/suivi-nutritionnel");
 
     return NextResponse.json({ message: "Contenu mis à jour" });
   } catch (error) {
