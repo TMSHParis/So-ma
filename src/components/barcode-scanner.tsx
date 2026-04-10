@@ -9,7 +9,7 @@ type BarcodeScannerProps = {
   onClose: () => void;
 };
 
-// Stable DOM id for the html5-qrcode scanner region.
+// Quagga2 mounts the <video> + <canvas> inside the element it's given.
 const SCANNER_REGION_ID = "barcode-scanner-region";
 
 export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
@@ -26,44 +26,111 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   useEffect(() => {
     let mounted = true;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let scanner: any = null;
+    let Quagga: any = null;
+    let started = false;
+    // Track recent codes: EAN-13 requires 2 consecutive identical reads to
+    // confirm, which dramatically reduces false positives.
+    const recent: string[] = [];
 
     (async () => {
       try {
-        const mod = await import("html5-qrcode");
+        const mod = await import("@ericblade/quagga2");
+        Quagga = mod.default;
         if (!mounted) return;
-        scanner = new mod.Html5Qrcode(SCANNER_REGION_ID, {
-          verbose: false,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any);
 
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 10,
-            qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
-              const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
-              const width = Math.floor(minEdge * 0.85);
-              const height = Math.floor(width * 0.45);
-              return { width, height };
+        const target = document.getElementById(SCANNER_REGION_ID);
+        if (!target) {
+          throw new Error("scanner region missing");
+        }
+
+        await new Promise<void>((resolve, reject) => {
+          Quagga.init(
+            {
+              inputStream: {
+                name: "Live",
+                type: "LiveStream",
+                target,
+                constraints: {
+                  facingMode: "environment",
+                  width: { ideal: 1280 },
+                  height: { ideal: 720 },
+                  aspectRatio: { ideal: 16 / 9 },
+                },
+                area: {
+                  // Scan only the central horizontal band (better for 1D).
+                  top: "25%",
+                  right: "5%",
+                  left: "5%",
+                  bottom: "25%",
+                },
+              },
+              locator: {
+                patchSize: "medium",
+                halfSample: true,
+              },
+              numOfWorkers: typeof navigator !== "undefined" && navigator.hardwareConcurrency
+                ? Math.min(4, navigator.hardwareConcurrency)
+                : 2,
+              frequency: 10,
+              decoder: {
+                readers: [
+                  "ean_reader",
+                  "ean_8_reader",
+                  "upc_reader",
+                  "upc_e_reader",
+                  "code_128_reader",
+                  "code_39_reader",
+                  "code_93_reader",
+                  "i2of5_reader",
+                  "codabar_reader",
+                ],
+              },
+              locate: true,
             },
-            aspectRatio: 1.3,
-          },
-          (decodedText: string) => {
-            if (scannedRef.current) return;
-            scannedRef.current = true;
-            onScanRef.current(decodedText);
-          },
-          () => {
-            // Ignore per-frame decode errors
-          }
-        );
+            (err: Error | null) => {
+              if (err) reject(err);
+              else resolve();
+            }
+          );
+        });
 
-        if (mounted) setStarting(false);
-      } catch {
+        if (!mounted) {
+          try {
+            Quagga.stop();
+          } catch {
+            /* noop */
+          }
+          return;
+        }
+
+        Quagga.start();
+        started = true;
+        setStarting(false);
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        Quagga.onDetected((result: any) => {
+          if (scannedRef.current) return;
+          const code = result?.codeResult?.code;
+          if (!code) return;
+
+          // Require 2 identical reads within the last 5 before accepting.
+          recent.push(code);
+          if (recent.length > 5) recent.shift();
+          const occurrences = recent.filter((c) => c === code).length;
+          if (occurrences < 2) return;
+
+          scannedRef.current = true;
+          try {
+            onScanRef.current(code);
+          } catch (e) {
+            console.error("[barcode-scanner] onScan threw", e);
+          }
+        });
+      } catch (e) {
+        console.error("[barcode-scanner] Quagga init failed", e);
         if (mounted) {
           setError(
-            "Impossible d'accéder à la caméra. Vérifiez les permissions du navigateur."
+            "Impossible d'accéder à la caméra. Vérifiez les permissions du navigateur (HTTPS requis sur mobile)."
           );
           setStarting(false);
         }
@@ -72,28 +139,10 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
 
     return () => {
       mounted = false;
-      if (scanner) {
+      if (Quagga) {
         try {
-          if (scanner.isScanning) {
-            scanner
-              .stop()
-              .then(() => {
-                try {
-                  scanner.clear();
-                } catch {
-                  /* noop */
-                }
-              })
-              .catch(() => {
-                /* noop */
-              });
-          } else {
-            try {
-              scanner.clear();
-            } catch {
-              /* noop */
-            }
-          }
+          if (started) Quagga.stop();
+          Quagga.offDetected();
         } catch {
           /* noop */
         }
@@ -121,10 +170,14 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
         <div className="relative">
           <div
             id={SCANNER_REGION_ID}
-            className="rounded-lg overflow-hidden bg-black w-full [&>video]:w-full [&>video]:h-full [&>video]:object-cover"
+            className="rounded-lg overflow-hidden bg-black w-full aspect-video [&>video]:w-full [&>video]:h-full [&>video]:object-cover [&>canvas.drawingBuffer]:hidden"
           />
+          {/* Scan guide overlay (wide horizontal band for 1D barcodes). */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-[90%] h-[40%] border-2 border-white/70 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.25)]" />
+          </div>
           {starting && (
-            <p className="absolute inset-0 flex items-center justify-center text-white/80 text-sm pointer-events-none">
+            <p className="absolute inset-0 flex items-center justify-center text-white/90 text-sm pointer-events-none bg-black/40">
               Activation de la caméra…
             </p>
           )}
@@ -132,7 +185,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       )}
 
       <p className="text-xs text-muted-foreground text-center mt-2">
-        Placez le code-barres du produit dans le cadre
+        Cadrez le code-barres horizontalement, à 15–20 cm de l&apos;objectif
       </p>
     </div>
   );
