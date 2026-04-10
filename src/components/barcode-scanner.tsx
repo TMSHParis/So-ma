@@ -16,6 +16,13 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
   const [starting, setStarting] = useState(true);
   const scanningRef = useRef(false);
 
+  // Store latest onScan in a ref so the effect doesn't re-run when the parent
+  // re-creates the callback (which would stop/restart the camera).
+  const onScanRef = useRef(onScan);
+  useEffect(() => {
+    onScanRef.current = onScan;
+  }, [onScan]);
+
   const stopCamera = useCallback(() => {
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((t) => t.stop());
@@ -53,7 +60,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               const barcodes = await detector.detect(videoRef.current);
               if (barcodes.length > 0 && barcodes[0].rawValue) {
                 scanningRef.current = true;
-                onScan(barcodes[0].rawValue);
+                onScanRef.current(barcodes[0].rawValue);
                 return;
               }
             } catch {
@@ -82,7 +89,7 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
               if (!scanningRef.current) {
                 scanningRef.current = true;
                 html5QrCode.stop().catch(() => {});
-                onScan(decodedText);
+                onScanRef.current(decodedText);
               }
             },
             () => {} // ignore errors during scanning
@@ -104,7 +111,9 @@ export function BarcodeScanner({ onScan, onClose }: BarcodeScannerProps) {
       cancelled = true;
       stopCamera();
     };
-  }, [onScan, stopCamera]);
+    // Only run once on mount — onScan is accessed via ref above.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="relative">
