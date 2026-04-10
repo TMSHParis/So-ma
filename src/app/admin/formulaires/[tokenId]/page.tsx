@@ -17,6 +17,7 @@ import {
   Droplets,
   Wheat,
   Mail,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -645,7 +646,7 @@ export default function BilanValidationPage() {
             </CardContent>
           </Card>
 
-          {/* Validate button */}
+          {/* Validate / Update button */}
           {!validated ? (
             <Button
               onClick={handleValidate}
@@ -666,11 +667,31 @@ export default function BilanValidationPage() {
               )}
             </Button>
           ) : (
-            <div className="text-center py-4">
-              <Badge className="bg-green-100 text-green-700 text-sm px-4 py-2">
-                <CheckCircle2 className="h-4 w-4 mr-2" />
-                Compte cliente validé — objectifs envoyés
-              </Badge>
+            <div className="space-y-3">
+              <div className="text-center py-2">
+                <Badge className="bg-green-100 text-green-700 text-sm px-4 py-2">
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Compte cliente validé — objectifs envoyés
+                </Badge>
+              </div>
+              <Button
+                onClick={handleValidate}
+                disabled={validating}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white text-base py-5"
+                size="lg"
+              >
+                {validating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Mise à jour...
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-5 w-5 mr-2" />
+                    Mettre à jour les objectifs
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </div>
