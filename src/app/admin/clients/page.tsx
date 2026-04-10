@@ -259,7 +259,7 @@ export default function ClientsPage() {
         sex: data.sex || "F",
         weight: data.weight?.toString() || "",
         height: data.height?.toString() || "",
-        birthDate: data.birthDate ? data.birthDate.split("T")[0] : "",
+        age: data.age?.toString() || "",
         goalCalories: data.goalCalories?.toString() || "",
         maintenanceCalories: data.maintenanceCalories?.toString() || "",
         energyBalance: data.energyBalance || "MAINTENANCE",
@@ -283,9 +283,8 @@ export default function ClientsPage() {
         if (h < 3) h = h * 100; // convert m to cm
         setCalcHeight(Math.round(h).toString());
       }
-      if (data.birthDate) {
-        const age = Math.floor((Date.now() - new Date(data.birthDate).getTime()) / 31557600000);
-        setCalcAge(age.toString());
+      if (data.age) {
+        setCalcAge(data.age.toString());
       }
       // Load saved NAP activities or use defaults
       const savedAct = data.napActivities as Record<string, number> | null;
@@ -419,7 +418,7 @@ export default function ClientsPage() {
       body.sex = editData.sex || null;
       body.energyBalance = editData.energyBalance || null;
       body.sessionTypes = editData.sessionTypes ? editData.sessionTypes.split(",").filter(Boolean) : [];
-      body.birthDate = editData.birthDate || null;
+      body.age = editData.age ? parseInt(editData.age) : null;
       body.napActivities = calcActivities;
 
       const res = await fetch(`/api/admin/clients/${editClientId}`, {
@@ -727,13 +726,10 @@ export default function ClientsPage() {
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px]">Naissance</Label>
-                        <Input className="h-8 text-xs" type="date" value={editData.birthDate} onChange={(e) => {
-                          updateEdit("birthDate", e.target.value);
-                          if (e.target.value) {
-                            const age = Math.floor((Date.now() - new Date(e.target.value).getTime()) / 31557600000);
-                            setCalcAge(age.toString());
-                          }
+                        <Label className="text-[10px]">Âge</Label>
+                        <Input className="h-8 text-xs" type="number" min={1} max={120} placeholder="ex : 28" value={editData.age} onChange={(e) => {
+                          updateEdit("age", e.target.value);
+                          setCalcAge(e.target.value);
                         }} />
                       </div>
                       <div className="space-y-1">

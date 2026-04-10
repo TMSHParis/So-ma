@@ -52,6 +52,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ cl
   if (body.birthDate !== undefined) {
     data.birthDate = body.birthDate ? new Date(body.birthDate) : null;
   }
+  if (body.age !== undefined) {
+    data.age = body.age === null ? null : Number(body.age);
+  }
   if (body.napActivities !== undefined) data.napActivities = body.napActivities;
 
   // Auto-compute goalCalories from maintenance + delta

@@ -576,6 +576,10 @@ export default function BilanPage() {
                   <Input type="text" placeholder="ex : 30min, 1h..." value={(formData.temps_toilettes as string) || ""} onChange={(e) => updateField("temps_toilettes", e.target.value)} className="border-warm-border" />
                 </div>
                 <div className="space-y-2">
+                  <Label>Combien d&apos;heures dormez-vous par nuit en moyenne ?</Label>
+                  <Input type="text" placeholder="ex : 7h, 6h30..." value={(formData.temps_sommeil as string) || ""} onChange={(e) => updateField("temps_sommeil", e.target.value)} className="border-warm-border" />
+                </div>
+                <div className="space-y-2">
                   <Label>Combien de temps passez-vous en voiture par jour ?</Label>
                   <Input type="text" placeholder="ex : 30min, 1h..." value={(formData.temps_voiture as string) || ""} onChange={(e) => updateField("temps_voiture", e.target.value)} className="border-warm-border" />
                 </div>

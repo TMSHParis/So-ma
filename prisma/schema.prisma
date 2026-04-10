@@ -86,6 +86,7 @@ model Client {
   userId          String    @unique @map("user_id")
   phone           String?
   birthDate       DateTime? @map("birth_date")
+  age             Int?
   height          Float?
   weight          Float?
   goalCalories    Int?      @map("goal_calories")
