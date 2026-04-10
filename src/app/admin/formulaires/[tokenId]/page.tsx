@@ -233,10 +233,18 @@ export default function BilanValidationPage() {
       setValidated(true);
       if (result.temporaryPassword) {
         setTempPassword(result.temporaryPassword);
-        toast.success(
-          `Compte créé pour ${result.email} ! Mot de passe temporaire affiché ci-dessous.`,
-          { duration: 15000 },
-        );
+        if (result.credentialsSent) {
+          setCredentialsSent(true);
+          toast.success(
+            `Compte créé pour ${result.email} ! Les accès ont été envoyés par email automatiquement.`,
+            { duration: 15000 },
+          );
+        } else {
+          toast.success(
+            `Compte créé pour ${result.email} ! ⚠️ L'email n'a pas pu être envoyé — transmets le mot de passe manuellement.`,
+            { duration: 15000 },
+          );
+        }
       } else {
         toast.success(`Objectifs mis à jour pour ${result.email}`);
       }
@@ -341,26 +349,32 @@ export default function BilanValidationPage() {
                 {tempPassword}
               </code>
             </p>
-            <p className="text-xs text-green-600 mt-1">
-              Transmettez ce mot de passe à la cliente. Elle pourra le changer
-              après connexion.
-            </p>
-            <div className="mt-3">
-              <Button
-                onClick={handleSendCredentials}
-                disabled={sendingCredentials || credentialsSent}
-                size="sm"
-                className={credentialsSent ? "bg-green-700 text-white" : "bg-primary hover:bg-primary/90 text-white"}
-              >
-                {credentialsSent ? (
-                  <><CheckCircle2 className="h-4 w-4 mr-1" /> Accès envoyés</>
-                ) : sendingCredentials ? (
-                  <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Envoi en cours...</>
-                ) : (
-                  <><Mail className="h-4 w-4 mr-1" /> Envoyer les accès par email</>
-                )}
-              </Button>
-            </div>
+            {credentialsSent ? (
+              <p className="text-xs text-green-600 mt-2 flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Les accès ont été envoyés automatiquement par email à la cliente.
+              </p>
+            ) : (
+              <>
+                <p className="text-xs text-orange-600 mt-1">
+                  L'email automatique n'a pas pu être envoyé. Tu peux réessayer ou transmettre le mot de passe manuellement.
+                </p>
+                <div className="mt-3">
+                  <Button
+                    onClick={handleSendCredentials}
+                    disabled={sendingCredentials}
+                    size="sm"
+                    className="bg-primary hover:bg-primary/90 text-white"
+                  >
+                    {sendingCredentials ? (
+                      <><Loader2 className="h-4 w-4 mr-1 animate-spin" /> Envoi en cours...</>
+                    ) : (
+                      <><Mail className="h-4 w-4 mr-1" /> Réessayer l'envoi par email</>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

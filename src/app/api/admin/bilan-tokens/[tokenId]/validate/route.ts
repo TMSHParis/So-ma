@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { sendClientCredentials } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -114,11 +115,17 @@ export async function POST(
       data: clientData,
     });
 
-    // Link bilan response to client
-    await prisma.bilanResponse.update({
-      where: { id: token.response.id },
-      data: { clientId: client.id },
-    });
+    // Link bilan response to client + mark token as used
+    await Promise.all([
+      prisma.bilanResponse.update({
+        where: { id: token.response.id },
+        data: { clientId: client.id },
+      }),
+      prisma.bilanToken.update({
+        where: { id: tokenId },
+        data: { used: true },
+      }),
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -145,12 +152,35 @@ export async function POST(
       include: { client: true },
     });
 
-    // Link bilan response to client
+    // Link bilan response to client + mark token as used
+    const updates: Promise<unknown>[] = [
+      prisma.bilanToken.update({
+        where: { id: tokenId },
+        data: { used: true },
+      }),
+    ];
     if (user.client) {
-      await prisma.bilanResponse.update({
-        where: { id: token.response.id },
-        data: { clientId: user.client.id },
+      updates.push(
+        prisma.bilanResponse.update({
+          where: { id: token.response.id },
+          data: { clientId: user.client.id },
+        }),
+      );
+    }
+    await Promise.all(updates);
+
+    // Auto-send credentials email
+    let credentialsSent = false;
+    try {
+      await sendClientCredentials({
+        to: email,
+        firstName,
+        email,
+        password: temporaryPassword,
       });
+      credentialsSent = true;
+    } catch (err) {
+      console.error("Failed to send credentials email:", err);
     }
 
     return NextResponse.json({
@@ -159,6 +189,7 @@ export async function POST(
       email,
       clientId: user.client?.id,
       temporaryPassword,
+      credentialsSent,
     });
   }
 }

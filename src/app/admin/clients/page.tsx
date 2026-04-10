@@ -122,7 +122,7 @@ function computeNAP(activities: Record<string, number>): { nap: number; totalH: 
     weightedH += h * act.coeff;
     totalH += h;
   }
-  return { nap: totalH > 0 ? totalH / 24 : 1.55, totalH, weightedH };
+  return { nap: totalH > 0 ? weightedH / 24 : 1.55, totalH, weightedH };
 }
 
 /** Macros from DEJ in KJ using correct energy coefficients */
@@ -297,6 +297,30 @@ export default function ClientsPage() {
       setMacroPctFat(35);
       setMacroPctCarbs(50);
       setFiberMode("auto");
+      // Auto-calculate if profile data exists so admin sees current values
+      if (data.weight && data.height && data.birthDate) {
+        const w = Number(data.weight);
+        let h = Number(data.height);
+        if (h < 3) h = Math.round(h * 100);
+        const age = Math.floor((Date.now() - new Date(data.birthDate).getTime()) / 31557600000);
+        const sex = data.sex || "F";
+        const mbKJ = computeMB_KJ(sex, w, h, age);
+        const mbKcal = Math.round(mbKJ * 0.239);
+        const savedAct2 = data.napActivities as Record<string, number> | null;
+        const actForCalc: Record<string, number> = {};
+        for (const a of NAP_ACTIVITIES) actForCalc[a.key] = savedAct2?.[a.key] ?? a.default;
+        const { nap: napVal } = computeNAP(actForCalc);
+        const sf = Number(data.stressFactor || 1);
+        const dejKJ = mbKJ * napVal * sf;
+        const dejKcal = Math.round(dejKJ * 0.239);
+        const balance = data.energyBalance || "MAINTENANCE";
+        const absDelta = Math.abs(Number(data.caloricDeltaKcal || 0));
+        let goalKcal = dejKcal;
+        if (balance === "DEFICIT") goalKcal = dejKcal - absDelta;
+        if (balance === "SURPLUS") goalKcal = dejKcal + absDelta;
+        const goalKJ = goalKcal / 0.239;
+        setCalcResult({ mbKJ, mbKcal, nap: napVal, dejKJ, dejKcal, goalKcal, goalKJ, stressFactor: sf });
+      }
     } catch { toast.error("Erreur chargement cliente"); }
     finally { setEditLoading(false); }
   }
