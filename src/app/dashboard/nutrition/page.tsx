@@ -34,7 +34,9 @@ import {
   Leaf,
   Loader2,
   Search,
+  ScanBarcode,
 } from "lucide-react";
+import { BarcodeScanner } from "@/components/barcode-scanner";
 
 type FoodItem = {
   id: string;
@@ -98,6 +100,8 @@ export default function NutritionPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [sendingSuggestion, setSendingSuggestion] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
 
   // Debounce ref
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -260,6 +264,28 @@ export default function NutritionPage() {
     }
   }
 
+  async function handleBarcodeScan(barcode: string) {
+    setScannerOpen(false);
+    setScanLoading(true);
+    try {
+      const res = await fetch(`/api/food-search?barcode=${encodeURIComponent(barcode)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.results?.length > 0) {
+          setSearchResults(data.results);
+          setSearchQuery(data.results[0].name);
+          toast.success("Produit trouvé !");
+        } else {
+          toast.error("Produit non reconnu — essayez la recherche textuelle");
+        }
+      }
+    } catch {
+      toast.error("Erreur lors du scan");
+    } finally {
+      setScanLoading(false);
+    }
+  }
+
   async function sendSuggestion() {
     if (!suggestion.trim()) return;
     setSendingSuggestion(true);
@@ -319,6 +345,7 @@ export default function NutritionPage() {
           if (!open) {
             setSearchQuery("");
             setSearchResults([]);
+            setScannerOpen(false);
           }
         }}>
           <DialogTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-white">
@@ -351,23 +378,42 @@ export default function NutritionPage() {
 
               <div className="space-y-2">
                 <Label>Rechercher un aliment</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    placeholder="Tapez : poulet, riz, pomme de terre, pome de ter..."
-                    className="pl-9"
-                    autoFocus
-                  />
-                  {searching && (
-                    <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                  )}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Tapez : poulet, riz, espresso, Big Mac..."
+                      className="pl-9"
+                      autoFocus
+                    />
+                    {(searching || scanLoading) && (
+                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="flex-shrink-0"
+                    onClick={() => setScannerOpen((v) => !v)}
+                    title="Scanner un code-barres"
+                  >
+                    <ScanBarcode className="h-4 w-4" />
+                  </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  La recherche tolère les fautes d'orthographe et les accents manquants.
+                  Recherche parmi 400+ aliments génériques + millions de produits (OpenFoodFacts). Tolère les fautes et accents.
                 </p>
               </div>
+
+              {scannerOpen && (
+                <BarcodeScanner
+                  onScan={handleBarcodeScan}
+                  onClose={() => setScannerOpen(false)}
+                />
+              )}
 
               <div className="space-y-2">
                 <Label>Quantité (g)</Label>
@@ -379,7 +425,7 @@ export default function NutritionPage() {
               </div>
 
               {searchResults.length > 0 && (
-                <div className="max-h-64 overflow-y-auto space-y-1.5">
+                <div className="max-h-80 overflow-y-auto space-y-1.5">
                   {searchResults.map((result) => {
                     const qty = parseFloat(quantity) || 100;
                     const ratio = qty / 100;
@@ -510,7 +556,7 @@ export default function NutritionPage() {
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground mb-3">
-            Un aliment que vous mangez souvent n'est pas dans la liste ? Dites-le nous et on l'ajoutera.
+            Un aliment que vous mangez souvent n&apos;est pas dans la liste ? Dites-le nous et on l&apos;ajoutera.
           </p>
           <Textarea
             value={suggestion}

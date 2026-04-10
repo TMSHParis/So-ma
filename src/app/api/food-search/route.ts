@@ -16,26 +16,65 @@ type SearchResult = {
 
 export async function GET(request: NextRequest) {
   const q = request.nextUrl.searchParams.get("q")?.trim();
+  const barcode = request.nextUrl.searchParams.get("barcode")?.trim();
+
+  // ── Recherche par code-barres ──────────────────────────────
+  if (barcode) {
+    try {
+      const offRes = await fetch(
+        `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,brands,nutriments,image_url`,
+        { signal: AbortSignal.timeout(5000) }
+      );
+
+      if (offRes.ok) {
+        const data = await offRes.json();
+        if (data.status === 1 && data.product) {
+          const p = data.product;
+          const name = [p.product_name, p.brands].filter(Boolean).join(" — ");
+          if (name && p.nutriments?.["energy-kcal_100g"] != null) {
+            const result: SearchResult = {
+              id: `off-${p.code}`,
+              name,
+              source: "openfoodfacts",
+              per100g: {
+                calories: Math.round(p.nutriments["energy-kcal_100g"] || 0),
+                protein: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
+                carbs: Math.round((p.nutriments.carbohydrates_100g || 0) * 10) / 10,
+                fat: Math.round((p.nutriments.fat_100g || 0) * 10) / 10,
+                fiber: Math.round((p.nutriments.fiber_100g || 0) * 10) / 10,
+              },
+            };
+            return NextResponse.json({ results: [result] });
+          }
+        }
+      }
+    } catch {
+      // fallthrough
+    }
+    return NextResponse.json({ results: [], error: "Produit non trouvé pour ce code-barres" });
+  }
+
+  // ── Recherche textuelle ────────────────────────────────────
   if (!q || q.length < 2) {
     return NextResponse.json({ results: [] });
   }
 
   // 1. Recherche locale (instantanée, fuzzy, aliments génériques)
   const localResults = searchLocalFoods(q);
-  const local: SearchResult[] = localResults.slice(0, 5).map((f, i) => ({
+  const local: SearchResult[] = localResults.slice(0, 8).map((f, i) => ({
     id: `local-${i}`,
     name: f.name,
     source: "local" as const,
     per100g: f.per100g,
   }));
 
-  // 2. Recherche OpenFoodFacts en parallèle (produits de marque)
+  // 2. Recherche OpenFoodFacts en parallèle (produits de marque, supermarchés, restaurants)
   let off: SearchResult[] = [];
   try {
     const normalizedQ = normalize(q);
     const offRes = await fetch(
-      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=15&fields=code,product_name,nutriments,categories_tags&lc=fr&cc=fr`,
-      { signal: AbortSignal.timeout(3000) }
+      `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=30&fields=code,product_name,brands,nutriments,categories_tags&lc=fr&cc=fr`,
+      { signal: AbortSignal.timeout(4000) }
     );
 
     if (offRes.ok) {
@@ -43,6 +82,7 @@ export async function GET(request: NextRequest) {
       const products = (data.products || []) as {
         code: string;
         product_name?: string;
+        brands?: string;
         categories_tags?: string[];
         nutriments?: {
           "energy-kcal_100g"?: number;
@@ -57,11 +97,13 @@ export async function GET(request: NextRequest) {
       off = products
         .filter((p) => {
           if (!p.product_name) return false;
-          if (!p.nutriments?.["energy-kcal_100g"]) return false;
+          if (p.nutriments?.["energy-kcal_100g"] == null) return false;
           return true;
         })
         .map((p) => {
-          const name = p.product_name!;
+          const name = p.brands
+            ? `${p.product_name} — ${p.brands}`
+            : p.product_name!;
           const normalizedName = normalize(name);
           // Score : bonus si le nom contient le query
           const relevance = normalizedName.includes(normalizedQ)
@@ -85,7 +127,7 @@ export async function GET(request: NextRequest) {
           };
         })
         .sort((a, b) => a._relevance - b._relevance)
-        .slice(0, 8)
+        .slice(0, 15)
         .map(({ _relevance, ...rest }) => rest);
     }
   } catch {
@@ -97,6 +139,6 @@ export async function GET(request: NextRequest) {
   const filtered = off.filter((o) => !seen.has(normalize(o.name)));
 
   return NextResponse.json({
-    results: [...local, ...filtered].slice(0, 12),
+    results: [...local, ...filtered].slice(0, 20),
   });
 }
