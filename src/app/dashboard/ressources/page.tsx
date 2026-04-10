@@ -147,7 +147,7 @@ export default function RessourcesPage() {
           if (!open) setSelected(null);
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {selected?.title}

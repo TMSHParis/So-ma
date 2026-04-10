@@ -433,7 +433,7 @@ export default function AdminRessourcesPage() {
           }
         }}
       >
-        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {editing ? "Modifier la ressource" : viewResource?.title}
@@ -658,7 +658,7 @@ export default function AdminRessourcesPage() {
           }
         }}
       >
-        <DialogContent>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Nouvelle ressource</DialogTitle>
           </DialogHeader>
