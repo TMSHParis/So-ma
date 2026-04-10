@@ -27,11 +27,6 @@ import { Progress } from "@/components/ui/progress";
 import {
   Plus,
   Trash2,
-  Flame,
-  Beef,
-  Wheat,
-  Droplets,
-  Leaf,
   Loader2,
   Search,
   ScanBarcode,
@@ -471,29 +466,77 @@ export default function NutritionPage() {
       </div>
 
       {/* Daily totals */}
-      <div className="grid grid-cols-5 gap-3 mb-8">
+      <div className="grid grid-cols-5 gap-2 mb-8">
         {[
-          { label: "Calories", icon: Flame, value: totals.calories, goal: goals.calories, unit: "kcal", color: "text-orange-500" },
-          { label: "Protéines", icon: Beef, value: Math.round(totals.protein * 10) / 10, goal: goals.protein, unit: "g", color: "text-red-400" },
-          { label: "Glucides", icon: Wheat, value: Math.round(totals.carbs * 10) / 10, goal: goals.carbs, unit: "g", color: "text-amber-500" },
-          { label: "Lipides", icon: Droplets, value: Math.round(totals.fat * 10) / 10, goal: goals.fat, unit: "g", color: "text-yellow-500" },
-          { label: "Fibres", icon: Leaf, value: Math.round(totals.fiber * 10) / 10, goal: goals.fiber, unit: "g", color: "text-green-500" },
+          {
+            label: "Kcal",
+            value: Math.round(totals.calories),
+            goal: goals.calories,
+            unit: "",
+            bg: "bg-orange-100/70 dark:bg-orange-950/30",
+            text: "text-orange-700 dark:text-orange-300",
+            progress: "[&>div]:bg-orange-400",
+          },
+          {
+            label: "P",
+            value: Math.round(totals.protein * 10) / 10,
+            goal: goals.protein,
+            unit: "g",
+            bg: "bg-rose-100/70 dark:bg-rose-950/30",
+            text: "text-rose-700 dark:text-rose-300",
+            progress: "[&>div]:bg-rose-400",
+          },
+          {
+            label: "G",
+            value: Math.round(totals.carbs * 10) / 10,
+            goal: goals.carbs,
+            unit: "g",
+            bg: "bg-amber-100/70 dark:bg-amber-950/30",
+            text: "text-amber-700 dark:text-amber-300",
+            progress: "[&>div]:bg-amber-400",
+          },
+          {
+            label: "L",
+            value: Math.round(totals.fat * 10) / 10,
+            goal: goals.fat,
+            unit: "g",
+            bg: "bg-yellow-100/70 dark:bg-yellow-950/30",
+            text: "text-yellow-700 dark:text-yellow-300",
+            progress: "[&>div]:bg-yellow-400",
+          },
+          {
+            label: "F",
+            value: Math.round(totals.fiber * 10) / 10,
+            goal: goals.fiber,
+            unit: "g",
+            bg: "bg-green-100/70 dark:bg-green-950/30",
+            text: "text-green-700 dark:text-green-300",
+            progress: "[&>div]:bg-green-400",
+          },
         ].map((m) => (
-          <Card key={m.label} className="border-warm-border">
-            <CardContent className="pt-3 pb-3">
-              <div className="flex items-center gap-1.5 mb-1">
-                <m.icon className={`h-3.5 w-3.5 ${m.color}`} />
-                <span className="text-xs text-muted-foreground">{m.label}</span>
-              </div>
-              <p className="text-sm font-bold">
+          <div
+            key={m.label}
+            className={`rounded-xl p-2.5 ${m.bg} flex flex-col`}
+          >
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${m.text}`}
+            >
+              {m.label}
+            </span>
+            <div className="mt-1 flex items-baseline gap-0.5 min-w-0">
+              <span className="text-base font-bold text-foreground leading-none truncate">
                 {m.value}
-                <span className="text-xs font-normal text-muted-foreground">
-                  {" "}/ {m.goal} {m.unit}
-                </span>
-              </p>
-              <Progress value={Math.min((m.value / m.goal) * 100, 100)} className="h-1 mt-1.5" />
-            </CardContent>
-          </Card>
+              </span>
+              <span className="text-[10px] text-muted-foreground truncate">
+                /{m.goal}
+                {m.unit}
+              </span>
+            </div>
+            <Progress
+              value={Math.min((m.value / m.goal) * 100, 100)}
+              className={`h-1 mt-1.5 bg-white/60 dark:bg-black/30 ${m.progress}`}
+            />
+          </div>
         ))}
       </div>
 
