@@ -12,16 +12,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink, Users } from "lucide-react";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
 
@@ -53,7 +47,8 @@ export default function ProgrammesPage() {
   const [saving, setSaving] = useState(false);
 
   // Form state
-  const [selectedClient, setSelectedClient] = useState("");
+  const [selectedClientIds, setSelectedClientIds] = useState<string[]>([]);
+  const [clientSearch, setClientSearch] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
@@ -87,13 +82,42 @@ export default function ProgrammesPage() {
   }, [fetchAll]);
 
   function resetForm() {
-    setSelectedClient("");
+    setSelectedClientIds([]);
+    setClientSearch("");
     setTitle("");
     setDescription("");
     setContent("");
     setUploadedFileUrl("");
     setUploadedFileName("");
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  const clientsWithProfile = clients.filter((c) => c.client);
+  const filteredClients = clientsWithProfile.filter((c) => {
+    if (!clientSearch.trim()) return true;
+    const q = clientSearch.toLowerCase();
+    return (
+      c.firstName.toLowerCase().includes(q) ||
+      c.lastName.toLowerCase().includes(q)
+    );
+  });
+
+  function toggleClient(clientId: string) {
+    setSelectedClientIds((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    );
+  }
+
+  function selectAllClients() {
+    setSelectedClientIds(
+      clientsWithProfile.map((c) => c.client!.id)
+    );
+  }
+
+  function deselectAllClients() {
+    setSelectedClientIds([]);
   }
 
   async function handleFileProcess(file: File) {
@@ -150,8 +174,8 @@ export default function ProgrammesPage() {
   }
 
   async function handleCreate() {
-    if (!selectedClient || !title) {
-      toast.error("Veuillez remplir cliente et titre");
+    if (selectedClientIds.length === 0 || !title) {
+      toast.error("Sélectionnez au moins une cliente et renseignez un titre");
       return;
     }
 
@@ -159,9 +183,6 @@ export default function ProgrammesPage() {
       toast.error("Ajoutez du contenu texte ou un fichier");
       return;
     }
-
-    const clientObj = clients.find((c) => c.client?.id === selectedClient);
-    if (!clientObj?.client) return;
 
     setSaving(true);
     const endpoint =
@@ -183,7 +204,7 @@ export default function ProgrammesPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          clientId: selectedClient,
+          clientIds: selectedClientIds,
           title,
           description: description || null,
           content: parsedContent,
@@ -193,7 +214,11 @@ export default function ProgrammesPage() {
       });
 
       if (res.ok) {
-        toast.success("Programme créé !");
+        const data = await res.json();
+        const n = data.count ?? selectedClientIds.length;
+        toast.success(
+          n > 1 ? `Programme envoyé à ${n} clientes !` : "Programme créé !"
+        );
         setDialogType(null);
         resetForm();
         fetchAll();
@@ -358,7 +383,7 @@ export default function ProgrammesPage() {
 
       {/* Create dialog */}
       <Dialog open={!!dialogType} onOpenChange={(open) => { if (!open) { setDialogType(null); resetForm(); } }}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {dialogType === "meal"
@@ -368,24 +393,73 @@ export default function ProgrammesPage() {
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Cliente</Label>
-              <Select
-                value={selectedClient}
-                onValueChange={(v) => v !== null && setSelectedClient(v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez une cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients
-                    .filter((c) => c.client)
-                    .map((c) => (
-                      <SelectItem key={c.client!.id} value={c.client!.id}>
-                        {c.firstName} {c.lastName}
-                      </SelectItem>
-                    ))}
-                </SelectContent>
-              </Select>
+              <div className="flex items-center justify-between">
+                <Label className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Clientes destinataires
+                  <span className="text-xs text-muted-foreground font-normal">
+                    ({selectedClientIds.length}/{clientsWithProfile.length})
+                  </span>
+                </Label>
+                <div className="flex items-center gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={selectAllClients}
+                  >
+                    Toutes
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={deselectAllClients}
+                  >
+                    Aucune
+                  </Button>
+                </div>
+              </div>
+              <Input
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+                placeholder="Rechercher une cliente..."
+                className="h-9"
+              />
+              {clientsWithProfile.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  Aucune cliente enregistrée.
+                </p>
+              ) : (
+                <div className="max-h-[220px] overflow-y-auto rounded-lg border border-warm-border divide-y divide-warm-border">
+                  {filteredClients.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Aucune cliente trouvée.
+                    </p>
+                  ) : (
+                    filteredClients.map((c) => {
+                      const clientId = c.client!.id;
+                      const checked = selectedClientIds.includes(clientId);
+                      return (
+                        <label
+                          key={clientId}
+                          className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleClient(clientId)}
+                          />
+                          <span className="text-sm flex-1 truncate">
+                            {c.firstName} {c.lastName}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Titre</Label>
@@ -462,14 +536,29 @@ export default function ProgrammesPage() {
             </div>
             <Button
               onClick={handleCreate}
-              disabled={saving || uploading || !selectedClient || !title || (!content && !uploadedFileUrl)}
+              disabled={
+                saving ||
+                uploading ||
+                selectedClientIds.length === 0 ||
+                !title ||
+                (!content && !uploadedFileUrl)
+              }
               className={`w-full text-white ${
                 dialogType === "meal"
                   ? "bg-primary hover:bg-primary/90"
                   : "bg-secondary hover:bg-secondary/90"
               }`}
             >
-              {saving ? "Création..." : "Créer le programme"}
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Envoi en cours...
+                </>
+              ) : selectedClientIds.length > 1 ? (
+                `Envoyer à ${selectedClientIds.length} clientes`
+              ) : (
+                "Créer le programme"
+              )}
             </Button>
           </div>
         </DialogContent>
