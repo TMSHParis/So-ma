@@ -62,12 +62,20 @@ export default function ProgrammeAlimentairePage() {
       ) : (
         <div className="space-y-6">
           {plans.map((plan) => {
-            const text =
-              typeof plan.content === "string"
-                ? plan.content
-                : typeof plan.content === "object" && plan.content !== null && "text" in plan.content
-                  ? (plan.content as { text: string }).text
-                  : JSON.stringify(plan.content, null, 2);
+            let text = "";
+            if (typeof plan.content === "string") {
+              text = plan.content;
+            } else if (
+              plan.content &&
+              typeof plan.content === "object" &&
+              "text" in plan.content &&
+              typeof (plan.content as { text?: unknown }).text === "string"
+            ) {
+              text = (plan.content as { text: string }).text;
+            }
+            text = text.trim();
+            const fileExt = plan.fileName?.split(".").pop()?.toUpperCase() ?? "";
+            const isPdf = fileExt === "PDF";
 
             return (
               <Card key={plan.id} className="border-warm-border">
@@ -100,13 +108,25 @@ export default function ProgrammeAlimentairePage() {
                           name: plan.fileName || plan.title,
                         })
                       }
-                      className="flex items-center gap-3 rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 hover:bg-primary/10 transition-colors w-full text-left"
+                      className="flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3.5 hover:bg-primary/10 hover:border-primary/40 transition-all w-full text-left group"
                     >
-                      <FileText className="h-5 w-5 text-primary shrink-0" />
-                      <span className="text-sm font-medium flex-1 truncate">
-                        {plan.fileName || "Programme joint"}
-                      </span>
-                      <Eye className="h-4 w-4 text-primary shrink-0" />
+                      <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-foreground">
+                          {isPdf ? "Ouvrir le programme (PDF)" : "Ouvrir le document"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Cliquez pour consulter
+                        </p>
+                      </div>
+                      {fileExt && (
+                        <Badge variant="secondary" className="text-[10px] font-bold uppercase shrink-0">
+                          {fileExt}
+                        </Badge>
+                      )}
+                      <Eye className="h-4 w-4 text-muted-foreground group-hover:text-primary shrink-0 transition-colors" />
                     </button>
                   )}
                   {text && (
