@@ -402,7 +402,7 @@ export default function NutritionPage() {
                   </Button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Recherche parmi 400+ aliments génériques + millions de produits (OpenFoodFacts). Tolère les fautes et accents.
+                  Recherche parmi 3 300+ aliments (table CIQUAL ANSES) + millions de produits (OpenFoodFacts). Tolère fautes, accents et orthographe approximative.
                 </p>
               </div>
 
