@@ -177,4 +177,5 @@ export const WORLD_FOODS: WorldFood[] = [
   { name: "Alloco (banane plantain frite)", region: "Afrique", kcal: 165, p: 1.2, c: 30, f: 5, fi: 2.5 },
   { name: "Poisson braisé (daurade)", region: "Afrique", kcal: 135, p: 22, c: 0, f: 5, fi: 0 },
   { name: "Tô (pâte de mil)", region: "Afrique", kcal: 140, p: 3.5, c: 30, f: 0.8, fi: 1.8 },
+  { name: "Dégué (boisson mil yaourt)", region: "Afrique", kcal: 110, p: 3, c: 20, f: 2, fi: 0.5 },
 ];
