@@ -618,7 +618,7 @@ export default function ClientsPage() {
                         {progress.food.calories > 0 && (
                           <div>
                             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Nutrition{progressDate !== todayIso ? ` du ${progressDate}` : " du jour"}</p>
-                            <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-4 gap-y-2 text-xs">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-2 text-xs">
                               {[
                                 { label: "Calories", val: progress.food.calories, goal: progress.goals.goalCalories, unit: "kcal" },
                                 { label: "Protéines", val: progress.food.protein, goal: progress.goals.goalProtein, unit: "g" },
@@ -628,12 +628,15 @@ export default function ClientsPage() {
                               ].map((item) => {
                                 const p = pct(item.val, item.goal);
                                 return (
-                                  <div key={item.label} className="flex flex-col">
+                                  <div key={item.label} className="flex flex-col min-w-0">
                                     <span className="text-muted-foreground text-[10px]">{item.label}</span>
-                                    <div className="flex items-baseline gap-1">
+                                    <div className="flex items-baseline gap-1 whitespace-nowrap">
                                       <span className={`font-semibold ${statColor(item.val, item.goal)}`}>{item.val}</span>
-                                      {item.goal && <span className="text-muted-foreground">/ {item.goal}</span>}
-                                      <span className="text-muted-foreground">{item.unit}</span>
+                                      {item.goal ? (
+                                        <span className="text-muted-foreground">/ {item.goal} {item.unit}</span>
+                                      ) : (
+                                        <span className="text-muted-foreground">{item.unit}</span>
+                                      )}
                                     </div>
                                     {item.goal && (
                                       <div className="h-1 w-full bg-muted rounded-full mt-1 overflow-hidden">
