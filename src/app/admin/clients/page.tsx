@@ -555,38 +555,63 @@ export default function ClientsPage() {
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground truncate">{c.email}</p>
+                    {/* Mobile-only compact stats */}
+                    <div className="sm:hidden mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      {c.client?.goalCalories && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warm-primary/10">
+                          <span className="text-[9px] font-semibold uppercase text-warm-primary">Obj</span>
+                          {pLoading ? (
+                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                          ) : progress && progress.food.calories > 0 ? (
+                            <>
+                              <span className={`font-bold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
+                              <span className="text-muted-foreground">/{c.client.goalCalories}</span>
+                            </>
+                          ) : (
+                            <span className="font-semibold">{c.client.goalCalories}</span>
+                          )}
+                        </span>
+                      )}
+                      {progress && progress.sport.calories > 0 && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-100/70 dark:bg-orange-950/30 text-orange-700 dark:text-orange-200">
+                          <Flame className="h-2.5 w-2.5" />
+                          <span className="font-bold">{progress.sport.calories}</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Compact summary */}
-                  <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+                  {/* Compact summary — stat blocks with labels */}
+                  <div className="hidden sm:flex items-stretch gap-2 shrink-0">
                     {c.client?.maintenanceCalories && (
-                      <span className="flex items-center gap-1" title="DEJ maintien">
-                        <span className="text-muted-foreground">{c.client.maintenanceCalories}</span>
-                      </span>
+                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-muted/60" title="DEJ maintien (kcal pour stabiliser le poids)">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">Maintien</span>
+                        <span className="text-xs font-medium text-muted-foreground mt-0.5 whitespace-nowrap">{c.client.maintenanceCalories} kcal</span>
+                      </div>
                     )}
                     {c.client?.goalCalories && (
-                      <span className="flex items-center gap-1 font-semibold text-foreground" title="Objectif kcal">
-                        {c.client.goalCalories} kcal
-                      </span>
+                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-warm-primary/10" title="Objectif kcal du jour">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-warm-primary leading-none">Objectif</span>
+                        {pLoading ? (
+                          <Loader2 className="h-3 w-3 animate-spin mt-1" />
+                        ) : progress && progress.food.calories > 0 ? (
+                          <span className="text-xs mt-0.5 whitespace-nowrap">
+                            <span className={`font-bold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
+                            <span className="text-muted-foreground"> / {c.client.goalCalories} kcal</span>
+                          </span>
+                        ) : (
+                          <span className="text-xs font-bold text-foreground mt-0.5 whitespace-nowrap">{c.client.goalCalories} kcal</span>
+                        )}
+                      </div>
                     )}
-                    {pLoading ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : progress && (progress.food.calories > 0 || progress.sport.calories > 0) ? (
-                      <>
-                        {progress.food.calories > 0 && progress.goals.goalCalories && (
-                          <span className="flex items-center gap-1">
-                            <span className={`font-semibold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
-                            <span>/ {progress.goals.goalCalories} kcal</span>
-                          </span>
-                        )}
-                        {progress.sport.calories > 0 && (
-                          <span className="flex items-center gap-1">
-                            <Flame className="h-3.5 w-3.5 text-orange-500" />
-                            <span className="font-semibold text-foreground">{progress.sport.calories}</span>
-                          </span>
-                        )}
-                      </>
-                    ) : null}
+                    {progress && progress.sport.calories > 0 && (
+                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-orange-100/60 dark:bg-orange-950/30" title="Calories brûlées par le sport">
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-300 leading-none">Sport</span>
+                        <span className="text-xs font-bold text-orange-700 dark:text-orange-200 mt-0.5 whitespace-nowrap inline-flex items-center gap-1">
+                          <Flame className="h-3 w-3" />{progress.sport.calories} kcal
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -618,13 +643,12 @@ export default function ClientsPage() {
                         {progress.food.calories > 0 && (
                           <div>
                             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Nutrition{progressDate !== todayIso ? ` du ${progressDate}` : " du jour"}</p>
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-x-3 gap-y-2 text-xs">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 text-xs">
                               {[
-                                { label: "Calories", val: progress.food.calories, goal: progress.goals.goalCalories, unit: "kcal" },
-                                { label: "Protéines", val: progress.food.protein, goal: progress.goals.goalProtein, unit: "g" },
-                                { label: "Glucides", val: progress.food.carbs, goal: progress.goals.goalCarbs, unit: "g" },
-                                { label: "Lipides", val: progress.food.fat, goal: progress.goals.goalFat, unit: "g" },
-                                { label: "Fibres", val: progress.food.fiber, goal: progress.goals.goalFiber, unit: "g" },
+                                { label: "Protéines", val: progress.food.protein, goal: progress.goals.goalProtein, unit: "g", color: "bg-rose-400" },
+                                { label: "Glucides", val: progress.food.carbs, goal: progress.goals.goalCarbs, unit: "g", color: "bg-amber-400" },
+                                { label: "Lipides", val: progress.food.fat, goal: progress.goals.goalFat, unit: "g", color: "bg-yellow-400" },
+                                { label: "Fibres", val: progress.food.fiber, goal: progress.goals.goalFiber, unit: "g", color: "bg-green-400" },
                               ].map((item) => {
                                 const p = pct(item.val, item.goal);
                                 return (
@@ -642,7 +666,7 @@ export default function ClientsPage() {
                                       <div className="h-1 w-full bg-muted rounded-full mt-1 overflow-hidden">
                                         <div
                                           className={`h-full rounded-full transition-all ${
-                                            (p ?? 0) > 110 ? "bg-red-500" : (p ?? 0) >= 90 ? "bg-green-500" : "bg-warm-primary"
+                                            (p ?? 0) > 110 ? "bg-red-500" : item.color
                                           }`}
                                           style={{ width: `${Math.min(p ?? 0, 100)}%` }}
                                         />
