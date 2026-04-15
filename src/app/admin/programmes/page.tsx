@@ -15,7 +15,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink, Users } from "lucide-react";
+import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink, Users, Send } from "lucide-react";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
 
@@ -52,6 +52,15 @@ export default function ProgrammesPage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [content, setContent] = useState("");
+
+  // Resend state
+  const [resendState, setResendState] = useState<{
+    plan: Plan;
+    type: "meal" | "workout";
+  } | null>(null);
+  const [resendClientIds, setResendClientIds] = useState<string[]>([]);
+  const [resendSearch, setResendSearch] = useState("");
+  const [resending, setResending] = useState(false);
 
   // File upload
   const [uploadedFileUrl, setUploadedFileUrl] = useState("");
@@ -233,6 +242,59 @@ export default function ProgrammesPage() {
     }
   }
 
+  function openResend(plan: Plan, type: "meal" | "workout") {
+    setResendState({ plan, type });
+    setResendClientIds([]);
+    setResendSearch("");
+  }
+
+  function toggleResendClient(clientId: string) {
+    setResendClientIds((prev) =>
+      prev.includes(clientId)
+        ? prev.filter((id) => id !== clientId)
+        : [...prev, clientId]
+    );
+  }
+
+  async function handleResend() {
+    if (!resendState || resendClientIds.length === 0) return;
+    const { plan, type } = resendState;
+    const endpoint =
+      type === "meal" ? "/api/admin/meal-plans" : "/api/admin/workout-plans";
+    setResending(true);
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientIds: resendClientIds,
+          title: plan.title,
+          description: plan.description,
+          content: plan.content ?? {},
+          fileUrl: plan.fileUrl,
+          fileName: plan.fileName,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const n = data.count ?? resendClientIds.length;
+        toast.success(
+          n > 1 ? `Programme envoyé à ${n} clientes !` : "Programme envoyé !"
+        );
+        setResendState(null);
+        setResendClientIds([]);
+        fetchAll();
+      } else {
+        const err = await res.json();
+        toast.error(err.message || "Erreur");
+      }
+    } catch {
+      toast.error("Erreur de connexion");
+    } finally {
+      setResending(false);
+    }
+  }
+
   async function deletePlan(type: "meal" | "workout", id: string) {
     const endpoint =
       type === "meal"
@@ -256,7 +318,14 @@ export default function ProgrammesPage() {
         <CardContent className="pt-4 pb-4">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
-              <p className="font-medium">{plan.title}</p>
+              <button
+                type="button"
+                onClick={() => openResend(plan, type)}
+                className="font-medium text-left hover:text-warm-primary hover:underline decoration-dotted underline-offset-4 transition-colors"
+                title="Renvoyer ce programme à d'autres clientes"
+              >
+                {plan.title}
+              </button>
               <p className="text-xs text-muted-foreground">
                 {plan.client.user.firstName} {plan.client.user.lastName}{" "}
                 &middot;{" "}
@@ -284,6 +353,15 @@ export default function ProgrammesPage() {
               <Badge variant={plan.active ? "default" : "secondary"}>
                 {plan.active ? "Actif" : "Inactif"}
               </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-warm-primary"
+                onClick={() => openResend(plan, type)}
+                title="Renvoyer à d'autres clientes"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
               <Button
                 variant="ghost"
                 size="icon"
@@ -561,6 +639,127 @@ export default function ProgrammesPage() {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Resend dialog */}
+      <Dialog
+        open={!!resendState}
+        onOpenChange={(open) => { if (!open) setResendState(null); }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Renvoyer à d&apos;autres clientes</DialogTitle>
+          </DialogHeader>
+          {resendState && (
+            <div className="space-y-4">
+              <div className="rounded-lg border border-warm-border bg-muted/30 px-3 py-2.5">
+                <p className="text-sm font-medium truncate">{resendState.plan.title}</p>
+                {resendState.plan.fileName && (
+                  <p className="text-xs text-muted-foreground truncate mt-0.5 inline-flex items-center gap-1">
+                    <FileText className="h-3 w-3" />
+                    {resendState.plan.fileName}
+                  </p>
+                )}
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Créé pour {resendState.plan.client.user.firstName} {resendState.plan.client.user.lastName}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    Destinataires
+                    <span className="text-xs text-muted-foreground font-normal">
+                      ({resendClientIds.length}/{clientsWithProfile.length})
+                    </span>
+                  </Label>
+                  <div className="flex items-center gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() =>
+                        setResendClientIds(clientsWithProfile.map((c) => c.client!.id))
+                      }
+                    >
+                      Toutes
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs"
+                      onClick={() => setResendClientIds([])}
+                    >
+                      Aucune
+                    </Button>
+                  </div>
+                </div>
+                <Input
+                  value={resendSearch}
+                  onChange={(e) => setResendSearch(e.target.value)}
+                  placeholder="Rechercher une cliente..."
+                  className="h-9"
+                />
+                <div className="max-h-[260px] overflow-y-auto rounded-lg border border-warm-border divide-y divide-warm-border">
+                  {clientsWithProfile
+                    .filter((c) => {
+                      if (!resendSearch.trim()) return true;
+                      const q = resendSearch.toLowerCase();
+                      return (
+                        c.firstName.toLowerCase().includes(q) ||
+                        c.lastName.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((c) => {
+                      const clientId = c.client!.id;
+                      const checked = resendClientIds.includes(clientId);
+                      return (
+                        <label
+                          key={clientId}
+                          className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                        >
+                          <Checkbox
+                            checked={checked}
+                            onCheckedChange={() => toggleResendClient(clientId)}
+                          />
+                          <span className="text-sm flex-1 truncate">
+                            {c.firstName} {c.lastName}
+                          </span>
+                        </label>
+                      );
+                    })}
+                </div>
+              </div>
+
+              <Button
+                onClick={handleResend}
+                disabled={resending || resendClientIds.length === 0}
+                className={`w-full text-white ${
+                  resendState.type === "meal"
+                    ? "bg-primary hover:bg-primary/90"
+                    : "bg-secondary hover:bg-secondary/90"
+                }`}
+              >
+                {resending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    {resendClientIds.length > 1
+                      ? `Envoyer à ${resendClientIds.length} clientes`
+                      : "Envoyer"}
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
