@@ -6,6 +6,7 @@
  */
 import Fuse from "fuse.js";
 import ciqualRaw from "@/data/ciqual.json";
+import { WORLD_FOODS } from "@/data/foods-world";
 
 export type GenericFood = {
   name: string;         // nom court affiché
@@ -74,6 +75,32 @@ const POPULAR_BOOST_TERMS = new Set(
 
 const ciqual = ciqualRaw as CiqualEntry[];
 
+/** Convertit WORLD_FOODS (plats méditerranéens, caucasiens, maghrébins,
+ *  africains) au même schéma CIQUAL pour un traitement unifié. */
+const worldEntries: CiqualEntry[] = WORLD_FOODS.map((w) => ({
+  name: w.name,
+  grp: w.region,
+  ssgrp: w.region,
+  kcal: w.kcal,
+  p: w.p,
+  c: w.c,
+  f: w.f,
+  fi: w.fi,
+}));
+
+/** Ciqual + plats du monde (les doublons sont filtrés par nom normalisé). */
+const allEntries: CiqualEntry[] = (() => {
+  const seen = new Set(ciqual.map((e) => normalize(shortDisplay(e.name))));
+  const out = [...ciqual];
+  for (const w of worldEntries) {
+    const key = normalize(shortDisplay(w.name));
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(w);
+  }
+  return out;
+})();
+
 type IndexedFood = GenericFood & {
   _nameNorm: string;      // nom normalisé (sans accents, lowercase)
   _fullNorm: string;      // nom CIQUAL complet normalisé
@@ -81,7 +108,7 @@ type IndexedFood = GenericFood & {
   _popular: boolean;
 };
 
-const foods: IndexedFood[] = ciqual.map((e) => {
+const foods: IndexedFood[] = allEntries.map((e) => {
   const display = shortDisplay(e.name);
   const normFull = normalize(e.name);
   const normDisplay = normalize(display);
