@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
+import { DateNavigator } from "@/components/date-navigator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,6 +134,7 @@ export default function SportPage() {
     () => calendarDateInTimeZone(CLIENT_TIMEZONE),
     []
   );
+  const [selectedDate, setSelectedDate] = useState(todayIso);
 
   const [sessions, setSessions] = useState<SportSession[]>([]);
   const [ready, setReady] = useState(false);
@@ -221,8 +223,9 @@ export default function SportPage() {
   );
 
   const refreshSessions = useCallback(async () => {
+    setReady(false);
     try {
-      const res = await fetch(`/api/client/sport-entries?date=${todayIso}`);
+      const res = await fetch(`/api/client/sport-entries?date=${selectedDate}`);
       if (!res.ok) {
         if (res.status === 401) toast.error("Session expirée");
         return;
@@ -236,7 +239,7 @@ export default function SportPage() {
     } finally {
       setReady(true);
     }
-  }, [todayIso, mapApiToSession]);
+  }, [selectedDate, mapApiToSession]);
 
   useEffect(() => {
     refreshSessions();
@@ -313,7 +316,7 @@ export default function SportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: todayIso,
+          date: selectedDate,
           sportType,
           duration: dur,
           calories: calories ? parseInt(calories, 10) : estimatedCalories,
@@ -347,7 +350,7 @@ export default function SportPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: todayIso,
+          date: selectedDate,
           sportType: "MARCHE",
           duration: est.minutes,
           calories: est.calories,
@@ -440,7 +443,7 @@ export default function SportPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
             Suivi sportif
@@ -753,6 +756,10 @@ export default function SportPage() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="mb-6 flex justify-center sm:justify-start">
+        <DateNavigator value={selectedDate} onChange={setSelectedDate} />
       </div>
 
       {/* Stats overview */}

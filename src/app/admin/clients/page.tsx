@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { DateNavigator } from "@/components/date-navigator";
+import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -149,6 +151,11 @@ type CalcResult = {
 export default function ClientsPage() {
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const todayIso = useMemo(
+    () => calendarDateInTimeZone(CLIENT_TIMEZONE),
+    []
+  );
+  const [progressDate, setProgressDate] = useState(todayIso);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -185,16 +192,31 @@ export default function ClientsPage() {
   const [macroPctCarbs, setMacroPctCarbs] = useState(50);
   const [fiberMode, setFiberMode] = useState<"auto" | "fixed">("auto");
 
+  const fetchProgress = useCallback(
+    async (clientId: string, date: string) => {
+      setProgressLoading((prev) => ({ ...prev, [clientId]: true }));
+      try {
+        const res = await fetch(
+          `/api/admin/clients/${clientId}/progress?date=${date}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setProgressMap((prev) => ({ ...prev, [clientId]: data }));
+        }
+      } catch { /* silent */ }
+      finally {
+        setProgressLoading((prev) => ({ ...prev, [clientId]: false }));
+      }
+    },
+    []
+  );
+
   const fetchClients = useCallback(async () => {
     try {
       const res = await fetch("/api/admin/clients");
       if (res.ok) {
         const data: ClientRow[] = await res.json();
         setClients(data);
-        // Fetch progress for all clients that have a client profile
-        for (const c of data) {
-          if (c.client?.id) fetchProgress(c.client.id);
-        }
       }
     } catch {
       toast.error("Erreur lors du chargement des clientes");
@@ -203,21 +225,14 @@ export default function ClientsPage() {
     }
   }, []);
 
-  async function fetchProgress(clientId: string) {
-    setProgressLoading((prev) => ({ ...prev, [clientId]: true }));
-    try {
-      const res = await fetch(`/api/admin/clients/${clientId}/progress`);
-      if (res.ok) {
-        const data = await res.json();
-        setProgressMap((prev) => ({ ...prev, [clientId]: data }));
-      }
-    } catch { /* silent */ }
-    finally {
-      setProgressLoading((prev) => ({ ...prev, [clientId]: false }));
-    }
-  }
-
   useEffect(() => { fetchClients(); }, [fetchClients]);
+
+  // Fetch progress for all clients whenever the list or date changes
+  useEffect(() => {
+    for (const c of clients) {
+      if (c.client?.id) fetchProgress(c.client.id, progressDate);
+    }
+  }, [clients, progressDate, fetchProgress]);
 
   async function handleCreateClient(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -461,7 +476,10 @@ export default function ClientsPage() {
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Clientes
           </h1>
-          <p className="text-muted-foreground mt-1">{clients.length} compte{clients.length > 1 ? "s" : ""}</p>
+          <div className="mt-1 flex items-center gap-3 flex-wrap">
+            <p className="text-muted-foreground">{clients.length} compte{clients.length > 1 ? "s" : ""}</p>
+            <DateNavigator value={progressDate} onChange={setProgressDate} />
+          </div>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90 text-white">
@@ -599,7 +617,7 @@ export default function ClientsPage() {
                         {/* Nutrition grid */}
                         {progress.food.calories > 0 && (
                           <div>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Nutrition du jour</p>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Nutrition{progressDate !== todayIso ? ` du ${progressDate}` : " du jour"}</p>
                             <div className="grid grid-cols-3 sm:grid-cols-6 gap-x-4 gap-y-2 text-xs">
                               {[
                                 { label: "Calories", val: progress.food.calories, goal: progress.goals.goalCalories, unit: "kcal" },
@@ -637,7 +655,7 @@ export default function ClientsPage() {
                         {/* Sport */}
                         {(progress.sport.calories > 0 || progress.sport.steps > 0) && (
                           <div>
-                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Activité du jour</p>
+                            <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">Activité{progressDate !== todayIso ? ` du ${progressDate}` : " du jour"}</p>
                             <div className="flex flex-wrap items-center gap-3 text-xs">
                               {progress.sport.calories > 0 && (
                                 <span className="flex items-center gap-1.5">
@@ -679,7 +697,7 @@ export default function ClientsPage() {
                         )}
                       </div>
                     ) : (
-                      <p className="ml-14 text-xs text-muted-foreground py-1">Aucune donnée aujourd'hui</p>
+                      <p className="ml-14 text-xs text-muted-foreground py-1">{progressDate === todayIso ? "Aucune donnée aujourd'hui" : `Aucune donnée le ${progressDate}`}</p>
                     )}
                   </div>
                 )}

@@ -24,15 +24,25 @@ function walkingMET(speedKmh: number): number {
 }
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ clientId: string }> },
 ) {
   if (!(await requireAdmin()))
     return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
   const { clientId } = await params;
 
-  const todayIso = calendarDateInTimeZone(CLIENT_TIMEZONE);
-  const todayDate = calendarIsoToPrismaDate(todayIso);
+  const dateParam = req.nextUrl.searchParams.get("date");
+  const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
+  const todayIso =
+    dateParam && isoRegex.test(dateParam)
+      ? dateParam
+      : calendarDateInTimeZone(CLIENT_TIMEZONE);
+  let todayDate: Date;
+  try {
+    todayDate = calendarIsoToPrismaDate(todayIso);
+  } catch {
+    return NextResponse.json({ error: "Date invalide" }, { status: 400 });
+  }
 
   const [client, foodEntries, sportEntries] = await Promise.all([
     prisma.client.findUnique({

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
+import { DateNavigator } from "@/components/date-navigator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,6 +78,7 @@ export default function NutritionPage() {
     () => calendarDateInTimeZone(CLIENT_TIMEZONE),
     []
   );
+  const [selectedDate, setSelectedDate] = useState(todayIso);
 
   const [meals, setMeals] = useState<Record<string, FoodItem[]>>(emptyMeals);
   const [goals, setGoals] = useState({
@@ -102,10 +104,11 @@ export default function NutritionPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
 
   const refreshData = useCallback(async () => {
+    setReady(false);
     try {
       const [profileRes, foodRes] = await Promise.all([
         fetch("/api/client/profile"),
-        fetch(`/api/client/food-entries?date=${todayIso}`),
+        fetch(`/api/client/food-entries?date=${selectedDate}`),
       ]);
       if (profileRes.ok) {
         const p = await profileRes.json();
@@ -154,7 +157,7 @@ export default function NutritionPage() {
     } finally {
       setReady(true);
     }
-  }, [todayIso]);
+  }, [selectedDate]);
 
   useEffect(() => {
     refreshData();
@@ -212,7 +215,7 @@ export default function NutritionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: todayIso,
+          date: selectedDate,
           mealType: selectedMealType,
           foodName: item.name,
           quantity: item.quantity,
@@ -326,7 +329,7 @@ export default function NutritionPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Suivi alimentaire
@@ -463,6 +466,10 @@ export default function NutritionPage() {
             </div>
           </DialogContent>
         </Dialog>
+      </div>
+
+      <div className="mb-8 flex justify-center sm:justify-start">
+        <DateNavigator value={selectedDate} onChange={setSelectedDate} />
       </div>
 
       {/* Daily totals */}
