@@ -264,23 +264,25 @@ export default async function DashboardPage() {
           </Card>
         </Link>
 
-        <Link href="/dashboard/cycle">
-          <Card className="border-warm-border hover:shadow-md transition-shadow cursor-pointer h-full">
-            <CardHeader className="pb-2">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center">
-                  <Heart className="h-5 w-5 text-accent-foreground" />
+        {client.sex !== "M" && (
+          <Link href="/dashboard/cycle">
+            <Card className="border-warm-border hover:shadow-md transition-shadow cursor-pointer h-full">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-accent/20 rounded-xl flex items-center justify-center">
+                    <Heart className="h-5 w-5 text-accent-foreground" />
+                  </div>
+                  <CardTitle className="text-base">Cycle menstruel</CardTitle>
                 </div>
-                <CardTitle className="text-base">Cycle menstruel</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Suivez votre cycle et ses phases pour adapter votre routine.
-              </p>
-            </CardContent>
-          </Card>
-        </Link>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">
+                  Suivez votre cycle et ses phases pour adapter votre routine.
+                </p>
+              </CardContent>
+            </Card>
+          </Link>
+        )}
       </div>
     </div>
   );

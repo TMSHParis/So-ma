@@ -19,9 +19,15 @@ import {
   Lightbulb,
   Target,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-const sidebarLinks = [
+type SidebarLink = {
+  href: string;
+  label: string;
+  icon: typeof LayoutDashboard;
+};
+
+const baseLinks: SidebarLink[] = [
   { href: "/dashboard", label: "Tableau de bord", icon: LayoutDashboard },
   { href: "/dashboard/objectifs", label: "Mes objectifs", icon: Target },
   { href: "/dashboard/nutrition", label: "Suivi alimentaire", icon: Utensils },
@@ -40,7 +46,13 @@ const sidebarLinks = [
   { href: "/dashboard/ressources", label: "Ressources", icon: Lightbulb },
 ];
 
-function SidebarContent({ pathname }: { pathname: string }) {
+function SidebarContent({
+  pathname,
+  sidebarLinks,
+}: {
+  pathname: string;
+  sidebarLinks: SidebarLink[];
+}) {
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-warm-border">
@@ -97,12 +109,26 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [hideCycle, setHideCycle] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/client/profile")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.sex === "M") setHideCycle(true);
+      })
+      .catch(() => {});
+  }, []);
+
+  const sidebarLinks = hideCycle
+    ? baseLinks.filter((l) => l.href !== "/dashboard/cycle")
+    : baseLinks;
 
   return (
     <div className="flex h-screen bg-cream">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-warm-border">
-        <SidebarContent pathname={pathname} />
+        <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} />
       </aside>
 
       {/* Mobile header + sidebar */}
@@ -116,7 +142,7 @@ export default function DashboardLayout({
                 <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 bg-white">
-              <SidebarContent pathname={pathname} />
+              <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} />
             </SheetContent>
           </Sheet>
         </header>
