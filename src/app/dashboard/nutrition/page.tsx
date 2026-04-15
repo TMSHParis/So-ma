@@ -376,8 +376,8 @@ export default function NutritionPage() {
 
               <div className="space-y-2">
                 <Label>Rechercher un aliment</Label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
+                <div className="flex gap-2 min-w-0">
+                  <div className="relative flex-1 min-w-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
                       value={searchQuery}
@@ -433,8 +433,8 @@ export default function NutritionPage() {
                         onClick={() => addFood(result)}
                         className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
                       >
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-foreground truncate pr-2">
+                        <div className="flex items-center justify-between gap-2 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate min-w-0 flex-1">
                             {result.name}
                           </p>
                           {result.source === "local" && (

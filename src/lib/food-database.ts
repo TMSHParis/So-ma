@@ -7,6 +7,7 @@
 import Fuse from "fuse.js";
 import ciqualRaw from "@/data/ciqual.json";
 import { WORLD_FOODS } from "@/data/foods-world";
+import { SUPPLEMENT_FOODS } from "@/data/foods-supplements";
 
 export type GenericFood = {
   name: string;         // nom court affiché
@@ -70,6 +71,7 @@ const POPULAR_BOOST_TERMS = new Set(
     "crepe", "gaufre", "gateau", "mousse", "flan", "creme", "compote",
     "miel", "confiture", "huile", "vinaigre", "mayonnaise", "moutarde",
     "amande", "noix", "noisette", "pistache", "cacahuete",
+    "whey", "proteine", "isolate", "caseine",
   ].map(normalize)
 );
 
@@ -88,11 +90,23 @@ const worldEntries: CiqualEntry[] = WORLD_FOODS.map((w) => ({
   fi: w.fi,
 }));
 
-/** Ciqual + plats du monde (les doublons sont filtrés par nom normalisé). */
+/** Compléments sportifs (whey, isolate, caséine) — marques FR populaires. */
+const supplementEntries: CiqualEntry[] = SUPPLEMENT_FOODS.map((s) => ({
+  name: s.name,
+  grp: "Compléments",
+  ssgrp: s.brand,
+  kcal: s.kcal,
+  p: s.p,
+  c: s.c,
+  f: s.f,
+  fi: s.fi,
+}));
+
+/** Ciqual + plats du monde + compléments (doublons filtrés par nom normalisé). */
 const allEntries: CiqualEntry[] = (() => {
   const seen = new Set(ciqual.map((e) => normalize(shortDisplay(e.name))));
   const out = [...ciqual];
-  for (const w of worldEntries) {
+  for (const w of [...worldEntries, ...supplementEntries]) {
     const key = normalize(shortDisplay(w.name));
     if (seen.has(key)) continue;
     seen.add(key);
@@ -168,7 +182,16 @@ export function searchLocalFoods(query: string): (GenericFood & { score: number 
   if (q.length < 2) return [];
 
   const normQ = normalize(q);
-  const hits = fuse.search(normQ, { limit: 60 });
+
+  // Pré-filtre substring : garantit que toute occurrence directe dans le nom
+  // remonte, même si Fuse.js rate la requête (fréquent sur les mots courts
+  // type "whey", "iso", "dymatize").
+  const directHits = foods
+    .filter((f) => f._nameNorm.includes(normQ) || f._fullNorm.includes(normQ))
+    .map((item) => ({ item, score: 0 as number }));
+
+  const fuseHits = fuse.search(normQ, { limit: 60 });
+  const hits = [...directHits, ...fuseHits];
 
   const scored = hits.map(({ item, score = 1 }) => {
     let adj = score;

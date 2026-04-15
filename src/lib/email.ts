@@ -2,6 +2,42 @@ import { Resend } from "resend";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
+export async function sendPasswordResetEmail(data: {
+  to: string;
+  firstName: string;
+  resetUrl: string;
+}) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn("[email] RESEND_API_KEY not set, skipping email");
+    return;
+  }
+
+  await resend.emails.send({
+    from: "So Ma <noreply@so-ma.fr>",
+    to: data.to,
+    subject: "Réinitialiser ton mot de passe",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 0;">
+        <h2 style="color: #1d1d1f; margin-bottom: 16px;">Salut ${data.firstName} !</h2>
+        <p style="color: #666; line-height: 1.6;">
+          Tu as demandé à réinitialiser ton mot de passe. Clique sur le bouton ci-dessous pour en définir un nouveau. Ce lien est valable <strong>1 heure</strong>.
+        </p>
+        <p style="margin-top: 24px;">
+          <a href="${data.resetUrl}" style="background: #8B7355; color: white; padding: 12px 24px; border-radius: 999px; text-decoration: none; display: inline-block;">
+            Réinitialiser mon mot de passe
+          </a>
+        </p>
+        <p style="color: #999; font-size: 13px; line-height: 1.5; margin-top: 24px;">
+          Si tu n'es pas à l'origine de cette demande, ignore simplement cet e-mail — ton mot de passe actuel reste inchangé.
+        </p>
+        <p style="color: #999; font-size: 12px; line-height: 1.5; margin-top: 16px; word-break: break-all;">
+          Lien direct : ${data.resetUrl}
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendAdminBilanNotification(data: {
   name: string;
   email: string;

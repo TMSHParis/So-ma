@@ -87,6 +87,12 @@ function ConnexionForm() {
         </form>
 
         <p className="text-center text-xs text-muted-foreground mt-6">
+          <Link href="/mot-de-passe-oublie" className="text-primary hover:text-primary/80 transition-colors">
+            Mot de passe oublié ?
+          </Link>
+        </p>
+
+        <p className="text-center text-xs text-muted-foreground mt-3">
           Pas encore de compte ?{" "}
           <Link href="/inscription" className="text-primary hover:text-primary/80 transition-colors">
             Créer un compte
@@ -95,7 +101,7 @@ function ConnexionForm() {
 
         <p className="text-center text-xs text-muted-foreground mt-3">
           <Link href="/" className="hover:text-foreground transition-colors">
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
         </p>
       </div>
