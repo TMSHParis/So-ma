@@ -138,6 +138,7 @@ model Client {
   measurementEntries MeasurementEntry[]
   resources         ClientResource[]
   foodSuggestions   FoodSuggestion[]
+  recipes           Recipe[]
   waterEntries      WaterEntry[]
 
   @@map("clients")
@@ -338,6 +339,37 @@ model ClientResource {
 
   @@unique([clientId, resourceId])
   @@map("client_resources")
+}
+
+model Recipe {
+  id        String       @id @default(cuid())
+  clientId  String       @map("client_id")
+  name      String
+  items     RecipeItem[]
+  createdAt DateTime     @default(now()) @map("created_at")
+  updatedAt DateTime     @updatedAt @map("updated_at")
+
+  client    Client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@map("recipes")
+}
+
+model RecipeItem {
+  id       String @id @default(cuid())
+  recipeId String @map("recipe_id")
+  foodName String @map("food_name")
+  quantity Float
+  unit     String @default("g")
+  calories Float  @default(0)
+  protein  Float  @default(0)
+  carbs    Float  @default(0)
+  fat      Float  @default(0)
+  fiber    Float  @default(0)
+
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+
+  @@map("recipe_items")
 }
 
 model FoodSuggestion {

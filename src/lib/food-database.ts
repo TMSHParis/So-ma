@@ -193,19 +193,29 @@ export function searchLocalFoods(query: string): (GenericFood & { score: number 
   const fuseHits = fuse.search(normQ, { limit: 60 });
   const hits = [...directHits, ...fuseHits];
 
+  const queryWords = normQ.split(" ").filter((w) => w.length >= 2);
+
   const scored = hits.map(({ item, score = 1 }) => {
     let adj = score;
     if (item._nameNorm === normQ) adj -= 0.7;
     else if (item._nameNorm.startsWith(normQ)) adj -= 0.45;
     else if (item._nameNorm.includes(normQ)) adj -= 0.3;
     else if (item._fullNorm.includes(normQ)) adj -= 0.2;
-    // tous les mots du query présents dans le nom
-    if (normQ.split(" ").every((w) => w.length < 2 || item._fullNorm.includes(w))) {
-      adj -= 0.15;
+
+    // Tous les mots du query présents dans le nom court → gros boost
+    if (queryWords.length > 1 && queryWords.every((w) => item._nameNorm.includes(w))) {
+      adj -= 0.5;
     }
+    // Tous les mots présents dans le nom complet (moindre boost)
+    else if (queryWords.every((w) => item._fullNorm.includes(w))) {
+      adj -= 0.25;
+    }
+
     if (item._popular) adj -= 0.1;
     // pénalise les noms très longs (variantes CIQUAL verbeuses)
     if (item.name.length > 50) adj += 0.1;
+    // favorise les noms courts et directs
+    if (item.name.length < 30) adj -= 0.05;
     return { item, score: Math.max(adj, 0) };
   });
 

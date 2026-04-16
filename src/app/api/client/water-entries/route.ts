@@ -1,68 +1,78 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { requireClientProfile } from "@/lib/client-session";
 import {
   calendarDateInTimeZone,
   calendarIsoToPrismaDate,
   CLIENT_TIMEZONE,
 } from "@/lib/calendar-day";
 
-async function getClient() {
-  const session = await auth();
-  if (!session?.user?.id) return null;
-  return prisma.client.findUnique({ where: { userId: session.user.id } });
-}
+/** GET — eau du jour en litres */
+export async function GET(request: NextRequest) {
+  const ctx = await requireClientProfile();
+  if ("error" in ctx) return ctx.error;
 
-export async function GET(req: NextRequest) {
-  const client = await getClient();
-  if (!client) return NextResponse.json([], { status: 401 });
-
-  const dateParam = req.nextUrl.searchParams.get("date");
-  const isoRegex = /^\d{4}-\d{2}-\d{2}$/;
-
-  if (dateParam && isoRegex.test(dateParam)) {
-    const entry = await prisma.waterEntry.findUnique({
-      where: {
-        clientId_date: {
-          clientId: client.id,
-          date: calendarIsoToPrismaDate(dateParam),
-        },
-      },
-    });
-    return NextResponse.json(entry ?? { liters: 0 });
-  }
-
-  const entries = await prisma.waterEntry.findMany({
-    where: { clientId: client.id },
-    orderBy: { date: "asc" },
-  });
-  return NextResponse.json(entries);
-}
-
-export async function POST(req: Request) {
-  const client = await getClient();
-  if (!client)
-    return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
-
-  const { date, liters } = await req.json();
-  const dateStr =
-    date && /^\d{4}-\d{2}-\d{2}$/.test(date)
-      ? date
+  const dateParam = request.nextUrl.searchParams.get("date");
+  const iso =
+    dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+      ? dateParam
       : calendarDateInTimeZone(CLIENT_TIMEZONE);
-  const d = calendarIsoToPrismaDate(dateStr);
-  const l = Math.max(0, Number(liters) || 0);
 
-  if (l === 0) {
-    await prisma.waterEntry.deleteMany({
-      where: { clientId: client.id, date: d },
-    });
-    return NextResponse.json({ liters: 0 });
+  const day = calendarIsoToPrismaDate(iso);
+
+  const entry = await prisma.waterEntry.findUnique({
+    where: {
+      clientId_date: { clientId: ctx.client.id, date: day },
+    },
+  });
+
+  return NextResponse.json({
+    date: iso,
+    totalMl: entry ? Math.round(entry.liters * 1000) : 0,
+  });
+}
+
+/** POST — ajouter ou retirer des mL (delta positif ou négatif) */
+export async function POST(request: NextRequest) {
+  const ctx = await requireClientProfile();
+  if ("error" in ctx) return ctx.error;
+
+  const body = await request.json();
+  const { date: dateStr, amountMl } = body;
+
+  if (!dateStr || typeof amountMl !== "number" || amountMl === 0) {
+    return NextResponse.json(
+      { message: "date et amountMl requis (non nul)" },
+      { status: 400 }
+    );
   }
 
-  const entry = await prisma.waterEntry.upsert({
-    where: { clientId_date: { clientId: client.id, date: d } },
-    update: { liters: l },
-    create: { clientId: client.id, date: d, liters: l },
+  const day = calendarIsoToPrismaDate(dateStr);
+  const deltaL = amountMl / 1000;
+
+  // Lire l'existant
+  const existing = await prisma.waterEntry.findUnique({
+    where: { clientId_date: { clientId: ctx.client.id, date: day } },
   });
-  return NextResponse.json(entry);
+
+  const currentL = existing?.liters ?? 0;
+  const newL = Math.max(0, Math.round((currentL + deltaL) * 100) / 100);
+
+  if (newL === 0 && existing) {
+    await prisma.waterEntry.delete({ where: { id: existing.id } });
+    return NextResponse.json({ totalMl: 0 });
+  }
+
+  if (existing) {
+    await prisma.waterEntry.update({
+      where: { id: existing.id },
+      data: { liters: newL },
+    });
+  } else if (newL > 0) {
+    await prisma.waterEntry.create({
+      data: { clientId: ctx.client.id, date: day, liters: newL },
+    });
+  }
+
+  return NextResponse.json({ totalMl: Math.round(newL * 1000) });
 }

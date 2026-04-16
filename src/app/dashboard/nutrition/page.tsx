@@ -31,6 +31,14 @@ import {
   Loader2,
   Search,
   ScanBarcode,
+  Pencil,
+  Check,
+  X,
+  BookOpen,
+  Save,
+  ChefHat,
+  Droplets,
+  Minus,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 
@@ -57,6 +65,24 @@ type SearchResult = {
     fat: number;
     fiber: number;
   };
+};
+
+type RecipeItem = {
+  id: string;
+  foodName: string;
+  quantity: number;
+  unit: string;
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  fiber: number;
+};
+
+type Recipe = {
+  id: string;
+  name: string;
+  items: RecipeItem[];
 };
 
 const mealTypes = [
@@ -99,12 +125,28 @@ export default function NutritionPage() {
   const [sendingSuggestion, setSendingSuggestion] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
-  const [waterL, setWaterL] = useState(0);
-  const [goalWaterL, setGoalWaterL] = useState<number | null>(null);
-  const [waterSaving, setWaterSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editQty, setEditQty] = useState("");
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [dialogTab, setDialogTab] = useState<"search" | "recipes">("search");
+  const [saveRecipeOpen, setSaveRecipeOpen] = useState<string | null>(null);
+  const [recipeName, setRecipeName] = useState("");
+  const [waterMl, setWaterMl] = useState(0);
+  const [waterGoalMl, setWaterGoalMl] = useState(0);
+  const [waterLoading, setWaterLoading] = useState(false);
 
   // Debounce ref
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
+
+  const loadRecipes = useCallback(async () => {
+    try {
+      const res = await fetch("/api/client/recipes");
+      if (res.ok) {
+        const data = await res.json();
+        setRecipes(data.recipes || []);
+      }
+    } catch { /* silent */ }
+  }, []);
 
   const refreshData = useCallback(async () => {
     setReady(false);
@@ -123,11 +165,11 @@ export default function NutritionPage() {
           fat: p.goalFat ?? 60,
           fiber: p.goalFiber ?? 25,
         });
-        setGoalWaterL(p.goalWaterL ?? null);
+        setWaterGoalMl(p.goalWaterL ? Math.round(p.goalWaterL * 1000) : 2000);
       }
       if (waterRes.ok) {
         const w = await waterRes.json();
-        setWaterL(w.liters ?? 0);
+        setWaterMl(w.totalMl ?? 0);
       }
       if (foodRes.ok) {
         const { entries } = await foodRes.json();
@@ -170,7 +212,8 @@ export default function NutritionPage() {
 
   useEffect(() => {
     refreshData();
-  }, [refreshData]);
+    loadRecipes();
+  }, [refreshData, loadRecipes]);
 
   // Recherche auto avec debounce 300ms
   useEffect(() => {
@@ -271,6 +314,42 @@ export default function NutritionPage() {
     }
   }
 
+  async function updateFood(mealType: string, food: FoodItem) {
+    const newQty = parseFloat(editQty);
+    if (!newQty || newQty <= 0 || newQty === food.quantity) {
+      setEditingId(null);
+      return;
+    }
+    const ratio = newQty / food.quantity;
+    const updated = {
+      quantity: newQty,
+      calories: Math.round(food.calories * ratio),
+      protein: Math.round(food.protein * ratio * 10) / 10,
+      carbs: Math.round(food.carbs * ratio * 10) / 10,
+      fat: Math.round(food.fat * ratio * 10) / 10,
+      fiber: Math.round(food.fiber * ratio * 10) / 10,
+    };
+    try {
+      const res = await fetch("/api/client/food-entries", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: food.id, ...updated }),
+      });
+      if (!res.ok) throw new Error();
+      setMeals((prev) => ({
+        ...prev,
+        [mealType]: prev[mealType].map((f) =>
+          f.id === food.id ? { ...f, ...updated } : f
+        ),
+      }));
+      toast.success("Quantité mise à jour");
+    } catch {
+      toast.error("Modification impossible");
+    } finally {
+      setEditingId(null);
+    }
+  }
+
   async function handleBarcodeScan(barcode: string) {
     setScannerOpen(false);
     setScanLoading(true);
@@ -293,22 +372,6 @@ export default function NutritionPage() {
     }
   }
 
-  async function saveWater(liters: number) {
-    setWaterSaving(true);
-    setWaterL(liters);
-    try {
-      await fetch("/api/client/water-entries", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ date: selectedDate, liters }),
-      });
-    } catch {
-      toast.error("Erreur sauvegarde eau");
-    } finally {
-      setWaterSaving(false);
-    }
-  }
-
   async function sendSuggestion() {
     if (!suggestion.trim()) return;
     setSendingSuggestion(true);
@@ -328,6 +391,114 @@ export default function NutritionPage() {
       toast.error("Erreur de connexion");
     } finally {
       setSendingSuggestion(false);
+    }
+  }
+
+  async function saveAsRecipe(mealType: string) {
+    const items = meals[mealType];
+    if (!items.length || !recipeName.trim()) return;
+    try {
+      const res = await fetch("/api/client/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: recipeName.trim(),
+          items: items.map((f) => ({
+            foodName: f.name,
+            quantity: f.quantity,
+            unit: f.unit,
+            calories: f.calories,
+            protein: f.protein,
+            carbs: f.carbs,
+            fat: f.fat,
+            fiber: f.fiber,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const recipe = await res.json();
+      setRecipes((prev) => [recipe, ...prev]);
+      toast.success(`Recette "${recipeName.trim()}" sauvegardée`);
+      setSaveRecipeOpen(null);
+      setRecipeName("");
+    } catch {
+      toast.error("Impossible de sauvegarder la recette");
+    }
+  }
+
+  async function addRecipeToMeal(recipe: Recipe) {
+    try {
+      const created: FoodItem[] = [];
+      for (const item of recipe.items) {
+        const res = await fetch("/api/client/food-entries", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date: selectedDate,
+            mealType: selectedMealType,
+            foodName: item.foodName,
+            quantity: item.quantity,
+            unit: item.unit,
+            calories: item.calories,
+            protein: item.protein,
+            carbs: item.carbs,
+            fat: item.fat,
+            fiber: item.fiber,
+          }),
+        });
+        if (!res.ok) throw new Error();
+        const row = await res.json();
+        created.push({
+          id: row.id,
+          name: item.foodName,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: Math.round(item.calories),
+          protein: Math.round(item.protein * 10) / 10,
+          carbs: Math.round(item.carbs * 10) / 10,
+          fat: Math.round(item.fat * 10) / 10,
+          fiber: Math.round(item.fiber * 10) / 10,
+        });
+      }
+      setMeals((prev) => ({
+        ...prev,
+        [selectedMealType]: [...prev[selectedMealType], ...created],
+      }));
+      setDialogOpen(false);
+      toast.success(`Recette "${recipe.name}" ajoutée`);
+    } catch {
+      toast.error("Erreur lors de l'ajout de la recette");
+    }
+  }
+
+  async function deleteRecipe(recipeId: string) {
+    try {
+      const res = await fetch(`/api/client/recipes?id=${recipeId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      setRecipes((prev) => prev.filter((r) => r.id !== recipeId));
+      toast.success("Recette supprimée");
+    } catch {
+      toast.error("Suppression impossible");
+    }
+  }
+
+  async function addWater(ml: number) {
+    setWaterLoading(true);
+    try {
+      const res = await fetch("/api/client/water-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: selectedDate, amountMl: ml }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setWaterMl(data.totalMl);
+    } catch {
+      toast.error("Erreur lors de l'enregistrement");
+    } finally {
+      setWaterLoading(false);
     }
   }
 
@@ -369,17 +540,19 @@ export default function NutritionPage() {
             setSearchQuery("");
             setSearchResults([]);
             setScannerOpen(false);
+            setDialogTab("search");
           }
         }}>
           <DialogTrigger className="inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-primary hover:bg-primary/90 text-white">
             <Plus className="h-4 w-4 mr-2" />
-            Ajouter un aliment
+            Ajouter
           </DialogTrigger>
           <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Ajouter un aliment</DialogTitle>
             </DialogHeader>
             <div className="space-y-4">
+              {/* Meal selector */}
               <div className="space-y-2">
                 <Label>Repas</Label>
                 <Select
@@ -399,94 +572,192 @@ export default function NutritionPage() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label>Rechercher un aliment</Label>
-                <div className="flex gap-2 min-w-0">
-                  <div className="relative flex-1 min-w-0">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      placeholder="Tapez : poulet, riz, espresso, Big Mac..."
-                      className="pl-9"
-                      autoFocus
-                    />
-                    {(searching || scanLoading) && (
-                      <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
-                    )}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="flex-shrink-0"
-                    onClick={() => setScannerOpen((v) => !v)}
-                    title="Scanner un code-barres"
-                  >
-                    <ScanBarcode className="h-4 w-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Recherche parmi 3 300+ aliments (table CIQUAL ANSES) + millions de produits (OpenFoodFacts). Tolère fautes, accents et orthographe approximative.
-                </p>
+              {/* Tab toggle */}
+              <div className="flex gap-1 p-1 bg-muted rounded-lg">
+                <button
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "search" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setDialogTab("search")}
+                >
+                  <Search className="h-3.5 w-3.5" />
+                  Rechercher
+                </button>
+                <button
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "recipes" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setDialogTab("recipes")}
+                >
+                  <ChefHat className="h-3.5 w-3.5" />
+                  Mes recettes
+                  {recipes.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                      {recipes.length}
+                    </Badge>
+                  )}
+                </button>
               </div>
 
-              {scannerOpen && (
-                <BarcodeScanner
-                  onScan={handleBarcodeScan}
-                  onClose={() => setScannerOpen(false)}
-                />
-              )}
-
-              <div className="space-y-2">
-                <Label>Quantité (g)</Label>
-                <Input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(e.target.value)}
-                />
-              </div>
-
-              {searchResults.length > 0 && (
-                <div className="max-h-80 overflow-y-auto space-y-1.5">
-                  {searchResults.map((result) => {
-                    const qty = parseFloat(quantity) || 100;
-                    const ratio = qty / 100;
-                    return (
-                      <button
-                        key={result.id}
-                        onClick={() => addFood(result)}
-                        className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
+              {/* Search tab */}
+              {dialogTab === "search" && (
+                <>
+                  <div className="space-y-2">
+                    <Label>Rechercher un aliment</Label>
+                    <div className="flex gap-2 min-w-0">
+                      <div className="relative flex-1 min-w-0">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          placeholder="Tapez : poulet, riz, espresso, Big Mac..."
+                          className="pl-9"
+                          autoFocus
+                        />
+                        {(searching || scanLoading) && (
+                          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-muted-foreground" />
+                        )}
+                      </div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="flex-shrink-0"
+                        onClick={() => setScannerOpen((v) => !v)}
+                        title="Scanner un code-barres"
                       >
-                        <div className="flex items-center justify-between gap-2 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate min-w-0 flex-1">
-                            {result.name}
-                          </p>
-                          {result.source === "local" && (
-                            <Badge variant="secondary" className="text-[10px] flex-shrink-0">
-                              Générique
-                            </Badge>
-                          )}
-                        </div>
-                        <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground/70">
-                            {Math.round(result.per100g.calories * ratio)} kcal
-                          </span>
-                          <span>P: {Math.round(result.per100g.protein * ratio * 10) / 10}g</span>
-                          <span>G: {Math.round(result.per100g.carbs * ratio * 10) / 10}g</span>
-                          <span>L: {Math.round(result.per100g.fat * ratio * 10) / 10}g</span>
-                          <span>F: {Math.round(result.per100g.fiber * ratio * 10) / 10}g</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                        <ScanBarcode className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      3 300+ aliments CIQUAL + millions de produits OpenFoodFacts.
+                    </p>
+                  </div>
+
+                  {scannerOpen && (
+                    <BarcodeScanner
+                      onScan={handleBarcodeScan}
+                      onClose={() => setScannerOpen(false)}
+                    />
+                  )}
+
+                  <div className="space-y-2">
+                    <Label>Quantité (g)</Label>
+                    <Input
+                      type="number"
+                      value={quantity}
+                      onChange={(e) => setQuantity(e.target.value)}
+                    />
+                  </div>
+
+                  {searchResults.length > 0 && (
+                    <div className="max-h-80 overflow-y-auto space-y-1.5">
+                      {searchResults.map((result) => {
+                        const qty = parseFloat(quantity) || 100;
+                        const ratio = qty / 100;
+                        return (
+                          <button
+                            key={result.id}
+                            onClick={() => addFood(result)}
+                            className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
+                          >
+                            <div className="flex items-center justify-between gap-2 min-w-0">
+                              <p className="text-sm font-medium text-foreground truncate min-w-0 flex-1">
+                                {result.name}
+                              </p>
+                              {result.source === "local" && (
+                                <Badge variant="secondary" className="text-[10px] flex-shrink-0">
+                                  Générique
+                                </Badge>
+                              )}
+                            </div>
+                            <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                              <span className="font-medium text-foreground/70">
+                                {Math.round(result.per100g.calories * ratio)} kcal
+                              </span>
+                              <span>P: {Math.round(result.per100g.protein * ratio * 10) / 10}g</span>
+                              <span>G: {Math.round(result.per100g.carbs * ratio * 10) / 10}g</span>
+                              <span>L: {Math.round(result.per100g.fat * ratio * 10) / 10}g</span>
+                              <span>F: {Math.round(result.per100g.fiber * ratio * 10) / 10}g</span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Aucun résultat pour &quot;{searchQuery}&quot;
+                    </p>
+                  )}
+                </>
               )}
 
-              {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  Aucun résultat pour &quot;{searchQuery}&quot;
-                </p>
+              {/* Recipes tab */}
+              {dialogTab === "recipes" && (
+                <div className="max-h-96 overflow-y-auto space-y-2">
+                  {recipes.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ChefHat className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                      <p className="text-sm">Aucune recette sauvegardée</p>
+                      <p className="text-xs mt-1">
+                        Ajoutez des aliments dans un repas, puis cliquez sur
+                        <Save className="inline h-3 w-3 mx-1" />
+                        pour sauvegarder comme recette.
+                      </p>
+                    </div>
+                  ) : (
+                    recipes.map((recipe) => {
+                      const totals = recipe.items.reduce(
+                        (acc, it) => ({
+                          calories: acc.calories + it.calories,
+                          protein: acc.protein + it.protein,
+                          carbs: acc.carbs + it.carbs,
+                          fat: acc.fat + it.fat,
+                        }),
+                        { calories: 0, protein: 0, carbs: 0, fat: 0 }
+                      );
+                      return (
+                        <div
+                          key={recipe.id}
+                          className="p-3 rounded-lg border border-warm-border hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{recipe.name}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {recipe.items.map((it) => it.foodName).join(", ")}
+                              </p>
+                              <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                                <span className="font-medium text-foreground/70">
+                                  {Math.round(totals.calories)} kcal
+                                </span>
+                                <span>P: {Math.round(totals.protein)}g</span>
+                                <span>G: {Math.round(totals.carbs)}g</span>
+                                <span>L: {Math.round(totals.fat)}g</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                size="sm"
+                                className="h-8"
+                                onClick={() => addRecipeToMeal(recipe)}
+                              >
+                                <Plus className="h-3.5 w-3.5 mr-1" />
+                                Ajouter
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                onClick={() => deleteRecipe(recipe.id)}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
               )}
             </div>
           </DialogContent>
@@ -573,54 +844,61 @@ export default function NutritionPage() {
       </div>
 
       {/* Water tracker */}
-      <div className="rounded-xl border border-warm-border bg-blue-50/40 dark:bg-blue-950/20 p-4">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="text-lg">💧</span>
-            <span className="text-sm font-medium">Hydratation</span>
+      <Card className="border-warm-border mb-8">
+        <CardContent className="py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-1 min-w-0">
+              <Droplets className="h-5 w-5 text-blue-500 flex-shrink-0" />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-lg font-bold text-foreground">
+                    {(waterMl / 1000).toFixed(1)}L
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    / {(waterGoalMl / 1000).toFixed(1)}L
+                  </span>
+                </div>
+                <Progress
+                  value={Math.min((waterMl / waterGoalMl) * 100, 100)}
+                  className="h-2 mt-1 bg-blue-100 dark:bg-blue-950/30 [&>div]:bg-blue-400"
+                />
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
+                onClick={() => addWater(-250)}
+                disabled={waterLoading || waterMl <= 0}
+              >
+                <Minus className="h-3.5 w-3.5 mr-1" />
+                25cl
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                onClick={() => addWater(250)}
+                disabled={waterLoading}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                25cl
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                onClick={() => addWater(500)}
+                disabled={waterLoading}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                50cl
+              </Button>
+            </div>
           </div>
-          {goalWaterL && (
-            <span className="text-xs text-muted-foreground">
-              {waterL.toFixed(1)} / {goalWaterL}L
-            </span>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {[0.25, 0.5].map((inc) => (
-            <Button
-              key={inc}
-              variant="outline"
-              size="sm"
-              className="h-9 px-3 text-xs border-blue-200 hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900"
-              disabled={waterSaving}
-              onClick={() => saveWater(Math.round((waterL + inc) * 100) / 100)}
-            >
-              +{inc}L
-            </Button>
-          ))}
-          <div className="flex-1" />
-          <span className="text-xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
-            {waterL.toFixed(1)}L
-          </span>
-          {waterL > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs text-muted-foreground hover:text-red-500"
-              disabled={waterSaving}
-              onClick={() => saveWater(Math.max(0, Math.round((waterL - 0.25) * 100) / 100))}
-            >
-              -0.25L
-            </Button>
-          )}
-        </div>
-        {goalWaterL && goalWaterL > 0 && (
-          <Progress
-            value={Math.min((waterL / goalWaterL) * 100, 100)}
-            className="h-1.5 mt-3 bg-blue-100 dark:bg-blue-900 [&>div]:bg-blue-400"
-          />
-        )}
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Meals */}
       <div className="space-y-6">
@@ -629,10 +907,50 @@ export default function NutritionPage() {
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base">{mealType.label}</CardTitle>
-                <Badge variant="secondary" className="text-xs">
-                  {meals[mealType.value].reduce((a, f) => a + f.calories, 0)}{" "}
-                  kcal
-                </Badge>
+                <div className="flex items-center gap-2">
+                  {meals[mealType.value].length >= 2 && (
+                    saveRecipeOpen === mealType.value ? (
+                      <form
+                        className="flex items-center gap-1.5"
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          saveAsRecipe(mealType.value);
+                        }}
+                      >
+                        <Input
+                          value={recipeName}
+                          onChange={(e) => setRecipeName(e.target.value)}
+                          placeholder="Nom de la recette"
+                          className="h-7 text-xs w-36"
+                          autoFocus
+                        />
+                        <Button type="submit" variant="ghost" size="icon" className="h-7 w-7 text-green-600" disabled={!recipeName.trim()}>
+                          <Check className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSaveRecipeOpen(null)}>
+                          <X className="h-3.5 w-3.5" />
+                        </Button>
+                      </form>
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        title="Sauvegarder comme recette"
+                        onClick={() => {
+                          setSaveRecipeOpen(mealType.value);
+                          setRecipeName("");
+                        }}
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                      </Button>
+                    )
+                  )}
+                  <Badge variant="secondary" className="text-xs">
+                    {meals[mealType.value].reduce((a, f) => a + f.calories, 0)}{" "}
+                    kcal
+                  </Badge>
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -647,24 +965,86 @@ export default function NutritionPage() {
                       key={food.id}
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                     >
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{food.name}</p>
-                        <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground">
-                          <span>{food.quantity}g</span>
-                          <span>{food.calories} kcal</span>
-                          <span>P: {food.protein}g</span>
-                          <span>G: {food.carbs}g</span>
-                          <span>L: {food.fat}g</span>
+                        <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground items-center">
+                          {editingId === food.id ? (
+                            <form
+                              className="flex items-center gap-1.5"
+                              onSubmit={(e) => {
+                                e.preventDefault();
+                                updateFood(mealType.value, food);
+                              }}
+                            >
+                              <Input
+                                type="number"
+                                value={editQty}
+                                onChange={(e) => setEditQty(e.target.value)}
+                                className="h-6 w-16 text-xs px-1.5"
+                                autoFocus
+                                min={1}
+                              />
+                              <span className="text-xs">g</span>
+                              <Button
+                                type="submit"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-green-600"
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground"
+                                onClick={() => setEditingId(null)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </form>
+                          ) : (
+                            <>
+                              <button
+                                className="underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
+                                onClick={() => {
+                                  setEditingId(food.id);
+                                  setEditQty(String(food.quantity));
+                                }}
+                              >
+                                {food.quantity}g
+                              </button>
+                              <span>{food.calories} kcal</span>
+                              <span>P: {food.protein}g</span>
+                              <span>G: {food.carbs}g</span>
+                              <span>L: {food.fat}g</span>
+                            </>
+                          )}
                         </div>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="text-muted-foreground hover:text-destructive h-8 w-8"
-                        onClick={() => removeFood(mealType.value, food.id)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                      <div className="flex items-center gap-0.5">
+                        {editingId !== food.id && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-foreground h-8 w-8"
+                            onClick={() => {
+                              setEditingId(food.id);
+                              setEditQty(String(food.quantity));
+                            }}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-muted-foreground hover:text-destructive h-8 w-8"
+                          onClick={() => removeFood(mealType.value, food.id)}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>

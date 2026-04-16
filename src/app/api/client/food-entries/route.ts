@@ -96,6 +96,42 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(row);
 }
 
+export async function PATCH(request: NextRequest) {
+  const ctx = await requireClientProfile();
+  if ("error" in ctx) return ctx.error;
+
+  const body = await request.json();
+  const { id, quantity, calories, protein, carbs, fat, fiber } = body;
+
+  if (!id || typeof quantity !== "number") {
+    return NextResponse.json(
+      { message: "id et quantity requis" },
+      { status: 400 }
+    );
+  }
+
+  const existing = await prisma.foodEntry.findFirst({
+    where: { id, clientId: ctx.client.id },
+  });
+  if (!existing) {
+    return NextResponse.json({ message: "Entrée introuvable" }, { status: 404 });
+  }
+
+  const row = await prisma.foodEntry.update({
+    where: { id },
+    data: {
+      quantity,
+      calories: Number(calories) || 0,
+      protein: Number(protein) || 0,
+      carbs: Number(carbs) || 0,
+      fat: Number(fat) || 0,
+      fiber: Number(fiber) || 0,
+    },
+  });
+
+  return NextResponse.json(row);
+}
+
 export async function DELETE(request: NextRequest) {
   const ctx = await requireClientProfile();
   if ("error" in ctx) return ctx.error;
