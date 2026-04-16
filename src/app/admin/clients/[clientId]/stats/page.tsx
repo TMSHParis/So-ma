@@ -35,6 +35,7 @@ import {
   Scale,
   Ruler,
   Activity,
+  Droplets,
 } from "lucide-react";
 
 type StatsData = {
@@ -46,6 +47,7 @@ type StatsData = {
       goalCarbs: number | null;
       goalFat: number | null;
       goalFiber: number | null;
+      goalWaterL: number | null;
       goalSteps: number | null;
       sessionsPerWeek: number | null;
       startWeight: number | null;
@@ -53,6 +55,8 @@ type StatsData = {
     };
   };
   days: number;
+  totalDays: number;
+  firstDataDate: string | null;
   dailyData: Array<{
     date: string;
     calories: number;
@@ -60,10 +64,12 @@ type StatsData = {
     carbs: number;
     fat: number;
     fiber: number;
+    water: number;
     calorieGoalPct: number | null;
     proteinGoalPct: number | null;
     carbsGoalPct: number | null;
     fatGoalPct: number | null;
+    waterGoalPct: number | null;
     sportDuration: number;
     sportCalories: number;
     sportSteps: number;
@@ -77,11 +83,13 @@ type StatsData = {
     hipCm: number | null;
     buttCm: number | null;
   }>;
+  waterData: Array<{ date: string; liters: number }>;
   scores: {
     effortScore: number;
     loggingRate: number;
     nutritionCompliance: number;
     sportCompliance: number | null;
+    waterCompliance: number | null;
     daysLogged: number;
     totalDays: number;
     daysOnTarget: number;
@@ -89,12 +97,15 @@ type StatsData = {
   };
 };
 
-const PERIOD_OPTIONS = [
+type PeriodValue = number | "all";
+
+const PERIOD_OPTIONS: Array<{ value: PeriodValue; label: string }> = [
   { value: 7, label: "7j" },
   { value: 14, label: "14j" },
   { value: 30, label: "30j" },
   { value: 60, label: "60j" },
   { value: 90, label: "90j" },
+  { value: "all", label: "Tout" },
 ];
 
 function formatDate(iso: string) {
@@ -113,7 +124,8 @@ function ScoreRing({
 }) {
   const radius = (size - 10) / 2;
   const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(value, 100) / 100) * circumference;
+  const clamped = Math.min(Math.max(value, 0), 100);
+  const offset = circumference - (clamped / 100) * circumference;
 
   let color = "stroke-red-500";
   if (value >= 80) color = "stroke-green-500";
@@ -197,7 +209,6 @@ const macroChartConfig: ChartConfig = {
 
 const sportChartConfig: ChartConfig = {
   sportCalories: { label: "Calories brûlées", color: "hsl(25 90% 55%)" },
-  sportSessions: { label: "Séances", color: "hsl(160 60% 45%)" },
 };
 
 const weightChartConfig: ChartConfig = {
@@ -210,6 +221,10 @@ const measurementChartConfig: ChartConfig = {
   buttCm: { label: "Fessiers", color: "hsl(280 60% 55%)" },
 };
 
+const waterChartConfig: ChartConfig = {
+  water: { label: "Eau (L)", color: "hsl(200 80% 55%)" },
+};
+
 export default function ClientStatsPage({
   params,
 }: {
@@ -218,10 +233,10 @@ export default function ClientStatsPage({
   const { clientId } = use(params);
   const [data, setData] = useState<StatsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [period, setPeriod] = useState(30);
+  const [period, setPeriod] = useState<PeriodValue>("all");
   const [fetchKey, setFetchKey] = useState(0);
 
-  function changePeriod(p: number) {
+  function changePeriod(p: PeriodValue) {
     setPeriod(p);
     setLoading(true);
     setFetchKey((k) => k + 1);
@@ -256,7 +271,7 @@ export default function ClientStatsPage({
     );
   }
 
-  const { client, dailyData, weightData, measurementData, scores } = data;
+  const { client, dailyData, weightData, measurementData, waterData, scores } = data;
 
   return (
     <div className="space-y-6">
@@ -274,13 +289,18 @@ export default function ClientStatsPage({
             </h1>
             <p className="text-sm text-muted-foreground">
               Statistiques & progression
+              {data.firstDataDate && (
+                <span className="ml-1">
+                  — depuis le {formatDate(data.firstDataDate)} ({scores.totalDays} jours)
+                </span>
+              )}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-1 bg-muted rounded-lg p-0.5">
           {PERIOD_OPTIONS.map((opt) => (
             <button
-              key={opt.value}
+              key={String(opt.value)}
               onClick={() => changePeriod(opt.value)}
               className={`px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                 period === opt.value
@@ -295,18 +315,18 @@ export default function ClientStatsPage({
       </div>
 
       {/* Score cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
         <Card className="border-warm-border">
           <CardContent className="pt-5 pb-4 flex flex-col items-center">
             <div className="relative">
-              <ScoreRing value={scores.effortScore} label="Score global" size={90} />
+              <ScoreRing value={scores.effortScore} label="Score global" size={85} />
             </div>
           </CardContent>
         </Card>
         <Card className="border-warm-border">
           <CardContent className="pt-5 pb-4 flex flex-col items-center">
             <div className="relative">
-              <ScoreRing value={scores.loggingRate} label="Régularité suivi" size={90} />
+              <ScoreRing value={scores.loggingRate} label="Régularité suivi" size={85} />
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
               {scores.daysLogged}/{scores.totalDays} jours
@@ -319,7 +339,7 @@ export default function ClientStatsPage({
               <ScoreRing
                 value={scores.nutritionCompliance}
                 label="Objectifs nutrition"
-                size={90}
+                size={85}
               />
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
@@ -333,7 +353,7 @@ export default function ClientStatsPage({
               <ScoreRing
                 value={scores.sportCompliance ?? 0}
                 label="Assiduité sport"
-                size={90}
+                size={85}
               />
             </div>
             <p className="text-[10px] text-muted-foreground mt-1">
@@ -342,6 +362,22 @@ export default function ClientStatsPage({
                 ? ` / ${client.goals.sessionsPerWeek}`
                 : ""}{" "}
               séances/sem
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-warm-border">
+          <CardContent className="pt-5 pb-4 flex flex-col items-center">
+            <div className="relative">
+              <ScoreRing
+                value={scores.waterCompliance ?? 0}
+                label="Hydratation"
+                size={85}
+              />
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-1">
+              {client.goals.goalWaterL
+                ? `Objectif : ${client.goals.goalWaterL}L/j`
+                : "Pas d'objectif"}
             </p>
           </CardContent>
         </Card>
@@ -505,6 +541,75 @@ export default function ClientStatsPage({
                 100% = objectif
               </span>
             </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Water chart */}
+      {(waterData.length > 0 || dailyData.some((d) => d.water > 0)) && (
+        <Card className="border-warm-border">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Droplets className="h-4 w-4 text-blue-400" />
+                Hydratation
+              </CardTitle>
+              {client.goals.goalWaterL && (
+                <span className="text-xs text-muted-foreground">
+                  Objectif : {client.goals.goalWaterL}L / jour
+                </span>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={waterChartConfig} className="h-[180px] w-full">
+              <BarChart data={dailyData.filter((d) => d.water > 0)} margin={{ top: 5, right: 5, bottom: 0, left: -15 }}>
+                <defs>
+                  <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(200 80% 55%)" stopOpacity={0.8} />
+                    <stop offset="100%" stopColor="hsl(200 80% 55%)" stopOpacity={0.3} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/30" />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={formatDate}
+                  tick={{ fontSize: 10 }}
+                  interval="preserveStartEnd"
+                />
+                <YAxis tick={{ fontSize: 10 }} unit="L" />
+                <ChartTooltip
+                  content={
+                    <ChartTooltipContent
+                      labelFormatter={(v) => formatDate(v as string)}
+                      formatter={(value) => (
+                        <span><strong>{value}L</strong></span>
+                      )}
+                    />
+                  }
+                />
+                {client.goals.goalWaterL && (
+                  <ReferenceLine
+                    y={client.goals.goalWaterL}
+                    stroke="hsl(200 70% 40%)"
+                    strokeDasharray="6 3"
+                    strokeWidth={1.5}
+                    label={{
+                      value: `${client.goals.goalWaterL}L`,
+                      position: "right",
+                      fontSize: 10,
+                      fill: "hsl(200 70% 40%)",
+                    }}
+                  />
+                )}
+                <Bar
+                  dataKey="water"
+                  fill="url(#waterGrad)"
+                  radius={[3, 3, 0, 0]}
+                  maxBarSize={24}
+                />
+              </BarChart>
+            </ChartContainer>
           </CardContent>
         </Card>
       )}
@@ -723,12 +828,12 @@ export default function ClientStatsPage({
       )}
 
       {/* Empty state */}
-      {dailyData.length === 0 && weightData.length === 0 && measurementData.length === 0 && (
+      {dailyData.length === 0 && weightData.length === 0 && measurementData.length === 0 && waterData.length === 0 && (
         <Card className="border-warm-border">
           <CardContent className="py-16 text-center">
             <Activity className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Aucune donnée sur les {data.days} derniers jours.
+              Aucune donnée sur cette période.
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Les statistiques apparaitront quand la cliente commencera à enregistrer ses repas, sport et pesées.

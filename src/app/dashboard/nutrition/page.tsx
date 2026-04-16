@@ -99,6 +99,9 @@ export default function NutritionPage() {
   const [sendingSuggestion, setSendingSuggestion] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
+  const [waterL, setWaterL] = useState(0);
+  const [goalWaterL, setGoalWaterL] = useState<number | null>(null);
+  const [waterSaving, setWaterSaving] = useState(false);
 
   // Debounce ref
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(null);
@@ -106,9 +109,10 @@ export default function NutritionPage() {
   const refreshData = useCallback(async () => {
     setReady(false);
     try {
-      const [profileRes, foodRes] = await Promise.all([
+      const [profileRes, foodRes, waterRes] = await Promise.all([
         fetch("/api/client/profile"),
         fetch(`/api/client/food-entries?date=${selectedDate}`),
+        fetch(`/api/client/water-entries?date=${selectedDate}`),
       ]);
       if (profileRes.ok) {
         const p = await profileRes.json();
@@ -119,6 +123,11 @@ export default function NutritionPage() {
           fat: p.goalFat ?? 60,
           fiber: p.goalFiber ?? 25,
         });
+        setGoalWaterL(p.goalWaterL ?? null);
+      }
+      if (waterRes.ok) {
+        const w = await waterRes.json();
+        setWaterL(w.liters ?? 0);
       }
       if (foodRes.ok) {
         const { entries } = await foodRes.json();
@@ -281,6 +290,22 @@ export default function NutritionPage() {
       toast.error("Erreur lors du scan");
     } finally {
       setScanLoading(false);
+    }
+  }
+
+  async function saveWater(liters: number) {
+    setWaterSaving(true);
+    setWaterL(liters);
+    try {
+      await fetch("/api/client/water-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: selectedDate, liters }),
+      });
+    } catch {
+      toast.error("Erreur sauvegarde eau");
+    } finally {
+      setWaterSaving(false);
     }
   }
 
@@ -545,6 +570,56 @@ export default function NutritionPage() {
             />
           </div>
         ))}
+      </div>
+
+      {/* Water tracker */}
+      <div className="rounded-xl border border-warm-border bg-blue-50/40 dark:bg-blue-950/20 p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <span className="text-lg">💧</span>
+            <span className="text-sm font-medium">Hydratation</span>
+          </div>
+          {goalWaterL && (
+            <span className="text-xs text-muted-foreground">
+              {waterL.toFixed(1)} / {goalWaterL}L
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {[0.25, 0.5].map((inc) => (
+            <Button
+              key={inc}
+              variant="outline"
+              size="sm"
+              className="h-9 px-3 text-xs border-blue-200 hover:bg-blue-100 dark:border-blue-800 dark:hover:bg-blue-900"
+              disabled={waterSaving}
+              onClick={() => saveWater(Math.round((waterL + inc) * 100) / 100)}
+            >
+              +{inc}L
+            </Button>
+          ))}
+          <div className="flex-1" />
+          <span className="text-xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">
+            {waterL.toFixed(1)}L
+          </span>
+          {waterL > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 px-2 text-xs text-muted-foreground hover:text-red-500"
+              disabled={waterSaving}
+              onClick={() => saveWater(Math.max(0, Math.round((waterL - 0.25) * 100) / 100))}
+            >
+              -0.25L
+            </Button>
+          )}
+        </div>
+        {goalWaterL && goalWaterL > 0 && (
+          <Progress
+            value={Math.min((waterL / goalWaterL) * 100, 100)}
+            className="h-1.5 mt-3 bg-blue-100 dark:bg-blue-900 [&>div]:bg-blue-400"
+          />
+        )}
       </div>
 
       {/* Meals */}

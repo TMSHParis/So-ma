@@ -138,6 +138,7 @@ model Client {
   measurementEntries MeasurementEntry[]
   resources         ClientResource[]
   foodSuggestions   FoodSuggestion[]
+  waterEntries      WaterEntry[]
 
   @@map("clients")
 }
@@ -155,6 +156,21 @@ model WeightEntry {
   @@unique([clientId, date])
   @@index([clientId, date])
   @@map("weight_entries")
+}
+
+/// Suivi hydratation quotidien
+model WaterEntry {
+  id        String   @id @default(cuid())
+  clientId  String   @map("client_id")
+  date      DateTime @db.Date
+  liters    Float
+  createdAt DateTime @default(now()) @map("created_at")
+
+  client    Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, date])
+  @@index([clientId, date])
+  @@map("water_entries")
 }
 
 /// Mensurations mensuelles
