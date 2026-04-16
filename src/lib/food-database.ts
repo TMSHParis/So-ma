@@ -72,6 +72,7 @@ const POPULAR_BOOST_TERMS = new Set(
     "miel", "confiture", "huile", "vinaigre", "mayonnaise", "moutarde",
     "amande", "noix", "noisette", "pistache", "cacahuete",
     "whey", "proteine", "isolate", "caseine",
+    "datte", "dattes", "graines", "lin", "chia", "courge", "sesame", "tournesol",
   ].map(normalize)
 );
 

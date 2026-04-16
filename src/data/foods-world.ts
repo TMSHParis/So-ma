@@ -178,4 +178,18 @@ export const WORLD_FOODS: WorldFood[] = [
   { name: "Poisson braisé (daurade)", region: "Afrique", kcal: 135, p: 22, c: 0, f: 5, fi: 0 },
   { name: "Tô (pâte de mil)", region: "Afrique", kcal: 140, p: 3.5, c: 30, f: 0.8, fi: 1.8 },
   { name: "Dégué (boisson mil yaourt)", region: "Afrique", kcal: 110, p: 3, c: 20, f: 2, fi: 0.5 },
+
+  // ═════════════════════════════════════════════════════
+  // ALIMENTS COURANTS (alias manquants ou mal nommés CIQUAL)
+  // ═════════════════════════════════════════════════════
+  { name: "Dattes", region: "Fruits secs", kcal: 282, p: 2.5, c: 64, f: 0.4, fi: 8 },
+  { name: "Dattes Medjool", region: "Fruits secs", kcal: 277, p: 1.8, c: 75, f: 0.2, fi: 6.7 },
+  { name: "Dattes Deglet Nour", region: "Fruits secs", kcal: 287, p: 2.5, c: 64, f: 0.4, fi: 8 },
+  { name: "Mélange graines oméga 3 (lin, chia, courge)", region: "Graines", kcal: 534, p: 22, c: 12, f: 40, fi: 25 },
+  { name: "Mélange graines (tournesol, courge, sésame)", region: "Graines", kcal: 600, p: 22, c: 15, f: 48, fi: 9 },
+  { name: "Graines de lin", region: "Graines", kcal: 534, p: 18.3, c: 28.9, f: 42.2, fi: 27.3 },
+  { name: "Graines de chia", region: "Graines", kcal: 486, p: 16.5, c: 42.1, f: 30.7, fi: 34.4 },
+  { name: "Graines de courge", region: "Graines", kcal: 559, p: 30.2, c: 10.7, f: 49.1, fi: 6 },
+  { name: "Graines de tournesol", region: "Graines", kcal: 584, p: 20.8, c: 20, f: 51.5, fi: 8.6 },
+  { name: "Graines de sésame", region: "Graines", kcal: 573, p: 17.7, c: 23.5, f: 49.7, fi: 11.8 },
 ];
