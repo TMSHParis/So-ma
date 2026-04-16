@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { DateNavigator } from "@/components/date-navigator";
 import { calendarDateInTimeZone, CLIENT_TIMEZONE } from "@/lib/calendar-day";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ import {
   Flame,
   X,
   Trash2,
+  BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -149,6 +151,7 @@ type CalcResult = {
 
 
 export default function ClientsPage() {
+  const router = useRouter();
   const [clients, setClients] = useState<ClientRow[]>([]);
   const [loading, setLoading] = useState(true);
   const todayIso = useMemo(
@@ -618,6 +621,9 @@ export default function ClientsPage() {
                   <div className="flex items-center gap-0.5 shrink-0">
                     {clientId && (
                       <>
+                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/admin/clients/${clientId}/stats`); }} className="h-8 w-8 p-0" title="Statistiques">
+                          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
                         <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPanel(clientId); }} className="h-8 w-8 p-0">
                           <Settings2 className="h-4 w-4 text-muted-foreground" />
                         </Button>
