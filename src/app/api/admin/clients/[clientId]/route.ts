@@ -17,7 +17,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
 
   const client = await prisma.client.findUnique({
     where: { id: clientId },
-    include: { user: { select: { email: true, firstName: true, lastName: true } } },
+    include: {
+      user: { select: { email: true, firstName: true, lastName: true } },
+      bilanResponses: {
+        orderBy: { submittedAt: "desc" },
+        take: 1,
+        select: { id: true, data: true, submittedAt: true },
+      },
+    },
   });
   if (!client) return NextResponse.json({ error: "Cliente introuvable" }, { status: 404 });
 

@@ -41,7 +41,12 @@ import {
   computeMB_KJ,
   computeNAP,
   computeMacrosFromKJ,
+  computeWater,
+  napActivitiesFromBilan,
+  balanceFromObjectif,
+  defaultDelta,
   NAP_ACTIVITIES,
+  type BilanData,
 } from "@/lib/nutrition-calculator";
 
 type ClientRow = {
@@ -155,6 +160,10 @@ export default function ClientsPage() {
   const [macroPctFat, setMacroPctFat] = useState(35);
   const [macroPctCarbs, setMacroPctCarbs] = useState(50);
   const [fiberMode, setFiberMode] = useState<"auto" | "fixed">("auto");
+  const [bilanSource, setBilanSource] = useState<{
+    data: Record<string, string | string[]>;
+    submittedAt: string;
+  } | null>(null);
 
   const fetchProgress = useCallback(
     async (clientId: string, date: string) => {
@@ -230,10 +239,15 @@ export default function ClientsPage() {
     setEditClientId(clientId);
     setEditLoading(true);
     setCalcResult(null);
+    setBilanSource(null);
     try {
       const res = await fetch(`/api/admin/clients/${clientId}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
+      const latestBilan = data.bilanResponses?.[0];
+      if (latestBilan) {
+        setBilanSource({ data: latestBilan.data, submittedAt: latestBilan.submittedAt });
+      }
       setEditData({
         sex: data.sex || "F",
         weight: data.weight?.toString() || "",
@@ -353,6 +367,73 @@ export default function ClientsPage() {
     }));
 
     toast.success("Protocole complet appliqué");
+  }
+
+  function handleResetFromBilan() {
+    if (!bilanSource) {
+      toast.error("Pas de bilan trouvé pour cette cliente");
+      return;
+    }
+    const bilanData = bilanSource.data as unknown as BilanData;
+    const sex = (bilanData.sexe as string) || "F";
+    const age = Number(bilanData.age) || 30;
+    let heightCm = Number(bilanData.taille) || 165;
+    if (heightCm < 3) heightCm = Math.round(heightCm * 100);
+    const weightKg = Number(bilanData.poids) || 60;
+    const goalWeight = Number(bilanData.poids_souhaite) || null;
+
+    const activities = napActivitiesFromBilan(bilanData);
+    const balanceVal = balanceFromObjectif(bilanData.objectif_principal as string);
+    const delta = defaultDelta(balanceVal);
+
+    setCalcSex(sex);
+    setCalcWeight(String(weightKg));
+    setCalcHeight(String(heightCm));
+    setCalcAge(String(age));
+    setCalcActivities(activities);
+    setMacroPctProtein(15);
+    setMacroPctFat(35);
+    setMacroPctCarbs(50);
+    setFiberMode("auto");
+
+    const mbKJ = computeMB_KJ(sex, weightKg, heightCm, age);
+    const mbKcal = Math.round(mbKJ * 0.239);
+    const { nap } = computeNAP(activities);
+    const dejKJ = mbKJ * nap;
+    const dejKcal = Math.round(dejKJ * 0.239);
+    let goalKcal = dejKcal;
+    if (balanceVal === "DEFICIT") goalKcal = dejKcal - delta;
+    else if (balanceVal === "SURPLUS") goalKcal = dejKcal + delta;
+    const goalKJ = goalKcal / 0.239;
+    const macros = computeMacrosFromKJ(goalKJ, 15, 35, 50);
+    const fiberG = Math.round((goalKcal / 1000) * 14);
+    const waterL = computeWater(weightKg, mbKcal, dejKcal, nap);
+    const signedDelta =
+      balanceVal === "DEFICIT" ? -delta : balanceVal === "SURPLUS" ? delta : 0;
+
+    setCalcResult({ mbKJ, mbKcal, nap, dejKJ, dejKcal, goalKcal, goalKJ, stressFactor: 1 });
+    setEditData((prev) => ({
+      ...prev,
+      sex,
+      age: String(age),
+      weight: String(weightKg),
+      height: String(heightCm),
+      goalWeight: goalWeight != null ? String(goalWeight) : prev.goalWeight,
+      stressFactor: "1",
+      energyBalance: balanceVal,
+      caloricDeltaKcal: String(signedDelta),
+      maintenanceCalories: String(dejKcal),
+      goalCalories: String(goalKcal),
+      goalProtein: String(macros.proteinG),
+      goalCarbs: String(macros.carbsG),
+      goalFat: String(macros.fatG),
+      goalFiber: String(fiberG),
+      goalWaterL: String(waterL),
+    }));
+    toast.success(
+      "Protocole recalculé depuis le bilan. Clique sur Enregistrer pour persister.",
+      { duration: 6000 },
+    );
   }
 
   function recalcMacros() {
@@ -720,6 +801,35 @@ export default function ClientsPage() {
                 <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : (
                 <>
+                  {bilanSource && (
+                    <Card className="border-blue-200 bg-blue-50/60">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-blue-900">
+                            Recalculer depuis le bilan
+                          </p>
+                          <p className="text-[10px] text-blue-700/80">
+                            Réinitialise activités NAP, FA, objectif et macros à
+                            partir des réponses du bilan du{" "}
+                            {new Date(bilanSource.submittedAt).toLocaleDateString(
+                              "fr-FR",
+                              { day: "numeric", month: "short", year: "numeric" },
+                            )}
+                            .
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-blue-400 text-blue-700 hover:bg-blue-100"
+                          onClick={handleResetFromBilan}
+                        >
+                          <Calculator className="h-3.5 w-3.5 mr-1" />
+                          Recalculer
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  )}
                   {/* ÉTAPE 1 — Profil & MB */}
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium flex items-center gap-2">
