@@ -316,6 +316,18 @@ export default function ClientsPage() {
         if (balance === "SURPLUS") goalKcal = dejKcal + absDelta;
         const goalKJ = goalKcal / 0.239;
         setCalcResult({ mbKJ, mbKcal, nap: napVal, dejKJ, dejKcal, goalKcal, goalKJ, stressFactor: sf });
+        // Sync les champs de persistance sur le calcul clinique frais afin
+        // d'éviter une divergence carte/modal quand des valeurs ont été
+        // sauvegardées avec l'ancienne méthode simplifiée (NAP hardcodé).
+        const savedMaintenance = Number(data.maintenanceCalories ?? 0);
+        const savedGoal = Number(data.goalCalories ?? 0);
+        if (savedMaintenance !== dejKcal || savedGoal !== goalKcal) {
+          setEditData((prev) => ({
+            ...prev,
+            maintenanceCalories: String(dejKcal),
+            goalCalories: String(goalKcal),
+          }));
+        }
       }
     } catch { toast.error("Erreur chargement cliente"); }
     finally { setEditLoading(false); }
