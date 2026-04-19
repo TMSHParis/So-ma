@@ -41,6 +41,7 @@ import {
   Minus,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
+import { BilanSemaine } from "@/components/bilan-semaine";
 
 type FoodItem = {
   id: string;
@@ -130,9 +131,12 @@ export default function NutritionPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [dialogTab, setDialogTab] = useState<"search" | "recipes">("search");
+  const [dialogTab, setDialogTab] = useState<"search" | "recipes" | "create-recipe">("search");
   const [saveRecipeOpen, setSaveRecipeOpen] = useState<string | null>(null);
   const [recipeName, setRecipeName] = useState("");
+  const [draftRecipeName, setDraftRecipeName] = useState("");
+  const [draftRecipeItems, setDraftRecipeItems] = useState<RecipeItem[]>([]);
+  const [savingDraftRecipe, setSavingDraftRecipe] = useState(false);
   const [waterMl, setWaterMl] = useState(0);
   const [waterGoalMl, setWaterGoalMl] = useState(0);
   const [waterLoading, setWaterLoading] = useState(false);
@@ -399,6 +403,70 @@ export default function NutritionPage() {
     }
   }
 
+  function addToDraftRecipe(result: SearchResult) {
+    const qty = parseFloat(quantity) || 100;
+    const chosenUnit = result.isLiquid ? quantityUnit : "g";
+    const qtyGrams = chosenUnit === "cl" ? qty * 10 : qty;
+    const ratio = qtyGrams / 100;
+    const item: RecipeItem = {
+      id: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      foodName: result.name,
+      quantity: qty,
+      unit: chosenUnit,
+      calories: Math.round(result.per100g.calories * ratio),
+      protein: Math.round(result.per100g.protein * ratio * 10) / 10,
+      carbs: Math.round(result.per100g.carbs * ratio * 10) / 10,
+      fat: Math.round(result.per100g.fat * ratio * 10) / 10,
+      fiber: Math.round(result.per100g.fiber * ratio * 10) / 10,
+    };
+    setDraftRecipeItems((prev) => [...prev, item]);
+    setSearchQuery("");
+    setSearchResults([]);
+    toast.success(`${item.foodName} ajouté à la recette`);
+  }
+
+  function removeDraftItem(id: string) {
+    setDraftRecipeItems((prev) => prev.filter((i) => i.id !== id));
+  }
+
+  async function saveDraftRecipe() {
+    if (!draftRecipeName.trim() || draftRecipeItems.length === 0) {
+      toast.error("Nom de recette et au moins un aliment requis");
+      return;
+    }
+    setSavingDraftRecipe(true);
+    try {
+      const res = await fetch("/api/client/recipes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: draftRecipeName.trim(),
+          items: draftRecipeItems.map((it) => ({
+            foodName: it.foodName,
+            quantity: it.quantity,
+            unit: it.unit,
+            calories: it.calories,
+            protein: it.protein,
+            carbs: it.carbs,
+            fat: it.fat,
+            fiber: it.fiber,
+          })),
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const recipe = await res.json();
+      setRecipes((prev) => [recipe, ...prev]);
+      toast.success(`Recette "${draftRecipeName.trim()}" créée`);
+      setDraftRecipeName("");
+      setDraftRecipeItems([]);
+      setDialogTab("recipes");
+    } catch {
+      toast.error("Impossible de sauvegarder la recette");
+    } finally {
+      setSavingDraftRecipe(false);
+    }
+  }
+
   async function saveAsRecipe(mealType: string) {
     const items = meals[mealType];
     if (!items.length || !recipeName.trim()) return;
@@ -558,24 +626,26 @@ export default function NutritionPage() {
             </DialogHeader>
             <div className="space-y-4">
               {/* Meal selector */}
-              <div className="space-y-2">
-                <Label>Repas</Label>
-                <Select
-                  value={selectedMealType}
-                  onValueChange={(v) => v !== null && setSelectedMealType(v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mealTypes.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>
-                        {m.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {dialogTab !== "create-recipe" && (
+                <div className="space-y-2">
+                  <Label>Repas</Label>
+                  <Select
+                    value={selectedMealType}
+                    onValueChange={(v) => v !== null && setSelectedMealType(v)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mealTypes.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Tab toggle */}
               <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -598,10 +668,89 @@ export default function NutritionPage() {
                     </Badge>
                   )}
                 </button>
+                <button
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "create-recipe" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setDialogTab("create-recipe")}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Nouvelle
+                  {draftRecipeItems.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                      {draftRecipeItems.length}
+                    </Badge>
+                  )}
+                </button>
               </div>
 
+              {/* Create-recipe header */}
+              {dialogTab === "create-recipe" && (
+                <div className="space-y-3 rounded-lg border border-warm-border p-3 bg-amber-50/40">
+                  <div className="space-y-1">
+                    <Label className="text-xs">Nom de la recette</Label>
+                    <Input
+                      value={draftRecipeName}
+                      onChange={(e) => setDraftRecipeName(e.target.value)}
+                      placeholder="ex : Bowl quinoa poulet"
+                    />
+                  </div>
+                  {draftRecipeItems.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                        Ingrédients ({draftRecipeItems.length})
+                      </p>
+                      <div className="space-y-1 max-h-40 overflow-y-auto">
+                        {draftRecipeItems.map((it) => (
+                          <div
+                            key={it.id}
+                            className="flex items-center justify-between gap-2 text-xs py-1 px-2 rounded bg-background"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium">{it.foodName}</p>
+                              <p className="text-muted-foreground text-[10px]">
+                                {it.quantity}{it.unit} · {it.calories} kcal · P{it.protein}g G{it.carbs}g L{it.fat}g
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeDraftItem(it.id)}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Minus className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="text-[10px] text-muted-foreground pt-1">
+                        Total :{" "}
+                        <strong className="text-foreground">
+                          {draftRecipeItems.reduce((s, i) => s + i.calories, 0)} kcal
+                        </strong>
+                        {" · "}
+                        P {Math.round(draftRecipeItems.reduce((s, i) => s + i.protein, 0) * 10) / 10}g
+                        {" · "}
+                        G {Math.round(draftRecipeItems.reduce((s, i) => s + i.carbs, 0) * 10) / 10}g
+                        {" · "}
+                        L {Math.round(draftRecipeItems.reduce((s, i) => s + i.fat, 0) * 10) / 10}g
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    onClick={saveDraftRecipe}
+                    disabled={savingDraftRecipe || !draftRecipeName.trim() || draftRecipeItems.length === 0}
+                    size="sm"
+                    className="w-full bg-primary hover:bg-primary/90 text-white"
+                  >
+                    {savingDraftRecipe ? (
+                      <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Sauvegarde...</>
+                    ) : (
+                      <><Save className="h-3.5 w-3.5 mr-1" /> Sauvegarder la recette</>
+                    )}
+                  </Button>
+                </div>
+              )}
+
               {/* Search tab */}
-              {dialogTab === "search" && (
+              {(dialogTab === "search" || dialogTab === "create-recipe") && (
                 <>
                   <div className="space-y-2">
                     <Label>Rechercher un aliment</Label>
@@ -683,7 +832,11 @@ export default function NutritionPage() {
                         return (
                           <button
                             key={result.id}
-                            onClick={() => addFood(result)}
+                            onClick={() =>
+                              dialogTab === "create-recipe"
+                                ? addToDraftRecipe(result)
+                                : addFood(result)
+                            }
                             className="w-full text-left p-3 rounded-lg border border-warm-border hover:bg-muted transition-colors"
                           >
                             <div className="flex items-center justify-between gap-2 min-w-0">
@@ -1081,6 +1234,15 @@ export default function NutritionPage() {
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      {/* Bilan semaine */}
+      <div className="mt-6">
+        <BilanSemaine
+          endDate={selectedDate}
+          goalCalories={goals.calories}
+          onChanged={refreshData}
+        />
       </div>
 
       {/* Suggestions d'aliments */}
