@@ -18,8 +18,10 @@ import {
   Menu,
   Lightbulb,
   Target,
+  Share2,
 } from "lucide-react";
 import { useEffect, useState } from "react";
+import { ShareGuidelinesModal } from "@/components/share-guidelines-modal";
 
 type SidebarLink = {
   href: string;
@@ -44,6 +46,7 @@ const baseLinks: SidebarLink[] = [
     icon: Calendar,
   },
   { href: "/dashboard/ressources", label: "Ressources", icon: Lightbulb },
+  { href: "/dashboard/partage", label: "Parler de So-ma", icon: Share2 },
 ];
 
 function SidebarContent({
@@ -152,6 +155,8 @@ export default function DashboardLayout({
           <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
         </main>
       </div>
+
+      <ShareGuidelinesModal />
     </div>
   );
 }
