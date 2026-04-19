@@ -12,6 +12,7 @@ import { SUPPLEMENT_FOODS } from "@/data/foods-supplements";
 export type GenericFood = {
   name: string;         // nom court affiché
   aliases: string[];    // variantes & termes de recherche supplémentaires
+  isLiquid?: boolean;   // true = boisson/liquide (affichage ml/cl possible)
   per100g: {
     calories: number;
     protein: number;
@@ -20,6 +21,12 @@ export type GenericFood = {
     fiber: number;
   };
 };
+
+/** Détecte si un aliment est un liquide à partir de son groupe CIQUAL / région. */
+function isLiquidGroup(grp: string): boolean {
+  const g = normalize(grp);
+  return g.includes("boisson") || g.includes("eaux");
+}
 
 type CiqualEntry = {
   name: string;
@@ -73,6 +80,11 @@ const POPULAR_BOOST_TERMS = new Set(
     "amande", "noix", "noisette", "pistache", "cacahuete",
     "whey", "proteine", "isolate", "caseine",
     "datte", "dattes", "graines", "lin", "chia", "courge", "sesame", "tournesol",
+    "pavot", "chanvre", "fenugrec",
+    "noix du bresil", "bresil", "cajou", "grenoble", "pecan", "macadamia",
+    "haricot", "haricots", "lentille", "lentilles", "pois chiche", "flageolet", "pois casse",
+    "lait amande", "lait avoine", "lait soja", "lait coco", "lait riz", "lait noisette", "lait chanvre",
+    "cafe", "the", "tisane", "infusion", "kombucha",
   ].map(normalize)
 );
 
@@ -133,6 +145,7 @@ const foods: IndexedFood[] = allEntries.map((e) => {
   return {
     name: display,
     aliases: [e.name],
+    isLiquid: isLiquidGroup(e.grp),
     per100g: {
       calories: e.kcal,
       protein: e.p,

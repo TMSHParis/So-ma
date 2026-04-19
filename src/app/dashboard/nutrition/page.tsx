@@ -58,6 +58,7 @@ type SearchResult = {
   id: string;
   name: string;
   source: "local" | "openfoodfacts";
+  isLiquid?: boolean;
   per100g: {
     calories: number;
     protein: number;
@@ -120,6 +121,7 @@ export default function NutritionPage() {
   const [searching, setSearching] = useState(false);
   const [selectedMealType, setSelectedMealType] = useState("PETIT_DEJEUNER");
   const [quantity, setQuantity] = useState("100");
+  const [quantityUnit, setQuantityUnit] = useState<"g" | "ml" | "cl">("g");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [suggestion, setSuggestion] = useState("");
   const [sendingSuggestion, setSendingSuggestion] = useState(false);
@@ -249,12 +251,15 @@ export default function NutritionPage() {
 
   async function addFood(result: SearchResult) {
     const qty = parseFloat(quantity) || 100;
-    const ratio = qty / 100;
+    // Pour les liquides, densité ≈ 1 donc 1 ml = 1 g et 1 cl = 10 ml = 10 g
+    const chosenUnit = result.isLiquid ? quantityUnit : "g";
+    const qtyGrams = chosenUnit === "cl" ? qty * 10 : qty;
+    const ratio = qtyGrams / 100;
 
     const item = {
       name: result.name,
       quantity: qty,
-      unit: "g",
+      unit: chosenUnit,
       calories: Math.round(result.per100g.calories * ratio),
       protein: Math.round(result.per100g.protein * ratio * 10) / 10,
       carbs: Math.round(result.per100g.carbs * ratio * 10) / 10,
@@ -638,19 +643,43 @@ export default function NutritionPage() {
                   )}
 
                   <div className="space-y-2">
-                    <Label>Quantité (g)</Label>
-                    <Input
-                      type="number"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
-                    />
+                    <Label>Quantité</Label>
+                    <div className="flex gap-2 items-center">
+                      <Input
+                        type="number"
+                        className="flex-1"
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value)}
+                      />
+                      <div className="flex gap-0.5 p-0.5 bg-muted rounded-lg">
+                        {(["g", "ml", "cl"] as const).map((u) => (
+                          <button
+                            key={u}
+                            type="button"
+                            onClick={() => setQuantityUnit(u)}
+                            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                              quantityUnit === u
+                                ? "bg-background shadow-sm text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            {u}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      ml / cl uniquement pour les liquides (densité ≈ 1 : 1 ml = 1 g, 1 cl = 10 g).
+                    </p>
                   </div>
 
                   {searchResults.length > 0 && (
                     <div className="max-h-80 overflow-y-auto space-y-1.5">
                       {searchResults.map((result) => {
                         const qty = parseFloat(quantity) || 100;
-                        const ratio = qty / 100;
+                        const unitForResult = result.isLiquid ? quantityUnit : "g";
+                        const qtyGrams = unitForResult === "cl" ? qty * 10 : qty;
+                        const ratio = qtyGrams / 100;
                         return (
                           <button
                             key={result.id}
@@ -1012,7 +1041,7 @@ export default function NutritionPage() {
                                   setEditQty(String(food.quantity));
                                 }}
                               >
-                                {food.quantity}g
+                                {food.quantity}{food.unit || "g"}
                               </button>
                               <span>{food.calories} kcal</span>
                               <span>P: {food.protein}g</span>

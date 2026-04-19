@@ -5,6 +5,7 @@ type SearchResult = {
   id: string;
   name: string;
   source: "local" | "openfoodfacts";
+  isLiquid?: boolean;
   per100g: {
     calories: number;
     protein: number;
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest) {
   if (barcode) {
     try {
       const offRes = await fetch(
-        `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,brands,nutriments,image_url`,
+        `https://world.openfoodfacts.org/api/v2/product/${encodeURIComponent(barcode)}.json?fields=code,product_name,brands,nutriments,categories_tags,image_url`,
         { signal: AbortSignal.timeout(5000) }
       );
 
@@ -32,10 +33,14 @@ export async function GET(request: NextRequest) {
           const p = data.product;
           const name = [p.product_name, p.brands].filter(Boolean).join(" — ");
           if (name && p.nutriments?.["energy-kcal_100g"] != null) {
+            const isLiquid = ((p.categories_tags as string[]) || []).some(
+              (t) => /beverage|drink|boisson|eau|milk|lait/.test(t),
+            );
             const result: SearchResult = {
               id: `off-${p.code}`,
               name,
               source: "openfoodfacts",
+              isLiquid,
               per100g: {
                 calories: Math.round(p.nutriments["energy-kcal_100g"] || 0),
                 protein: Math.round((p.nutriments.proteins_100g || 0) * 10) / 10,
@@ -65,6 +70,7 @@ export async function GET(request: NextRequest) {
     id: `local-${i}`,
     name: f.name,
     source: "local" as const,
+    isLiquid: f.isLiquid,
     per100g: f.per100g,
   }));
 
@@ -123,11 +129,15 @@ export async function GET(request: NextRequest) {
             : normalizedQ.split(" ").every((w) => normalizedName.includes(w))
               ? 1
               : 2;
+          const isLiquid = (p.categories_tags || []).some(
+            (t) => /beverage|drink|boisson|eau|milk|lait/.test(t),
+          );
 
           return {
             id: `off-${p.code}`,
             name,
             source: "openfoodfacts" as const,
+            isLiquid,
             per100g: {
               calories: Math.round(p.nutriments!["energy-kcal_100g"] || 0),
               protein: Math.round((p.nutriments!.proteins_100g || 0) * 10) / 10,

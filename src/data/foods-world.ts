@@ -192,4 +192,44 @@ export const WORLD_FOODS: WorldFood[] = [
   { name: "Graines de courge", region: "Graines", kcal: 559, p: 30.2, c: 10.7, f: 49.1, fi: 6 },
   { name: "Graines de tournesol", region: "Graines", kcal: 584, p: 20.8, c: 20, f: 51.5, fi: 8.6 },
   { name: "Graines de sésame", region: "Graines", kcal: 573, p: 17.7, c: 23.5, f: 49.7, fi: 11.8 },
+  { name: "Graines de pavot", region: "Graines", kcal: 525, p: 18, c: 28, f: 42, fi: 19.5 },
+  { name: "Graines de chanvre décortiquées", region: "Graines", kcal: 553, p: 31.6, c: 8.7, f: 48.8, fi: 4 },
+  { name: "Graines de fenugrec", region: "Graines", kcal: 323, p: 23, c: 58, f: 6.4, fi: 24.6 },
+
+  // Noix & fruits à coque
+  { name: "Noix du Brésil", region: "Fruits à coque", kcal: 659, p: 14.3, c: 4.2, f: 66.4, fi: 7.5 },
+  { name: "Noix de cajou", region: "Fruits à coque", kcal: 553, p: 18.2, c: 30.2, f: 43.8, fi: 3.3 },
+  { name: "Noix de Grenoble", region: "Fruits à coque", kcal: 654, p: 15.2, c: 13.7, f: 65.2, fi: 6.7 },
+  { name: "Noix de pécan", region: "Fruits à coque", kcal: 691, p: 9.2, c: 13.9, f: 72, fi: 9.6 },
+  { name: "Noix de macadamia", region: "Fruits à coque", kcal: 718, p: 7.9, c: 13.8, f: 75.8, fi: 8.6 },
+
+  // Légumineuses cuites (versions pratiques, déjà préparées)
+  { name: "Haricots rouges cuits", region: "Légumineuses", kcal: 127, p: 8.7, c: 22.8, f: 0.5, fi: 7.4 },
+  { name: "Haricots blancs cuits", region: "Légumineuses", kcal: 139, p: 9.7, c: 25.1, f: 0.4, fi: 6.3 },
+  { name: "Haricots noirs cuits", region: "Légumineuses", kcal: 132, p: 8.9, c: 23.7, f: 0.5, fi: 8.7 },
+  { name: "Pois chiches cuits", region: "Légumineuses", kcal: 164, p: 8.9, c: 27.4, f: 2.6, fi: 7.6 },
+  { name: "Lentilles vertes cuites", region: "Légumineuses", kcal: 116, p: 9, c: 20.1, f: 0.4, fi: 7.9 },
+  { name: "Lentilles corail cuites", region: "Légumineuses", kcal: 114, p: 9, c: 19.5, f: 0.4, fi: 7.3 },
+  { name: "Flageolets cuits", region: "Légumineuses", kcal: 130, p: 8.5, c: 23, f: 0.5, fi: 6.5 },
+  { name: "Pois cassés cuits", region: "Légumineuses", kcal: 118, p: 8.3, c: 21, f: 0.4, fi: 8.3 },
+
+  // Boissons végétales (valeurs par 100 ml ≈ 100 g)
+  { name: "Lait d'amande (non sucré)", region: "Boissons végétales", kcal: 17, p: 0.5, c: 0.3, f: 1.5, fi: 0.4 },
+  { name: "Lait d'amande sucré", region: "Boissons végétales", kcal: 40, p: 0.5, c: 7, f: 1.3, fi: 0.3 },
+  { name: "Lait d'avoine", region: "Boissons végétales", kcal: 47, p: 1, c: 7.1, f: 1.5, fi: 0.8 },
+  { name: "Lait d'avoine barista", region: "Boissons végétales", kcal: 60, p: 1, c: 7, f: 3, fi: 0.8 },
+  { name: "Lait de soja (non sucré)", region: "Boissons végétales", kcal: 39, p: 3.3, c: 0.4, f: 1.8, fi: 0.5 },
+  { name: "Lait de soja sucré", region: "Boissons végétales", kcal: 55, p: 3.3, c: 6.5, f: 1.8, fi: 0.5 },
+  { name: "Lait de coco (boisson)", region: "Boissons végétales", kcal: 24, p: 0.2, c: 2.8, f: 1.4, fi: 0.1 },
+  { name: "Lait de riz", region: "Boissons végétales", kcal: 52, p: 0.3, c: 10.2, f: 1, fi: 0.3 },
+  { name: "Lait de noisette", region: "Boissons végétales", kcal: 32, p: 0.4, c: 3, f: 1.7, fi: 0.3 },
+  { name: "Lait de chanvre", region: "Boissons végétales", kcal: 46, p: 3.1, c: 0.2, f: 3.6, fi: 0.4 },
+
+  // Boissons
+  { name: "Café noir", region: "Boissons", kcal: 2, p: 0.1, c: 0, f: 0, fi: 0 },
+  { name: "Thé vert infusé", region: "Boissons", kcal: 1, p: 0, c: 0.2, f: 0, fi: 0 },
+  { name: "Thé noir infusé", region: "Boissons", kcal: 1, p: 0, c: 0.3, f: 0, fi: 0 },
+  { name: "Infusion (tisane)", region: "Boissons", kcal: 1, p: 0, c: 0.2, f: 0, fi: 0 },
+  { name: "Eau pétillante", region: "Boissons", kcal: 0, p: 0, c: 0, f: 0, fi: 0 },
+  { name: "Kombucha", region: "Boissons", kcal: 24, p: 0, c: 6, f: 0, fi: 0 },
 ];
