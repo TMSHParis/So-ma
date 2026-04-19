@@ -37,6 +37,12 @@ import {
   BarChart3,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  computeMB_KJ,
+  computeNAP,
+  computeMacrosFromKJ,
+  NAP_ACTIVITIES,
+} from "@/lib/nutrition-calculator";
 
 type ClientRow = {
   id: string;
@@ -92,51 +98,6 @@ const SPORT_TYPES = [
   { value: "VELO", label: "Vélo" },
   { value: "AUTRE", label: "Autre" },
 ];
-
-/** Activities for NAP calculation with their coefficients */
-const NAP_ACTIVITIES = [
-  { key: "sommeil", label: "Sommeil", coeff: 1, default: 8 },
-  { key: "toilettes", label: "Toilettes", coeff: 2, default: 0.5 },
-  { key: "repas", label: "Repas (PDJ, déj, dîner)", coeff: 1.6, default: 1.5 },
-  { key: "travailAssis", label: "Travail assis", coeff: 1.6, default: 8 },
-  { key: "deplacements", label: "Déplacements divers", coeff: 1.5, default: 1 },
-  { key: "marche", label: "Marche", coeff: 3, default: 1 },
-  { key: "sport", label: "Sport", coeff: 5, default: 1 },
-  { key: "soinsDetente", label: "Soins perso / détente", coeff: 1.35, default: 1.5 },
-  { key: "prepRepas", label: "Préparation des repas", coeff: 2, default: 1 },
-  { key: "voiture", label: "Temps en voiture", coeff: 1.5, default: 0.5 },
-  { key: "enfants", label: "Soins des enfants", coeff: 2, default: 0 },
-];
-
-/** MB (MJ/jour) = coeff × poids^0.48 × taille(m)^0.50 × âge^-0.13 — Black et al. (1996)
- *  Résultat en MJ, × 1000 pour KJ */
-function computeMB_KJ(sex: string, weightKg: number, heightCm: number, ageYears: number): number {
-  const coeff = sex === "F" ? 0.963 : 1.083;
-  const heightM = heightCm / 100;
-  const mbMJ = coeff * Math.pow(weightKg, 0.48) * Math.pow(heightM, 0.50) * Math.pow(ageYears, -0.13);
-  return mbMJ * 1000; // MJ → KJ
-}
-
-/** Calculate NAP from activity hours */
-function computeNAP(activities: Record<string, number>): { nap: number; totalH: number; weightedH: number } {
-  let weightedH = 0;
-  let totalH = 0;
-  for (const act of NAP_ACTIVITIES) {
-    const h = activities[act.key] || 0;
-    weightedH += h * act.coeff;
-    totalH += h;
-  }
-  return { nap: totalH > 0 ? weightedH / 24 : 1.55, totalH, weightedH };
-}
-
-/** Macros from DEJ in KJ using correct energy coefficients */
-function computeMacrosFromKJ(dejKJ: number, pctProtein: number, pctFat: number, pctCarbs: number) {
-  return {
-    proteinG: Math.round((dejKJ * pctProtein / 100) / 17),
-    fatG: Math.round((dejKJ * pctFat / 100) / 38),
-    carbsG: Math.round((dejKJ * pctCarbs / 100) / 17),
-  };
-}
 
 type CalcResult = {
   mbKJ: number;
@@ -824,7 +785,7 @@ export default function ClientsPage() {
                       ))}
                     </div>
                     {(() => {
-                      const { nap, totalH, weightedH } = computeNAP(calcActivities);
+                      const { nap, totalH } = computeNAP(calcActivities);
                       const mbKJ = (Number(calcWeight) && Number(calcHeight) && Number(calcAge))
                         ? computeMB_KJ(calcSex, Number(calcWeight), Number(calcHeight), Number(calcAge))
                         : 0;

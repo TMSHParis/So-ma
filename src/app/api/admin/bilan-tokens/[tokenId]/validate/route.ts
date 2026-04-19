@@ -51,6 +51,8 @@ export async function POST(
     goalFat,
     goalFiber,
     goalWaterL,
+    napActivities,
+    stressFactor,
   } = body;
 
   const bilanData = token.response.data as Record<string, string>;
@@ -81,6 +83,7 @@ export async function POST(
     weight,
     height,
     birthDate,
+    age,
     startWeight: weight,
     goalWeight,
     goalCalories: Math.round(Number(goalCalories)),
@@ -92,6 +95,8 @@ export async function POST(
     goalFat: Math.round(Number(goalFat)),
     goalFiber: Math.round(Number(goalFiber)),
     goalWaterL: Math.round(Number(goalWaterL) * 10) / 10,
+    napActivities: napActivities ?? undefined,
+    stressFactor: stressFactor != null ? Number(stressFactor) : 1,
   };
 
   // Check if user already exists
