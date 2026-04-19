@@ -186,7 +186,7 @@ export default function ClientsPage() {
 
   const fetchClients = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/clients");
+      const res = await fetch("/api/admin/clients", { cache: "no-store" });
       if (res.ok) {
         const data: ClientRow[] = await res.json();
         setClients(data);
@@ -487,6 +487,25 @@ export default function ClientsPage() {
         body: JSON.stringify(body),
       });
       if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setClients((prev) =>
+        prev.map((row) =>
+          row.client?.id === editClientId
+            ? {
+                ...row,
+                client: row.client
+                  ? {
+                      ...row.client,
+                      goalCalories: updated.goalCalories ?? row.client.goalCalories,
+                      maintenanceCalories:
+                        updated.maintenanceCalories ?? row.client.maintenanceCalories,
+                      energyBalance: updated.energyBalance ?? row.client.energyBalance,
+                    }
+                  : row.client,
+              }
+            : row,
+        ),
+      );
       toast.success("Objectifs enregistrés");
       fetchClients();
     } catch { toast.error("Erreur enregistrement"); }
