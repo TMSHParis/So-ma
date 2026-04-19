@@ -27,6 +27,8 @@ enum SportType {
   YOGA
   NATATION
   VELO
+  MOBILITE
+  RENFORCEMENT
   AUTRE
 }
 

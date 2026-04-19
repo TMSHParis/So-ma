@@ -26,6 +26,8 @@ import {
   Flame,
   Bike,
   Waves,
+  Activity,
+  StretchHorizontal,
 } from "lucide-react";
 
 type SportSession = {
@@ -44,14 +46,34 @@ type SportSession = {
 
 const sportTypes = [
   { value: "MUSCULATION", label: "Musculation", icon: Dumbbell },
+  { value: "RENFORCEMENT", label: "Renforcement", icon: Activity },
   { value: "CARDIO", label: "Cardio", icon: Flame },
   { value: "MARCHE", label: "Marche", icon: Footprints },
   { value: "COURSE", label: "Course à pied", icon: Footprints },
   { value: "YOGA", label: "Yoga / Pilates", icon: Waves },
+  { value: "MOBILITE", label: "Mobilité", icon: StretchHorizontal },
   { value: "NATATION", label: "Natation", icon: Waves },
   { value: "VELO", label: "Vélo", icon: Bike },
   { value: "AUTRE", label: "Autre", icon: Timer },
 ];
+
+/**
+ * MET (Metabolic Equivalent of Task) — Compendium of Physical Activities 2011.
+ * Utilisé pour l'estimation auto des calories quand l'utilisatrice ne les saisit pas.
+ *
+ *   calories = MET × poids(kg) × durée(h)
+ *
+ * Valeurs retenues :
+ *   - MOBILITE      2.5  (étirements / yoga doux / mobility work)
+ *   - RENFORCEMENT  5.0  (body-weight / calisthenics modéré à vigoureux)
+ *
+ * Les autres types gardent la saisie manuelle (sauf MARCHE qui a sa propre estim
+ * basée sur pas + vitesse, plus précise).
+ */
+const SPORT_MET: Record<string, number> = {
+  MOBILITE: 2.5,
+  RENFORCEMENT: 5.0,
+};
 
 /**
  * Estime la durée de marche en minutes à partir du nombre de pas.
@@ -307,6 +329,12 @@ export default function SportPage() {
     if (sportType === "MUSCULATION") {
       const ex = exercises.filter((e) => e.name.trim());
       if (ex.length > 0) details = { ...details, exercises: ex };
+    }
+
+    // Estimation auto via MET pour mobilité / renforcement
+    if (estimatedCalories == null && SPORT_MET[sportType] && dur > 0) {
+      const weight = clientWeight && clientWeight > 0 ? clientWeight : 65;
+      estimatedCalories = Math.round(SPORT_MET[sportType] * weight * (dur / 60));
     }
 
     if (!dur && sportType !== "MARCHE") return;

@@ -84,10 +84,12 @@ type ProgressData = {
 
 const SPORT_LABELS: Record<string, string> = {
   MUSCULATION: "Muscu",
+  RENFORCEMENT: "Renforcement",
   CARDIO: "Cardio",
   MARCHE: "Marche",
   COURSE: "Course",
   YOGA: "Yoga",
+  MOBILITE: "Mobilité",
   NATATION: "Natation",
   VELO: "Vélo",
   AUTRE: "Autre",
@@ -95,10 +97,12 @@ const SPORT_LABELS: Record<string, string> = {
 
 const SPORT_TYPES = [
   { value: "MUSCULATION", label: "Musculation" },
+  { value: "RENFORCEMENT", label: "Renforcement" },
   { value: "CARDIO", label: "Cardio" },
   { value: "MARCHE", label: "Marche" },
   { value: "COURSE", label: "Course" },
   { value: "YOGA", label: "Yoga" },
+  { value: "MOBILITE", label: "Mobilité" },
   { value: "NATATION", label: "Natation" },
   { value: "VELO", label: "Vélo" },
   { value: "AUTRE", label: "Autre" },

@@ -16,6 +16,8 @@ const SPORT_TYPES: SportType[] = [
   "YOGA",
   "NATATION",
   "VELO",
+  "MOBILITE",
+  "RENFORCEMENT",
   "AUTRE",
 ];
 
