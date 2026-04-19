@@ -35,8 +35,44 @@ type Plan = {
   fileName: string | null;
   active: boolean;
   createdAt: string;
-  client: { user: { firstName: string; lastName: string } };
+  client: { id: string; user: { firstName: string; lastName: string } };
 };
+
+type PlanGroup = {
+  key: string;
+  representative: Plan;
+  plans: Plan[];
+  clientIds: string[];
+};
+
+function groupPlans(plans: Plan[]): PlanGroup[] {
+  const map = new Map<string, PlanGroup>();
+  for (const plan of plans) {
+    const key = plan.fileUrl
+      ? `file:${plan.fileUrl}`
+      : `doc:${plan.title}|${plan.description ?? ""}|${JSON.stringify(plan.content ?? {})}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.plans.push(plan);
+      if (plan.client?.id) existing.clientIds.push(plan.client.id);
+      if (new Date(plan.createdAt) > new Date(existing.representative.createdAt)) {
+        existing.representative = plan;
+      }
+    } else {
+      map.set(key, {
+        key,
+        representative: plan,
+        plans: [plan],
+        clientIds: plan.client?.id ? [plan.client.id] : [],
+      });
+    }
+  }
+  return Array.from(map.values()).sort(
+    (a, b) =>
+      new Date(b.representative.createdAt).getTime() -
+      new Date(a.representative.createdAt).getTime()
+  );
+}
 
 export default function ProgrammesPage() {
   const [clients, setClients] = useState<ClientOption[]>([]);
@@ -55,7 +91,7 @@ export default function ProgrammesPage() {
 
   // Resend state
   const [resendState, setResendState] = useState<{
-    plan: Plan;
+    group: PlanGroup;
     type: "meal" | "workout";
   } | null>(null);
   const [resendClientIds, setResendClientIds] = useState<string[]>([]);
@@ -242,8 +278,8 @@ export default function ProgrammesPage() {
     }
   }
 
-  function openResend(plan: Plan, type: "meal" | "workout") {
-    setResendState({ plan, type });
+  function openResend(group: PlanGroup, type: "meal" | "workout") {
+    setResendState({ group, type });
     setResendClientIds([]);
     setResendSearch("");
   }
@@ -258,7 +294,8 @@ export default function ProgrammesPage() {
 
   async function handleResend() {
     if (!resendState || resendClientIds.length === 0) return;
-    const { plan, type } = resendState;
+    const { group, type } = resendState;
+    const plan = group.representative;
     const endpoint =
       type === "meal" ? "/api/admin/meal-plans" : "/api/admin/workout-plans";
     setResending(true);
@@ -295,41 +332,59 @@ export default function ProgrammesPage() {
     }
   }
 
-  async function deletePlan(type: "meal" | "workout", id: string) {
-    const endpoint =
-      type === "meal"
-        ? `/api/admin/meal-plans?id=${id}`
-        : `/api/admin/workout-plans?id=${id}`;
+  async function deleteGroup(type: "meal" | "workout", group: PlanGroup) {
+    const base =
+      type === "meal" ? "/api/admin/meal-plans" : "/api/admin/workout-plans";
+    const label =
+      group.plans.length > 1
+        ? `Supprimer ce programme pour les ${group.plans.length} clientes ?`
+        : "Supprimer ce programme ?";
+    if (!confirm(label)) return;
 
     try {
-      const res = await fetch(endpoint, { method: "DELETE" });
-      if (res.ok) {
-        toast.success("Programme supprimé");
-        fetchAll();
+      const results = await Promise.all(
+        group.plans.map((p) =>
+          fetch(`${base}?id=${p.id}`, { method: "DELETE" })
+        )
+      );
+      if (results.every((r) => r.ok)) {
+        toast.success(
+          group.plans.length > 1
+            ? `Programme supprimé pour ${group.plans.length} clientes`
+            : "Programme supprimé"
+        );
+      } else {
+        toast.error("Certaines suppressions ont échoué");
       }
+      fetchAll();
     } catch {
       toast.error("Erreur");
     }
   }
 
-  function renderPlanCard(plan: Plan, type: "meal" | "workout") {
+  function renderPlanGroup(group: PlanGroup, type: "meal" | "workout") {
+    const plan = group.representative;
+    const clients = group.plans
+      .map((p) => p.client)
+      .filter((c): c is Plan["client"] => !!c);
+    const anyActive = group.plans.some((p) => p.active);
+
     return (
-      <Card key={plan.id} className="border-warm-border">
+      <Card key={group.key} className="border-warm-border">
         <CardContent className="pt-4 pb-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <button
                 type="button"
-                onClick={() => openResend(plan, type)}
+                onClick={() => openResend(group, type)}
                 className="font-medium text-left hover:text-warm-primary hover:underline decoration-dotted underline-offset-4 transition-colors"
-                title="Renvoyer ce programme à d'autres clientes"
+                title="Renvoyer à d'autres clientes"
               >
                 {plan.title}
               </button>
-              <p className="text-xs text-muted-foreground">
-                {plan.client.user.firstName} {plan.client.user.lastName}{" "}
-                &middot;{" "}
-                {new Date(plan.createdAt).toLocaleDateString("fr-FR")}
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {new Date(plan.createdAt).toLocaleDateString("fr-FR")} &middot;{" "}
+                {clients.length} cliente{clients.length > 1 ? "s" : ""}
               </p>
               {plan.description && (
                 <p className="text-sm text-muted-foreground mt-1">
@@ -348,16 +403,29 @@ export default function ProgrammesPage() {
                   <ExternalLink className="h-3 w-3" />
                 </a>
               )}
+              {clients.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2.5">
+                  {clients.map((c, i) => (
+                    <Badge
+                      key={`${group.key}-${c.id}-${i}`}
+                      variant="outline"
+                      className="font-normal"
+                    >
+                      {c.user.firstName} {c.user.lastName}
+                    </Badge>
+                  ))}
+                </div>
+              )}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0 ml-3">
-              <Badge variant={plan.active ? "default" : "secondary"}>
-                {plan.active ? "Actif" : "Inactif"}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <Badge variant={anyActive ? "default" : "secondary"}>
+                {anyActive ? "Actif" : "Inactif"}
               </Badge>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-warm-primary"
-                onClick={() => openResend(plan, type)}
+                onClick={() => openResend(group, type)}
                 title="Renvoyer à d'autres clientes"
               >
                 <Send className="h-4 w-4" />
@@ -366,7 +434,12 @@ export default function ProgrammesPage() {
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={() => deletePlan(type, plan.id)}
+                onClick={() => deleteGroup(type, group)}
+                title={
+                  group.plans.length > 1
+                    ? "Supprimer pour toutes les clientes"
+                    : "Supprimer"
+                }
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -376,6 +449,9 @@ export default function ProgrammesPage() {
       </Card>
     );
   }
+
+  const mealGroups = groupPlans(mealPlans);
+  const workoutGroups = groupPlans(workoutPlans);
 
   if (loading) {
     return (
@@ -420,7 +496,7 @@ export default function ProgrammesPage() {
               Nouveau programme alimentaire
             </Button>
           </div>
-          {mealPlans.length === 0 ? (
+          {mealGroups.length === 0 ? (
             <Card className="border-warm-border">
               <CardContent className="py-12 text-center">
                 <Utensils className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -429,7 +505,7 @@ export default function ProgrammesPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {mealPlans.map((plan) => renderPlanCard(plan, "meal"))}
+              {mealGroups.map((group) => renderPlanGroup(group, "meal"))}
             </div>
           )}
         </TabsContent>
@@ -444,7 +520,7 @@ export default function ProgrammesPage() {
               Nouveau programme sportif
             </Button>
           </div>
-          {workoutPlans.length === 0 ? (
+          {workoutGroups.length === 0 ? (
             <Card className="border-warm-border">
               <CardContent className="py-12 text-center">
                 <Dumbbell className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
@@ -453,7 +529,7 @@ export default function ProgrammesPage() {
             </Card>
           ) : (
             <div className="space-y-3">
-              {workoutPlans.map((plan) => renderPlanCard(plan, "workout"))}
+              {workoutGroups.map((group) => renderPlanGroup(group, "workout"))}
             </div>
           )}
         </TabsContent>
@@ -654,15 +730,15 @@ export default function ProgrammesPage() {
           {resendState && (
             <div className="space-y-4">
               <div className="rounded-lg border border-warm-border bg-muted/30 px-3 py-2.5">
-                <p className="text-sm font-medium truncate">{resendState.plan.title}</p>
-                {resendState.plan.fileName && (
+                <p className="text-sm font-medium truncate">{resendState.group.representative.title}</p>
+                {resendState.group.representative.fileName && (
                   <p className="text-xs text-muted-foreground truncate mt-0.5 inline-flex items-center gap-1">
                     <FileText className="h-3 w-3" />
-                    {resendState.plan.fileName}
+                    {resendState.group.representative.fileName}
                   </p>
                 )}
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Créé pour {resendState.plan.client.user.firstName} {resendState.plan.client.user.lastName}
+                  Déjà envoyé à {resendState.group.plans.length} cliente{resendState.group.plans.length > 1 ? "s" : ""}
                 </p>
               </div>
 
@@ -682,7 +758,11 @@ export default function ProgrammesPage() {
                       size="sm"
                       className="h-7 text-xs"
                       onClick={() =>
-                        setResendClientIds(clientsWithProfile.map((c) => c.client!.id))
+                        setResendClientIds(
+                          clientsWithProfile
+                            .map((c) => c.client!.id)
+                            .filter((id) => !resendState.group.clientIds.includes(id))
+                        )
                       }
                     >
                       Toutes
@@ -716,19 +796,30 @@ export default function ProgrammesPage() {
                     })
                     .map((c) => {
                       const clientId = c.client!.id;
+                      const alreadySent = resendState.group.clientIds.includes(clientId);
                       const checked = resendClientIds.includes(clientId);
                       return (
                         <label
                           key={clientId}
-                          className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/50 transition-colors"
+                          className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${
+                            alreadySent
+                              ? "opacity-50 cursor-not-allowed"
+                              : "cursor-pointer hover:bg-muted/50"
+                          }`}
                         >
                           <Checkbox
                             checked={checked}
-                            onCheckedChange={() => toggleResendClient(clientId)}
+                            disabled={alreadySent}
+                            onCheckedChange={() => !alreadySent && toggleResendClient(clientId)}
                           />
                           <span className="text-sm flex-1 truncate">
                             {c.firstName} {c.lastName}
                           </span>
+                          {alreadySent && (
+                            <span className="text-xs text-muted-foreground">
+                              déjà envoyé
+                            </span>
+                          )}
                         </label>
                       );
                     })}
