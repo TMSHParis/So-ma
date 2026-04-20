@@ -111,6 +111,35 @@ export const LUNCHES: MealTemplate[] = [
   },
 ];
 
+// Collations post-workout (plus petites, riches en protéines + glucides rapides)
+// Servies en plus d'une COLLATION normale les jours de muscu.
+export const POST_WORKOUT: MealTemplate[] = [
+  {
+    name: "Shake whey + banane",
+    items: [
+      { foodName: "Whey protéine", quantity: 30, unit: "g", calories: 115, protein: 23, carbs: 2, fat: 1, fiber: 0 },
+      { foodName: "Banane", quantity: 120, unit: "g", calories: 107, protein: 1.3, carbs: 27, fat: 0.4, fiber: 3 },
+      { foodName: "Lait demi-écrémé", quantity: 200, unit: "ml", calories: 92, protein: 6.8, carbs: 9.6, fat: 3.2, fiber: 0 },
+    ],
+  },
+  {
+    name: "Skyr + fruits + miel",
+    items: [
+      { foodName: "Skyr", quantity: 250, unit: "g", calories: 163, protein: 27.5, carbs: 10, fat: 0.5, fiber: 0 },
+      { foodName: "Myrtilles", quantity: 100, unit: "g", calories: 57, protein: 0.7, carbs: 14, fat: 0.3, fiber: 2.4 },
+      { foodName: "Miel", quantity: 20, unit: "g", calories: 60, protein: 0, carbs: 16, fat: 0, fiber: 0 },
+    ],
+  },
+  {
+    name: "Pain + thon + œuf",
+    items: [
+      { foodName: "Pain complet", quantity: 60, unit: "g", calories: 150, protein: 5.3, carbs: 26.4, fat: 1.8, fiber: 3.8 },
+      { foodName: "Thon au naturel", quantity: 80, unit: "g", calories: 100, protein: 19, carbs: 0, fat: 2.4, fiber: 0 },
+      { foodName: "Œuf dur", quantity: 1, unit: "u", calories: 78, protein: 6.3, carbs: 0.6, fat: 5.3, fiber: 0 },
+    ],
+  },
+];
+
 export const SNACKS: MealTemplate[] = [
   {
     name: "Skyr myrtilles noix",

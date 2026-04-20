@@ -1,7 +1,12 @@
 import { prisma } from "@/lib/db";
-import { BREAKFASTS, LUNCHES, SNACKS, DINNERS, type MealTemplate } from "./meals";
+import { BREAKFASTS, LUNCHES, SNACKS, DINNERS, POST_WORKOUT, type MealTemplate } from "./meals";
 
 const DEMO_EMAIL = "pixelbfr@gmail.com";
+
+// Anchor pour la progression de pesée hebdo (vendredi de départ).
+const WEIGH_IN_ANCHOR_DATE = "2026-04-10";
+const WEIGH_IN_ANCHOR_WEIGHT = 84;
+const WEEKLY_LOSS_KG = 0.5;
 
 // RNG déterministe basé sur la date (yyyy-mm-dd) — même date = mêmes choix.
 function seededRng(seed: string) {
@@ -33,6 +38,10 @@ function isMuscleDay(date: Date): boolean {
   return d === 1 || d === 3 || d === 5;
 }
 
+function isFriday(date: Date): boolean {
+  return date.getUTCDay() === 5;
+}
+
 function startOfDayUTC(date: Date): Date {
   return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
 }
@@ -52,81 +61,97 @@ type SeedSummary = {
   march: { skipped: boolean; steps?: number; kcal?: number };
   muscu: { skipped: boolean; kcal?: number; scheduled: boolean };
   water: { skipped: boolean; liters?: number };
+  weight: { skipped: boolean; kg?: number; scheduled: boolean };
 };
+
+// Scale les items d'un template et les rend prêts à insérer.
+function scaleMeal(
+  rng: () => number,
+  template: MealTemplate,
+  scale: number,
+  clientId: string,
+  date: Date,
+  mealType: "PETIT_DEJEUNER" | "DEJEUNER" | "COLLATION" | "DINER"
+) {
+  return template.items.map((item) => {
+    // ±3% de variance par item + scale global
+    const factor = scale * (1 + (rng() * 0.06 - 0.03));
+    const q = Math.round(item.quantity * factor * 10) / 10;
+    const actualScale = q / item.quantity;
+    return {
+      clientId,
+      date,
+      mealType,
+      foodName: item.foodName,
+      quantity: q,
+      unit: item.unit,
+      calories: Math.round(item.calories * actualScale),
+      protein: Math.round(item.protein * actualScale * 10) / 10,
+      carbs: Math.round(item.carbs * actualScale * 10) / 10,
+      fat: Math.round(item.fat * actualScale * 10) / 10,
+      fiber: Math.round(item.fiber * actualScale * 10) / 10,
+    };
+  });
+}
 
 export async function seedDay(clientId: string, dateIso: string): Promise<SeedSummary> {
   const date = startOfDayUTC(new Date(dateIso));
   const isoDay = date.toISOString().slice(0, 10);
   const rng = seededRng(isoDay + clientId);
+  const muscleDay = isMuscleDay(date);
 
   const summary: SeedSummary = {
     date: isoDay,
     meals: { skipped: true, count: 0 },
     march: { skipped: true },
-    muscu: { skipped: true, scheduled: isMuscleDay(date) },
+    muscu: { skipped: true, scheduled: muscleDay },
     water: { skipped: true },
+    weight: { skipped: true, scheduled: isFriday(date) },
   };
 
   // --- FOOD ---
   const existingFood = await prisma.foodEntry.count({ where: { clientId, date } });
   if (existingFood === 0) {
+    // Scale des portions : 0.83 base (~2550 kcal), 0.86 jour muscu (~2650 + 250 post-workout = ~2900)
+    const scale = muscleDay ? 0.86 : 0.83;
+
     const pdj = pick(rng, BREAKFASTS);
     const dej = pick(rng, LUNCHES);
     const col = pick(rng, SNACKS);
     const din = pick(rng, DINNERS);
+    const pwo = muscleDay ? pick(rng, POST_WORKOUT) : null;
 
-    // Parfois 2ème collation (30% des jours) pour varier
-    const hasSecondSnack = rng() < 0.3;
-    const col2 = hasSecondSnack ? pick(rng, SNACKS.filter((s) => s.name !== col.name)) : null;
-
-    const meals: { mealType: "PETIT_DEJEUNER" | "DEJEUNER" | "COLLATION" | "DINER"; template: MealTemplate }[] = [
-      { mealType: "PETIT_DEJEUNER", template: pdj },
-      { mealType: "DEJEUNER", template: dej },
-      { mealType: "COLLATION", template: col },
-      ...(col2 ? [{ mealType: "COLLATION" as const, template: col2 }] : []),
-      { mealType: "DINER", template: din },
+    const rows = [
+      ...scaleMeal(rng, pdj, scale, clientId, date, "PETIT_DEJEUNER"),
+      ...scaleMeal(rng, dej, scale, clientId, date, "DEJEUNER"),
+      ...scaleMeal(rng, col, scale, clientId, date, "COLLATION"),
+      ...(pwo ? scaleMeal(rng, pwo, 1.0, clientId, date, "COLLATION") : []),
+      ...scaleMeal(rng, din, scale, clientId, date, "DINER"),
     ];
 
-    const totals = { kcal: 0, p: 0, c: 0, f: 0, fib: 0 };
-    const rows = meals.flatMap(({ mealType, template }) =>
-      template.items.map((item) => {
-        // ±3% de variance par item pour réalisme (poids de cuisson, portion réelle)
-        const q = Math.round(jitter(rng, item.quantity, 0.03) * 10) / 10;
-        const scale = q / item.quantity;
-        const calories = Math.round(item.calories * scale);
-        const protein = Math.round(item.protein * scale * 10) / 10;
-        const carbs = Math.round(item.carbs * scale * 10) / 10;
-        const fat = Math.round(item.fat * scale * 10) / 10;
-        const fiber = Math.round(item.fiber * scale * 10) / 10;
-        totals.kcal += calories;
-        totals.p += protein;
-        totals.c += carbs;
-        totals.f += fat;
-        totals.fib += fiber;
-        return {
-          clientId,
-          date,
-          mealType,
-          foodName: item.foodName,
-          quantity: q,
-          unit: item.unit,
-          calories,
-          protein,
-          carbs,
-          fat,
-          fiber,
-        };
-      })
+    const totals = rows.reduce(
+      (acc, r) => ({
+        kcal: acc.kcal + r.calories,
+        p: acc.p + r.protein,
+        c: acc.c + r.carbs,
+        f: acc.f + r.fat,
+        fib: acc.fib + r.fiber,
+      }),
+      { kcal: 0, p: 0, c: 0, f: 0, fib: 0 }
     );
 
     await prisma.foodEntry.createMany({ data: rows });
-    summary.meals = { skipped: false, count: rows.length, totals: {
-      kcal: Math.round(totals.kcal),
-      p: Math.round(totals.p),
-      c: Math.round(totals.c),
-      f: Math.round(totals.f),
-      fib: Math.round(totals.fib),
-    } };
+    summary.meals = {
+      skipped: false,
+      count: rows.length,
+      totals: {
+        kcal: Math.round(totals.kcal),
+        p: Math.round(totals.p),
+        c: Math.round(totals.c),
+        f: Math.round(totals.f),
+        fib: Math.round(totals.fib),
+      },
+    };
   }
 
   // --- SPORT : MARCHE (pas quotidiens) ---
@@ -137,35 +162,19 @@ export async function seedDay(clientId: string, dateIso: string): Promise<SeedSu
     const distance = Math.round(steps * 0.000795 * 100) / 100;
     const duration = Math.round(steps * 0.00992);
     await prisma.sportEntry.create({
-      data: {
-        clientId,
-        date,
-        sportType: "MARCHE",
-        steps,
-        calories,
-        distance,
-        duration,
-      },
+      data: { clientId, date, sportType: "MARCHE", steps, calories, distance, duration },
     });
     summary.march = { skipped: false, steps, kcal: calories };
   }
 
   // --- SPORT : MUSCULATION (lun/mer/ven, 80 min) ---
-  if (isMuscleDay(date)) {
+  if (muscleDay) {
     const existingMuscu = await prisma.sportEntry.count({ where: { clientId, date, sportType: "MUSCULATION" } });
     if (existingMuscu === 0) {
-      // 80 min, variance 75-85 min pour réalisme
       const duration = Math.round(jitter(rng, 80, 0.06));
-      // MET ~5 pour musculation modérée-vigoureuse, 84kg
       const calories = Math.round(duration * 5.5 * 84 / 60);
       await prisma.sportEntry.create({
-        data: {
-          clientId,
-          date,
-          sportType: "MUSCULATION",
-          duration,
-          calories,
-        },
+        data: { clientId, date, sportType: "MUSCULATION", duration, calories },
       });
       summary.muscu = { skipped: false, scheduled: true, kcal: calories };
     }
@@ -176,12 +185,24 @@ export async function seedDay(clientId: string, dateIso: string): Promise<SeedSu
     where: { clientId_date: { clientId, date } },
   });
   if (!existingWater) {
-    // 2L à 2.5L (en-dessous de l'objectif 4.4L, pattern réaliste)
     const liters = Math.round((2 + rng() * 0.5) * 10) / 10;
-    await prisma.waterEntry.create({
-      data: { clientId, date, liters },
-    });
+    await prisma.waterEntry.create({ data: { clientId, date, liters } });
     summary.water = { skipped: false, liters };
+  }
+
+  // --- WEIGHT (pesée hebdo vendredi) ---
+  if (isFriday(date)) {
+    const existingWeight = await prisma.weightEntry.findUnique({
+      where: { clientId_date: { clientId, date } },
+    });
+    if (!existingWeight) {
+      const anchor = startOfDayUTC(new Date(WEIGH_IN_ANCHOR_DATE));
+      const weeks = (date.getTime() - anchor.getTime()) / (7 * 24 * 3600 * 1000);
+      const weight = WEIGH_IN_ANCHOR_WEIGHT - weeks * WEEKLY_LOSS_KG + (rng() * 0.2 - 0.1);
+      const kg = Math.round(weight * 10) / 10;
+      await prisma.weightEntry.create({ data: { clientId, date, weight: kg } });
+      summary.weight = { skipped: false, scheduled: true, kg };
+    }
   }
 
   return summary;
@@ -195,4 +216,23 @@ export async function seedRange(clientId: string, fromIso: string, toIso: string
     out.push(await seedDay(clientId, d.toISOString().slice(0, 10)));
   }
   return out;
+}
+
+// Wipe complet d'une plage avant re-seed propre.
+export async function wipeRange(clientId: string, fromIso: string, toIso: string) {
+  const from = startOfDayUTC(new Date(fromIso));
+  const to = startOfDayUTC(new Date(toIso));
+  const where = { clientId, date: { gte: from, lte: to } };
+  const [food, sport, water, weight] = await Promise.all([
+    prisma.foodEntry.deleteMany({ where }),
+    prisma.sportEntry.deleteMany({ where }),
+    prisma.waterEntry.deleteMany({ where }),
+    prisma.weightEntry.deleteMany({ where }),
+  ]);
+  return {
+    foodDeleted: food.count,
+    sportDeleted: sport.count,
+    waterDeleted: water.count,
+    weightDeleted: weight.count,
+  };
 }
