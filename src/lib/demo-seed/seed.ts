@@ -176,8 +176,8 @@ export async function seedDay(clientId: string, dateIso: string): Promise<SeedSu
     where: { clientId_date: { clientId, date } },
   });
   if (!existingWater) {
-    // Vise 4.4L (objectif), ± 0.4L
-    const liters = Math.round((4 + rng() * 0.8) * 10) / 10;
+    // 2L à 2.5L (en-dessous de l'objectif 4.4L, pattern réaliste)
+    const liters = Math.round((2 + rng() * 0.5) * 10) / 10;
     await prisma.waterEntry.create({
       data: { clientId, date, liters },
     });
