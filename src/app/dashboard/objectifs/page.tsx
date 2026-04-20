@@ -18,6 +18,10 @@ import {
   Minus,
   Ruler,
   Loader2,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
 import {
   LineChart,
@@ -84,10 +88,13 @@ export default function ObjectifsPage() {
   const [savingWeight, setSavingWeight] = useState(false);
 
   // Mensuration form
+  const [mDate, setMDate] = useState(() => new Date().toISOString().split("T")[0]);
   const [mWaist, setMWaist] = useState("");
   const [mHip, setMHip] = useState("");
   const [mButt, setMButt] = useState("");
   const [savingMeasurement, setSavingMeasurement] = useState(false);
+  const [editingMeasurementId, setEditingMeasurementId] = useState<string | null>(null);
+  const [editDate, setEditDate] = useState("");
 
   useEffect(() => {
     Promise.all([
@@ -163,12 +170,11 @@ export default function ObjectifsPage() {
     if (!mWaist && !mHip && !mButt) return;
     setSavingMeasurement(true);
     try {
-      const today = new Date().toISOString().split("T")[0];
       const res = await fetch("/api/client/measurement-entries", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          date: today,
+          date: mDate,
           waistCm: mWaist ? Number(mWaist) : null,
           hipCm: mHip ? Number(mHip) : null,
           buttCm: mButt ? Number(mButt) : null,
@@ -176,15 +182,54 @@ export default function ObjectifsPage() {
       });
       if (!res.ok) throw new Error();
       const entry = await res.json();
-      setMeasurements((prev) => [entry, ...prev]);
+      setMeasurements((prev) =>
+        [entry, ...prev].sort((a, b) => b.date.localeCompare(a.date))
+      );
       setMWaist("");
       setMHip("");
       setMButt("");
+      setMDate(new Date().toISOString().split("T")[0]);
       toast.success("Mensurations enregistrées");
     } catch {
       toast.error("Erreur lors de l'enregistrement");
     } finally {
       setSavingMeasurement(false);
+    }
+  }
+
+  async function handleUpdateMeasurementDate(id: string) {
+    if (!editDate) return;
+    try {
+      const res = await fetch(`/api/client/measurement-entries/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date: editDate }),
+      });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setMeasurements((prev) =>
+        prev
+          .map((m) => (m.id === id ? updated : m))
+          .sort((a, b) => b.date.localeCompare(a.date))
+      );
+      setEditingMeasurementId(null);
+      toast.success("Date modifiée");
+    } catch {
+      toast.error("Erreur lors de la modification");
+    }
+  }
+
+  async function handleDeleteMeasurement(id: string) {
+    if (!confirm("Supprimer cette mensuration ?")) return;
+    try {
+      const res = await fetch(`/api/client/measurement-entries/${id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error();
+      setMeasurements((prev) => prev.filter((m) => m.id !== id));
+      toast.success("Mensuration supprimée");
+    } catch {
+      toast.error("Erreur lors de la suppression");
     }
   }
 
@@ -368,6 +413,15 @@ export default function ObjectifsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="space-y-1 max-w-[200px]">
+              <Label className="text-xs">Date</Label>
+              <Input
+                type="date"
+                value={mDate}
+                max={new Date().toISOString().split("T")[0]}
+                onChange={(e) => setMDate(e.target.value)}
+              />
+            </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Taille (cm)</Label>
@@ -396,15 +450,66 @@ export default function ObjectifsPage() {
                 <p className="text-sm font-medium text-foreground mb-2">Historique</p>
                 <div className="space-y-2">
                   {measurements.slice(0, 6).map((m) => (
-                    <div key={m.id} className="flex items-center justify-between text-sm py-1.5 border-b border-black/[0.04] last:border-0">
-                      <span className="text-muted-foreground">
-                        {new Date(m.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
-                      </span>
-                      <div className="flex gap-4 text-foreground">
-                        {m.waistCm && <span>Taille: {m.waistCm}cm</span>}
-                        {m.hipCm && <span>Hanches: {m.hipCm}cm</span>}
-                        {m.buttCm && <span>Fesses: {m.buttCm}cm</span>}
-                      </div>
+                    <div key={m.id} className="flex items-center justify-between gap-2 text-sm py-1.5 border-b border-black/[0.04] last:border-0">
+                      {editingMeasurementId === m.id ? (
+                        <>
+                          <Input
+                            type="date"
+                            value={editDate}
+                            max={new Date().toISOString().split("T")[0]}
+                            onChange={(e) => setEditDate(e.target.value)}
+                            className="h-8 max-w-[160px]"
+                          />
+                          <div className="flex items-center gap-1">
+                            <button
+                              onClick={() => handleUpdateMeasurementDate(m.id)}
+                              className="p-1 text-primary hover:bg-primary/10 rounded"
+                              aria-label="Valider"
+                            >
+                              <Check className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => setEditingMeasurementId(null)}
+                              className="p-1 text-muted-foreground hover:bg-muted rounded"
+                              aria-label="Annuler"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-muted-foreground">
+                            {new Date(m.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" })}
+                          </span>
+                          <div className="flex items-center gap-3">
+                            <div className="flex gap-4 text-foreground">
+                              {m.waistCm && <span>Taille: {m.waistCm}cm</span>}
+                              {m.hipCm && <span>Hanches: {m.hipCm}cm</span>}
+                              {m.buttCm && <span>Fesses: {m.buttCm}cm</span>}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setEditingMeasurementId(m.id);
+                                  setEditDate(m.date.slice(0, 10));
+                                }}
+                                className="p-1 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded"
+                                aria-label="Modifier la date"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteMeasurement(m.id)}
+                                className="p-1 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded"
+                                aria-label="Supprimer"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
