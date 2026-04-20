@@ -29,10 +29,10 @@ async function main() {
     const iso = d.toISOString().slice(0, 10);
     const res = await seedDay(client.id, iso);
     const parts: string[] = [iso];
-    parts.push(res.meals.skipped ? "food=skip" : `food=${res.meals.count} items (${res.meals.totals?.kcal}kcal, ${res.meals.totals?.p}P/${res.meals.totals?.c}C/${res.meals.totals?.f}F/${res.meals.totals?.fib}fib)`);
-    parts.push(res.march.skipped ? "march=skip" : `march=${res.march.steps} pas (${res.march.kcal}kcal)`);
-    parts.push(res.muscu.scheduled ? (res.muscu.skipped ? "muscu=skip" : `muscu=${res.muscu.kcal}kcal`) : "muscu=off");
-    parts.push(res.water.skipped ? "water=skip" : `water=${res.water.liters}L`);
+    parts.push(res.meals.totals ? `food=${res.meals.totals.kcal}kcal (${res.meals.totals.p}P/${res.meals.totals.c}C/${res.meals.totals.f}F/${res.meals.totals.fib}fib)` : "food=skip");
+    parts.push(`march=${res.march.steps ?? 0} pas`);
+    parts.push(res.muscu.added ? `muscu=${res.muscu.kcal}kcal` : "muscu=—");
+    parts.push(res.water.set ? `water=${res.water.liters}L` : "water=—");
     console.log(parts.join(" | "));
   }
 }

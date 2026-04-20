@@ -3,12 +3,12 @@ import { BREAKFASTS, LUNCHES, SNACKS, DINNERS, POST_WORKOUT, type MealTemplate }
 
 const DEMO_EMAIL = "pixelbfr@gmail.com";
 
-// Anchor pour la progression de pesée hebdo (vendredi de départ).
 const WEIGH_IN_ANCHOR_DATE = "2026-04-10";
 const WEIGH_IN_ANCHOR_WEIGHT = 84;
 const WEEKLY_LOSS_KG = 0.5;
 
-// RNG déterministe basé sur la date (yyyy-mm-dd) — même date = mêmes choix.
+export type Phase = "morning" | "evening" | "full";
+
 function seededRng(seed: string) {
   let h = 2166136261;
   for (let i = 0; i < seed.length; i++) {
@@ -32,7 +32,6 @@ function jitter(rng: () => number, value: number, pct: number): number {
   return Math.max(0, value + delta);
 }
 
-// Jours de muscu : lundi (1), mercredi (3), vendredi (5) — 3 séances/sem.
 function isMuscleDay(date: Date): boolean {
   const d = date.getUTCDay();
   return d === 1 || d === 3 || d === 5;
@@ -57,14 +56,14 @@ export async function getDemoClient() {
 
 type SeedSummary = {
   date: string;
-  meals: { skipped: boolean; count: number; totals?: { kcal: number; p: number; c: number; f: number; fib: number } };
-  march: { skipped: boolean; steps?: number; kcal?: number };
-  muscu: { skipped: boolean; kcal?: number; scheduled: boolean };
-  water: { skipped: boolean; liters?: number };
-  weight: { skipped: boolean; kg?: number; scheduled: boolean };
+  phase: Phase;
+  meals: { added: number; totals?: { kcal: number; p: number; c: number; f: number; fib: number } };
+  march: { added: number; steps?: number };
+  muscu: { added: boolean; kcal?: number };
+  water: { set: boolean; liters?: number };
+  weight: { added: boolean; kg?: number };
 };
 
-// Scale les items d'un template et les rend prêts à insérer.
 function scaleMeal(
   rng: () => number,
   template: MealTemplate,
@@ -74,7 +73,6 @@ function scaleMeal(
   mealType: "PETIT_DEJEUNER" | "DEJEUNER" | "COLLATION" | "DINER"
 ) {
   return template.items.map((item) => {
-    // ±3% de variance par item + scale global
     const factor = scale * (1 + (rng() * 0.06 - 0.03));
     const q = Math.round(item.quantity * factor * 10) / 10;
     const actualScale = q / item.quantity;
@@ -94,131 +92,182 @@ function scaleMeal(
   });
 }
 
-export async function seedDay(clientId: string, dateIso: string): Promise<SeedSummary> {
+export async function seedDay(clientId: string, dateIso: string, phase: Phase = "full"): Promise<SeedSummary> {
   const date = startOfDayUTC(new Date(dateIso));
   const isoDay = date.toISOString().slice(0, 10);
   const rng = seededRng(isoDay + clientId);
   const muscleDay = isMuscleDay(date);
+  const doMorning = phase === "morning" || phase === "full";
+  const doEvening = phase === "evening" || phase === "full";
 
   const summary: SeedSummary = {
     date: isoDay,
-    meals: { skipped: true, count: 0 },
-    march: { skipped: true },
-    muscu: { skipped: true, scheduled: muscleDay },
-    water: { skipped: true },
-    weight: { skipped: true, scheduled: isFriday(date) },
+    phase,
+    meals: { added: 0 },
+    march: { added: 0 },
+    muscu: { added: false },
+    water: { set: false },
+    weight: { added: false },
   };
 
-  // --- FOOD ---
-  const existingFood = await prisma.foodEntry.count({ where: { clientId, date } });
-  if (existingFood === 0) {
-    // Scale des portions : 0.83 base (~2550 kcal), 0.86 jour muscu (~2650 + 250 post-workout = ~2900)
-    const scale = muscleDay ? 0.86 : 0.83;
+  // Tous les picks sont consommés dans le même ordre → déterminisme entre phases.
+  const pdj = pick(rng, BREAKFASTS);
+  const dej = pick(rng, LUNCHES);
+  const col = pick(rng, SNACKS);
+  const din = pick(rng, DINNERS);
+  const pwo = muscleDay ? pick(rng, POST_WORKOUT) : null;
+  const scale = muscleDay ? 0.86 : 0.83;
 
-    const pdj = pick(rng, BREAKFASTS);
-    const dej = pick(rng, LUNCHES);
-    const col = pick(rng, SNACKS);
-    const din = pick(rng, DINNERS);
-    const pwo = muscleDay ? pick(rng, POST_WORKOUT) : null;
+  // Pré-génère tous les items pour totaux cohérents (même si on n'insère que morning).
+  const pdjRows = scaleMeal(rng, pdj, scale, clientId, date, "PETIT_DEJEUNER");
+  const dejRows = scaleMeal(rng, dej, scale, clientId, date, "DEJEUNER");
+  const colRows = scaleMeal(rng, col, scale, clientId, date, "COLLATION");
+  const pwoRows = pwo ? scaleMeal(rng, pwo, 1.0, clientId, date, "COLLATION") : [];
+  const dinRows = scaleMeal(rng, din, scale, clientId, date, "DINER");
 
-    const rows = [
-      ...scaleMeal(rng, pdj, scale, clientId, date, "PETIT_DEJEUNER"),
-      ...scaleMeal(rng, dej, scale, clientId, date, "DEJEUNER"),
-      ...scaleMeal(rng, col, scale, clientId, date, "COLLATION"),
-      ...(pwo ? scaleMeal(rng, pwo, 1.0, clientId, date, "COLLATION") : []),
-      ...scaleMeal(rng, din, scale, clientId, date, "DINER"),
-    ];
+  // --- MORNING PHASE ---
+  if (doMorning) {
+    // Petit-déjeuner
+    const hasPdj = await prisma.foodEntry.count({ where: { clientId, date, mealType: "PETIT_DEJEUNER" } });
+    if (hasPdj === 0) {
+      await prisma.foodEntry.createMany({ data: pdjRows });
+      summary.meals.added += pdjRows.length;
+    }
 
-    const totals = rows.reduce(
-      (acc, r) => ({
-        kcal: acc.kcal + r.calories,
-        p: acc.p + r.protein,
-        c: acc.c + r.carbs,
-        f: acc.f + r.fat,
-        fib: acc.fib + r.fiber,
-      }),
-      { kcal: 0, p: 0, c: 0, f: 0, fib: 0 }
-    );
-
-    await prisma.foodEntry.createMany({ data: rows });
-    summary.meals = {
-      skipped: false,
-      count: rows.length,
-      totals: {
-        kcal: Math.round(totals.kcal),
-        p: Math.round(totals.p),
-        c: Math.round(totals.c),
-        f: Math.round(totals.f),
-        fib: Math.round(totals.fib),
-      },
-    };
-  }
-
-  // --- SPORT : MARCHE (pas quotidiens) ---
-  const existingWalk = await prisma.sportEntry.count({ where: { clientId, date, sportType: "MARCHE" } });
-  if (existingWalk === 0) {
-    const steps = Math.round(17000 + rng() * 13000); // 17k-30k
-    const calories = Math.round(steps * 0.0487);
-    const distance = Math.round(steps * 0.000795 * 100) / 100;
-    const duration = Math.round(steps * 0.00992);
-    await prisma.sportEntry.create({
-      data: { clientId, date, sportType: "MARCHE", steps, calories, distance, duration },
-    });
-    summary.march = { skipped: false, steps, kcal: calories };
-  }
-
-  // --- SPORT : MUSCULATION (lun/mer/ven, 80 min) ---
-  if (muscleDay) {
-    const existingMuscu = await prisma.sportEntry.count({ where: { clientId, date, sportType: "MUSCULATION" } });
-    if (existingMuscu === 0) {
-      const duration = Math.round(jitter(rng, 80, 0.06));
-      const calories = Math.round(duration * 5.5 * 84 / 60);
+    // Marche matinale : 5000-8000 pas
+    const existingWalks = await prisma.sportEntry.count({ where: { clientId, date, sportType: "MARCHE" } });
+    if (existingWalks === 0) {
+      const steps = Math.round(5000 + rng() * 3000);
       await prisma.sportEntry.create({
-        data: { clientId, date, sportType: "MUSCULATION", duration, calories },
+        data: {
+          clientId, date, sportType: "MARCHE",
+          steps,
+          calories: Math.round(steps * 0.0487),
+          distance: Math.round(steps * 0.000795 * 100) / 100,
+          duration: Math.round(steps * 0.00992),
+        },
       });
-      summary.muscu = { skipped: false, scheduled: true, kcal: calories };
+      summary.march.added = 1;
+      summary.march.steps = steps;
+    }
+
+    // Eau matin : 1L
+    const existingWater = await prisma.waterEntry.findUnique({ where: { clientId_date: { clientId, date } } });
+    if (!existingWater) {
+      await prisma.waterEntry.create({ data: { clientId, date, liters: 1 } });
+      summary.water = { set: true, liters: 1 };
     }
   }
 
-  // --- WATER ---
-  const existingWater = await prisma.waterEntry.findUnique({
-    where: { clientId_date: { clientId, date } },
-  });
-  if (!existingWater) {
-    const liters = Math.round((2 + rng() * 0.5) * 10) / 10;
-    await prisma.waterEntry.create({ data: { clientId, date, liters } });
-    summary.water = { skipped: false, liters };
-  }
+  // --- EVENING PHASE ---
+  if (doEvening) {
+    // Déjeuner
+    const hasDej = await prisma.foodEntry.count({ where: { clientId, date, mealType: "DEJEUNER" } });
+    if (hasDej === 0) {
+      await prisma.foodEntry.createMany({ data: dejRows });
+      summary.meals.added += dejRows.length;
+    }
 
-  // --- WEIGHT (pesée hebdo vendredi) ---
-  if (isFriday(date)) {
-    const existingWeight = await prisma.weightEntry.findUnique({
-      where: { clientId_date: { clientId, date } },
+    // Collation(s) : COLLATION + éventuel post-workout
+    const hasCol = await prisma.foodEntry.count({ where: { clientId, date, mealType: "COLLATION" } });
+    if (hasCol === 0) {
+      await prisma.foodEntry.createMany({ data: [...colRows, ...pwoRows] });
+      summary.meals.added += colRows.length + pwoRows.length;
+    }
+
+    // Dîner
+    const hasDin = await prisma.foodEntry.count({ where: { clientId, date, mealType: "DINER" } });
+    if (hasDin === 0) {
+      await prisma.foodEntry.createMany({ data: dinRows });
+      summary.meals.added += dinRows.length;
+    }
+
+    // Compléter la marche jusqu'à 17k-30k (ajoute une entrée soirée).
+    const existingSteps = await prisma.sportEntry.aggregate({
+      _sum: { steps: true },
+      where: { clientId, date, sportType: "MARCHE" },
     });
-    if (!existingWeight) {
-      const anchor = startOfDayUTC(new Date(WEIGH_IN_ANCHOR_DATE));
-      const weeks = (date.getTime() - anchor.getTime()) / (7 * 24 * 3600 * 1000);
-      const weight = WEIGH_IN_ANCHOR_WEIGHT - weeks * WEEKLY_LOSS_KG + (rng() * 0.2 - 0.1);
-      const kg = Math.round(weight * 10) / 10;
-      await prisma.weightEntry.create({ data: { clientId, date, weight: kg } });
-      summary.weight = { skipped: false, scheduled: true, kg };
+    const currentSteps = existingSteps._sum.steps ?? 0;
+    const targetSteps = Math.round(17000 + rng() * 13000);
+    if (currentSteps < targetSteps) {
+      const remaining = targetSteps - currentSteps;
+      await prisma.sportEntry.create({
+        data: {
+          clientId, date, sportType: "MARCHE",
+          steps: remaining,
+          calories: Math.round(remaining * 0.0487),
+          distance: Math.round(remaining * 0.000795 * 100) / 100,
+          duration: Math.round(remaining * 0.00992),
+        },
+      });
+      summary.march.added += 1;
+      summary.march.steps = (summary.march.steps ?? currentSteps) + remaining;
     }
+
+    // Muscu (lun/mer/ven)
+    if (muscleDay) {
+      const existingMuscu = await prisma.sportEntry.count({ where: { clientId, date, sportType: "MUSCULATION" } });
+      if (existingMuscu === 0) {
+        const duration = Math.round(jitter(rng, 80, 0.06));
+        const calories = Math.round(duration * 5.5 * 84 / 60);
+        await prisma.sportEntry.create({
+          data: { clientId, date, sportType: "MUSCULATION", duration, calories },
+        });
+        summary.muscu = { added: true, kcal: calories };
+      }
+    }
+
+    // Eau : upsert à 2-2.5L final
+    const targetLiters = Math.round((2 + rng() * 0.5) * 10) / 10;
+    await prisma.waterEntry.upsert({
+      where: { clientId_date: { clientId, date } },
+      update: { liters: targetLiters },
+      create: { clientId, date, liters: targetLiters },
+    });
+    summary.water = { set: true, liters: targetLiters };
+
+    // Pesée vendredi
+    if (isFriday(date)) {
+      const existingWeight = await prisma.weightEntry.findUnique({ where: { clientId_date: { clientId, date } } });
+      if (!existingWeight) {
+        const anchor = startOfDayUTC(new Date(WEIGH_IN_ANCHOR_DATE));
+        const weeks = (date.getTime() - anchor.getTime()) / (7 * 24 * 3600 * 1000);
+        const weight = WEIGH_IN_ANCHOR_WEIGHT - weeks * WEEKLY_LOSS_KG + (rng() * 0.2 - 0.1);
+        const kg = Math.round(weight * 10) / 10;
+        await prisma.weightEntry.create({ data: { clientId, date, weight: kg } });
+        summary.weight = { added: true, kg };
+      }
+    }
+  }
+
+  // Totaux food si inséré
+  if (summary.meals.added > 0) {
+    const agg = await prisma.foodEntry.aggregate({
+      _sum: { calories: true, protein: true, carbs: true, fat: true, fiber: true },
+      where: { clientId, date },
+    });
+    summary.meals.totals = {
+      kcal: Math.round(agg._sum.calories ?? 0),
+      p: Math.round((agg._sum.protein ?? 0) * 10) / 10,
+      c: Math.round((agg._sum.carbs ?? 0) * 10) / 10,
+      f: Math.round((agg._sum.fat ?? 0) * 10) / 10,
+      fib: Math.round((agg._sum.fiber ?? 0) * 10) / 10,
+    };
   }
 
   return summary;
 }
 
-export async function seedRange(clientId: string, fromIso: string, toIso: string): Promise<SeedSummary[]> {
+export async function seedRange(clientId: string, fromIso: string, toIso: string, phase: Phase = "full"): Promise<SeedSummary[]> {
   const from = startOfDayUTC(new Date(fromIso));
   const to = startOfDayUTC(new Date(toIso));
   const out: SeedSummary[] = [];
   for (let d = new Date(from); d <= to; d.setUTCDate(d.getUTCDate() + 1)) {
-    out.push(await seedDay(clientId, d.toISOString().slice(0, 10)));
+    out.push(await seedDay(clientId, d.toISOString().slice(0, 10), phase));
   }
   return out;
 }
 
-// Wipe complet d'une plage avant re-seed propre.
 export async function wipeRange(clientId: string, fromIso: string, toIso: string) {
   const from = startOfDayUTC(new Date(fromIso));
   const to = startOfDayUTC(new Date(toIso));

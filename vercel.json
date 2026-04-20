@@ -1,8 +1,12 @@
 {
   "crons": [
     {
-      "path": "/api/cron/seed-demo",
-      "schedule": "0 18 * * *"
+      "path": "/api/cron/seed-demo?phase=morning",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/seed-demo?phase=evening",
+      "schedule": "0 17 * * *"
     }
   ]
 }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDemoClient, seedDay, seedRange } from "@/lib/demo-seed/seed";
+import { getDemoClient, seedDay, seedRange, type Phase } from "@/lib/demo-seed/seed";
 
 // Europe/Paris : offset +2h en DST, +1h hors DST. On vise la date LOCALE Paris au moment du run.
 function parisDateIso(now = new Date()): string {
@@ -29,15 +29,17 @@ async function handle(req: NextRequest) {
   const from = searchParams.get("from");
   const to = searchParams.get("to");
   const date = searchParams.get("date");
+  const phaseParam = (searchParams.get("phase") ?? "full") as Phase;
+  const phase: Phase = phaseParam === "morning" || phaseParam === "evening" ? phaseParam : "full";
 
   if (from && to) {
-    const results = await seedRange(client.id, from, to);
-    return NextResponse.json({ mode: "range", from, to, count: results.length, results });
+    const results = await seedRange(client.id, from, to, phase);
+    return NextResponse.json({ mode: "range", from, to, phase, count: results.length, results });
   }
 
   const target = date ?? parisDateIso();
-  const result = await seedDay(client.id, target);
-  return NextResponse.json({ mode: "day", result });
+  const result = await seedDay(client.id, target, phase);
+  return NextResponse.json({ mode: "day", phase, result });
 }
 
 export async function GET(req: NextRequest) {
