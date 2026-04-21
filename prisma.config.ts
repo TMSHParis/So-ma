@@ -9,6 +9,9 @@ export default defineConfig({
     path: "prisma/migrations",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // Utilisé uniquement par les commandes Prisma CLI (migrate, db pull, db push…).
+    // Le runtime PrismaClient passe par l'adapter @prisma/adapter-pg avec DATABASE_URL (voir src/lib/prisma-pg-adapter.ts).
+    // On privilégie DIRECT_URL (session mode, port 5432) pour supporter les advisory locks — le pooler transaction (6543) ne les supporte pas.
+    url: process.env["DIRECT_URL"] || process.env["DATABASE_URL"],
   },
 });
