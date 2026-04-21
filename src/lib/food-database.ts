@@ -8,6 +8,7 @@ import Fuse from "fuse.js";
 import ciqualRaw from "@/data/ciqual.json";
 import { WORLD_FOODS } from "@/data/foods-world";
 import { SUPPLEMENT_FOODS } from "@/data/foods-supplements";
+import { SPORTS_FOODS } from "@/data/foods-sports";
 
 export type GenericFood = {
   name: string;         // nom court affiché
@@ -79,6 +80,7 @@ const POPULAR_BOOST_TERMS = new Set(
     "miel", "confiture", "huile", "vinaigre", "mayonnaise", "moutarde",
     "amande", "noix", "noisette", "pistache", "cacahuete",
     "whey", "proteine", "isolate", "caseine",
+    "aptonia", "pate de fruits", "gel energetique", "barre energetique",
     "datte", "dattes", "graines", "lin", "chia", "courge", "sesame", "tournesol",
     "pavot", "chanvre", "fenugrec",
     "noix du bresil", "bresil", "cajou", "grenoble", "pecan", "macadamia",
@@ -115,11 +117,23 @@ const supplementEntries: CiqualEntry[] = SUPPLEMENT_FOODS.map((s) => ({
   fi: s.fi,
 }));
 
-/** Ciqual + plats du monde + compléments (doublons filtrés par nom normalisé). */
+/** Nutrition sportive (pâtes de fruits, gels, barres énergétiques). */
+const sportsEntries: CiqualEntry[] = SPORTS_FOODS.map((s) => ({
+  name: s.name,
+  grp: "Nutrition sportive",
+  ssgrp: s.brand,
+  kcal: s.kcal,
+  p: s.p,
+  c: s.c,
+  f: s.f,
+  fi: s.fi,
+}));
+
+/** Ciqual + plats du monde + compléments + sportive (doublons filtrés par nom normalisé). */
 const allEntries: CiqualEntry[] = (() => {
   const seen = new Set(ciqual.map((e) => normalize(shortDisplay(e.name))));
   const out = [...ciqual];
-  for (const w of [...worldEntries, ...supplementEntries]) {
+  for (const w of [...worldEntries, ...supplementEntries, ...sportsEntries]) {
     const key = normalize(shortDisplay(w.name));
     if (seen.has(key)) continue;
     seen.add(key);
