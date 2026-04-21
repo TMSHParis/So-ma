@@ -22,8 +22,17 @@ type CycleEntry = {
   date: string;
   phase: string;
   flowIntensity: string | null;
+  bloodColor: string | null;
   symptoms: string[];
   notes: string | null;
+};
+
+const BLOOD_COLOR_LABELS: Record<string, { label: string; swatch: string }> = {
+  ROUGE_VIF: { label: "Rouge vif", swatch: "bg-red-500" },
+  POURPRE: { label: "Pourpre", swatch: "bg-rose-800" },
+  MARRON_CLAIR: { label: "Marron clair", swatch: "bg-amber-700" },
+  MARRON_FONCE: { label: "Marron foncé", swatch: "bg-amber-900" },
+  NOIR: { label: "Noir", swatch: "bg-neutral-900" },
 };
 
 const phases = [
@@ -82,7 +91,12 @@ const phaseDetails = [
         text: "Faible. Privilégier marche, yoga doux, étirements. Pas le moment de se pousser.",
       },
     ],
-    metabolism: { label: "Bas", value: "-100 à -150 kcal/j", color: "text-red-500" },
+    metabolism: {
+      label: "Bas",
+      value: "-100 à -150 kcal/j",
+      color: "text-red-500",
+      note: "Ton corps brûle 100 à 150 kcal en moins au repos. Tu peux manger un peu moins sans te sentir en manque.",
+    },
   },
   {
     phase: "PHASE 2",
@@ -108,7 +122,12 @@ const phaseDetails = [
         text: "En hausse. Bonne phase pour reprendre l'intensité : cardio, musculation, HIIT léger.",
       },
     ],
-    metabolism: { label: "Neutre", value: "Base", color: "text-blue-500" },
+    metabolism: {
+      label: "Neutre",
+      value: "Base",
+      color: "text-blue-500",
+      note: "Dépense normale, aucune correction à faire. Tiens-toi à tes kcal habituelles.",
+    },
   },
   {
     phase: "PHASE 3",
@@ -134,7 +153,12 @@ const phaseDetails = [
         text: "Maximale. Phase idéale pour les PR, séances HIIT, efforts intenses. Le corps récupère vite.",
       },
     ],
-    metabolism: { label: "Légèrement élevé", value: "+50 à +100 kcal/j", color: "text-amber-500" },
+    metabolism: {
+      label: "Légèrement élevé",
+      value: "+50 à +100 kcal/j",
+      color: "text-amber-500",
+      note: "Tu dépenses 50 à 100 kcal en plus au repos, sans bouger. Tu peux ajouter une petite portion (fruit, yaourt, une tranche de pain) sans prendre de gras.",
+    },
   },
   {
     phase: "PHASE 4",
@@ -160,7 +184,12 @@ const phaseDetails = [
         text: "Variable selon la moitié de la phase. Début : encore correct. Fin : préférer pilates, natation, marche.",
       },
     ],
-    metabolism: { label: "Le plus élevé", value: "+100 à +300 kcal/j", color: "text-purple-500" },
+    metabolism: {
+      label: "Le plus élevé",
+      value: "+100 à +300 kcal/j",
+      color: "text-purple-500",
+      note: "Ton corps brûle 100 à 300 kcal en plus au repos grâce à la progestérone. Tu peux clairement manger davantage (un vrai repas en plus ou une grosse collation) sans prendre de gras.",
+    },
   },
 ];
 
@@ -196,6 +225,7 @@ export default function CyclePage() {
   const [showForm, setShowForm] = useState(false);
   const [phase, setPhase] = useState("");
   const [flowIntensity, setFlowIntensity] = useState("");
+  const [bloodColor, setBloodColor] = useState("");
   const [symptoms, setSymptoms] = useState<string[]>([]);
   const [notes, setNotes] = useState("");
   const formRef = useRef<HTMLDivElement>(null);
@@ -240,6 +270,7 @@ export default function CyclePage() {
           date: todayISO(),
           phase,
           flowIntensity: phase === "MENSTRUATION" ? flowIntensity || null : null,
+          bloodColor: phase === "MENSTRUATION" ? bloodColor || null : null,
           symptoms,
           notes: notes || null,
         }),
@@ -249,6 +280,7 @@ export default function CyclePage() {
         setShowForm(false);
         setPhase("");
         setFlowIntensity("");
+        setBloodColor("");
         setSymptoms([]);
         setNotes("");
         fetchEntries();
@@ -313,7 +345,7 @@ export default function CyclePage() {
           className="bg-accent hover:bg-accent/90 text-accent-foreground"
         >
           <Plus className="h-4 w-4 mr-2" />
-          Enregistrer aujourd'hui
+          Enregistrer aujourd’hui
         </Button>
       </div>
 
@@ -352,26 +384,53 @@ export default function CyclePage() {
               </div>
 
               {phase === "MENSTRUATION" && (
-                <div className="space-y-2">
-                  <Label>Intensité du flux</Label>
-                  <Select
-                    value={flowIntensity || undefined}
-                    onValueChange={(v) => { if (v) setFlowIntensity(v); }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionne" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="LEGER">Léger</SelectItem>
-                      <SelectItem value="MOYEN">Moyen</SelectItem>
-                      <SelectItem value="ABONDANT">Abondant</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                <>
+                  <div className="space-y-2">
+                    <Label>Intensité du flux</Label>
+                    <Select
+                      value={flowIntensity || undefined}
+                      onValueChange={(v) => { if (v) setFlowIntensity(v); }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionne" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="LEGER">Léger</SelectItem>
+                        <SelectItem value="MOYEN">Moyen</SelectItem>
+                        <SelectItem value="ABONDANT">Abondant</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Couleur du sang</Label>
+                    <Select
+                      value={bloodColor || undefined}
+                      onValueChange={(v) => { if (v) setBloodColor(v); }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionne" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(BLOOD_COLOR_LABELS).map(([key, meta]) => (
+                          <SelectItem key={key} value={key}>
+                            <span className="inline-flex items-center gap-2">
+                              <span className={`inline-block h-3 w-3 rounded-full ${meta.swatch}`} />
+                              {meta.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Indice du profil hormonal : rouge vif = flux récent / œstrogènes présents, marron/noir = sang oxydé / fin de règles ou flux ralenti.
+                    </p>
+                  </div>
+                </>
               )}
 
               <div className="space-y-2">
-                <Label>Comment te sens-tu aujourd'hui ?</Label>
+                <Label>Comment te sens-tu aujourd’hui ?</Label>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {symptomsList.map((s) => (
                     <div key={s} className="flex items-center gap-2">
@@ -426,7 +485,7 @@ export default function CyclePage() {
       <div className="mb-8">
         <h2 className="font-semibold text-foreground mb-2">Comprendre ton cycle</h2>
         <p className="text-sm text-muted-foreground mb-4">
-          Plus tu avances dans le cycle, plus ton corps brûle — pic en phase lutéale (+100 à +300 kcal/j grâce à la progestérone), plancher en phase menstruelle. La rétention d'eau de la phase lutéale n'a rien à voir avec ta balance réelle.
+          Ton corps ne brûle pas la même chose chaque jour. En phase lutéale tu dépenses jusqu’à +100 à +300 kcal en plus au repos (progestérone) — tu peux manger davantage sans grossir. En phase menstruelle tu brûles 100 à 150 kcal en moins. Si la balance monte en lutéale, c’est de l’eau, pas du gras.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {phaseDetails.map((p) => (
@@ -459,6 +518,9 @@ export default function CyclePage() {
                       {p.metabolism.value}
                     </span>
                   </div>
+                  <p className="text-sm text-foreground mt-1">
+                    {p.metabolism.note}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -473,7 +535,7 @@ export default function CyclePage() {
           <CardContent className="py-12 text-center">
             <Calendar className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
             <p className="text-muted-foreground">
-              Aucun enregistrement pour l'instant
+              Aucun enregistrement pour l’instant
             </p>
           </CardContent>
         </Card>
@@ -492,6 +554,12 @@ export default function CyclePage() {
                       {entry.flowIntensity && (
                         <Badge variant="outline" className="text-xs">
                           Flux {entry.flowIntensity.toLowerCase()}
+                        </Badge>
+                      )}
+                      {entry.bloodColor && BLOOD_COLOR_LABELS[entry.bloodColor] && (
+                        <Badge variant="outline" className="text-xs inline-flex items-center gap-1.5">
+                          <span className={`inline-block h-2.5 w-2.5 rounded-full ${BLOOD_COLOR_LABELS[entry.bloodColor].swatch}`} />
+                          {BLOOD_COLOR_LABELS[entry.bloodColor].label}
                         </Badge>
                       )}
                     </div>

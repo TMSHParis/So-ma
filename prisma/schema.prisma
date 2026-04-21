@@ -45,6 +45,15 @@ enum FlowIntensity {
   ABONDANT
 }
 
+/// Couleur du sang menstruel — indicateur clinique du profil hormonal / oxydation.
+enum BloodColor {
+  ROUGE_VIF
+  POURPRE
+  MARRON_CLAIR
+  MARRON_FONCE
+  NOIR
+}
+
 enum PaymentProvider {
   STRIPE
   PAYPAL
@@ -265,6 +274,7 @@ model CycleEntry {
   date          DateTime       @db.Date
   phase         CyclePhase
   flowIntensity FlowIntensity? @map("flow_intensity")
+  bloodColor    BloodColor?    @map("blood_color")
   symptoms      String[]
   notes         String?
   createdAt     DateTime       @default(now()) @map("created_at")

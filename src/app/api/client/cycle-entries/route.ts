@@ -6,7 +6,7 @@ import {
   calendarIsoToPrismaDate,
   CLIENT_TIMEZONE,
 } from "@/lib/calendar-day";
-import type { CyclePhase, FlowIntensity } from "@/generated/prisma/client";
+import type { CyclePhase, FlowIntensity, BloodColor } from "@/generated/prisma/client";
 
 const CYCLE_PHASES: CyclePhase[] = [
   "MENSTRUATION",
@@ -16,6 +16,14 @@ const CYCLE_PHASES: CyclePhase[] = [
 ];
 
 const FLOW_INTENSITIES: FlowIntensity[] = ["LEGER", "MOYEN", "ABONDANT"];
+
+const BLOOD_COLORS: BloodColor[] = [
+  "ROUGE_VIF",
+  "POURPRE",
+  "MARRON_CLAIR",
+  "MARRON_FONCE",
+  "NOIR",
+];
 
 export async function GET(request: NextRequest) {
   const ctx = await requireClientProfile();
@@ -61,7 +69,7 @@ export async function POST(request: NextRequest) {
   if ("error" in ctx) return ctx.error;
 
   const body = await request.json();
-  const { date: dateStr, phase, flowIntensity, symptoms, notes } = body;
+  const { date: dateStr, phase, flowIntensity, bloodColor, symptoms, notes } = body;
 
   if (!dateStr || !CYCLE_PHASES.includes(phase)) {
     return NextResponse.json(
@@ -77,7 +85,19 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  if (bloodColor && !BLOOD_COLORS.includes(bloodColor)) {
+    return NextResponse.json(
+      { message: "Couleur du sang invalide" },
+      { status: 400 }
+    );
+  }
+
   const day = calendarIsoToPrismaDate(dateStr);
+
+  // Flux et couleur du sang n'ont de sens qu'en phase menstruelle.
+  const menstrualOnly = phase === "MENSTRUATION";
+  const nextFlow = menstrualOnly ? flowIntensity || null : null;
+  const nextColor = menstrualOnly ? bloodColor || null : null;
 
   // Upsert : un seul enregistrement par jour
   const existing = await prisma.cycleEntry.findFirst({
@@ -89,7 +109,8 @@ export async function POST(request: NextRequest) {
       where: { id: existing.id },
       data: {
         phase,
-        flowIntensity: phase === "MENSTRUATION" ? flowIntensity || null : null,
+        flowIntensity: nextFlow,
+        bloodColor: nextColor,
         symptoms: Array.isArray(symptoms) ? symptoms : [],
         notes: typeof notes === "string" ? notes : null,
       },
@@ -102,7 +123,8 @@ export async function POST(request: NextRequest) {
       clientId: ctx.client.id,
       date: day,
       phase,
-      flowIntensity: phase === "MENSTRUATION" ? flowIntensity || null : null,
+      flowIntensity: nextFlow,
+      bloodColor: nextColor,
       symptoms: Array.isArray(symptoms) ? symptoms : [],
       notes: typeof notes === "string" ? notes : null,
     },
