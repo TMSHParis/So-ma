@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { DEMO_EMAIL } from "@/lib/demo-seed/seed";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -76,8 +77,10 @@ export async function GET() {
       return NextResponse.json({ message: "Non autorisé" }, { status: 401 });
     }
 
+    // Masque le compte démo (seedé quotidiennement par cron) de la liste admin.
+    // Les données restent en base : changer DEMO_EMAIL ou retirer ce filtre suffit à le ré-exposer.
     const clients = await prisma.user.findMany({
-      where: { role: "CLIENT" },
+      where: { role: "CLIENT", email: { not: DEMO_EMAIL } },
       include: { client: true },
       orderBy: { createdAt: "desc" },
     });

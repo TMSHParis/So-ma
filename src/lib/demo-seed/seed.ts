@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { BREAKFASTS, LUNCHES, SNACKS, DINNERS, POST_WORKOUT, type MealTemplate } from "./meals";
 
-const DEMO_EMAIL = "pixelbfr@gmail.com";
+export const DEMO_EMAIL = "pixelbfr@gmail.com";
 
 const WEIGH_IN_ANCHOR_DATE = "2026-04-10";
 const WEIGH_IN_ANCHOR_WEIGHT = 84;
