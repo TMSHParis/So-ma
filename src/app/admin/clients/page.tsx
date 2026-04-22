@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -35,7 +34,15 @@ import {
   X,
   Trash2,
   BarChart3,
+  MoreVertical,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   computeMB_KJ,
@@ -544,20 +551,21 @@ export default function ClientsPage() {
   }
 
   function getBalanceLabel(b: string | null | undefined) {
-    if (b === "DEFICIT") return { label: "Déficit", color: "bg-orange-100 text-orange-700" };
-    if (b === "SURPLUS") return { label: "Prise de masse", color: "bg-blue-100 text-blue-700" };
-    return { label: "Maintien", color: "bg-green-100 text-green-700" };
+    if (b === "DEFICIT") return { label: "Déficit", dot: "bg-orange-500" };
+    if (b === "SURPLUS") return { label: "Prise de masse", dot: "bg-blue-500" };
+    return { label: "Maintien", dot: "bg-emerald-500" };
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Clientes
           </h1>
-          <div className="mt-1 flex items-center gap-3 flex-wrap">
-            <p className="text-muted-foreground">{clients.length} compte{clients.length > 1 ? "s" : ""}</p>
+          <div className="mt-1.5 flex items-center gap-2 flex-wrap text-sm text-muted-foreground">
+            <span className="tabular-nums">{clients.length} cliente{clients.length > 1 ? "s" : ""}</span>
+            <span className="text-muted-foreground/40">·</span>
             <DateNavigator value={progressDate} onChange={setProgressDate} />
           </div>
         </div>
@@ -618,98 +626,140 @@ export default function ClientsPage() {
               <div key={c.id}>
                 {/* Row */}
                 <div
-                  className="flex items-center gap-4 px-5 py-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer"
                   onClick={() => setExpandedId(isExpanded ? null : c.id)}
                 >
                   {/* Avatar */}
-                  <div className="h-10 w-10 shrink-0 rounded-full bg-warm-primary/10 flex items-center justify-center text-sm font-bold text-warm-primary">
+                  <div className="h-9 w-9 shrink-0 rounded-full bg-warm-primary/10 flex items-center justify-center text-[11px] font-semibold text-warm-primary">
                     {c.firstName?.[0]}{c.lastName?.[0]}
                   </div>
 
-                  {/* Info */}
+                  {/* Identity */}
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="font-medium text-sm truncate">{c.firstName} {c.lastName}</p>
-                      <Badge className={`text-[10px] font-medium px-2 py-0 leading-5 ${balance.color} border-0`}>
+                    <div className="flex items-center gap-2.5">
+                      <p className="font-medium text-sm truncate text-foreground">{c.firstName} {c.lastName}</p>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                        <span className={`h-1.5 w-1.5 rounded-full ${balance.dot}`} />
                         {balance.label}
-                      </Badge>
+                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground truncate">{c.email}</p>
-                    {/* Mobile-only compact stats */}
-                    <div className="sm:hidden mt-1.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-                      {c.client?.goalCalories && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-warm-primary/10">
-                          <span className="text-[9px] font-semibold uppercase text-warm-primary">Obj</span>
-                          {pLoading ? (
-                            <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                          ) : progress && progress.food.calories > 0 ? (
-                            <>
-                              <span className={`font-bold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
-                              <span className="text-muted-foreground">/{c.client.goalCalories}</span>
-                            </>
-                          ) : (
-                            <span className="font-semibold">{c.client.goalCalories}</span>
-                          )}
-                        </span>
-                      )}
-                      {progress && progress.sport.calories > 0 && (
-                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-orange-100/70 dark:bg-orange-950/30 text-orange-700 dark:text-orange-200">
-                          <Flame className="h-2.5 w-2.5" />
-                          <span className="font-bold">{progress.sport.calories}</span>
-                        </span>
-                      )}
-                    </div>
+                    <p className="text-xs text-muted-foreground/80 truncate mt-0.5">{c.email}</p>
                   </div>
 
-                  {/* Compact summary — stat blocks with labels */}
-                  <div className="hidden sm:flex items-stretch gap-2 shrink-0">
-                    {c.client?.maintenanceCalories && (
-                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-muted/60" title="DEJ maintien (kcal pour stabiliser le poids)">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">Maintien</span>
-                        <span className="text-xs font-medium text-muted-foreground mt-0.5 whitespace-nowrap">{c.client.maintenanceCalories} kcal</span>
-                      </div>
-                    )}
+                  {/* Maintien — desktop, secondary */}
+                  {c.client?.maintenanceCalories ? (
+                    <div className="hidden md:block shrink-0 text-right w-[64px]" title="DEJ de maintien (stabiliser le poids)">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 leading-none mb-1">Maint.</div>
+                      <div className="text-xs text-muted-foreground tabular-nums">{c.client.maintenanceCalories.toLocaleString("fr-FR")}</div>
+                    </div>
+                  ) : null}
+
+                  {/* Objectif — primary stat, desktop */}
+                  {c.client?.goalCalories ? (
+                    <div className="hidden sm:block shrink-0 text-right w-[130px]">
+                      <div className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground leading-none mb-1">Objectif</div>
+                      {pLoading ? (
+                        <Loader2 className="h-3 w-3 animate-spin ml-auto" />
+                      ) : progress && progress.food.calories > 0 ? (
+                        <>
+                          <div className="text-sm tabular-nums leading-none">
+                            <span className={`font-semibold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>
+                              {progress.food.calories.toLocaleString("fr-FR")}
+                            </span>
+                            <span className="text-muted-foreground/70"> / {c.client.goalCalories.toLocaleString("fr-FR")}</span>
+                            <span className="text-muted-foreground/70 text-xs font-normal"> kcal</span>
+                          </div>
+                          {(() => {
+                            const p = pct(progress.food.calories, c.client.goalCalories) ?? 0;
+                            const barColor = p > 110 ? "bg-red-500" : p >= 90 ? "bg-emerald-500" : "bg-foreground/60";
+                            return (
+                              <div className="h-0.5 w-full bg-muted rounded-full mt-1.5 overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${barColor}`}
+                                  style={{ width: `${Math.min(p, 100)}%` }}
+                                />
+                              </div>
+                            );
+                          })()}
+                        </>
+                      ) : (
+                        <div className="text-sm font-semibold text-foreground tabular-nums leading-none">
+                          {c.client.goalCalories.toLocaleString("fr-FR")}
+                          <span className="text-muted-foreground/70 text-xs font-normal ml-1">kcal</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {/* Sport — desktop, optional pill with fixed slot for alignment */}
+                  <div className="hidden sm:flex shrink-0 w-[76px] justify-end">
+                    {progress && progress.sport.calories > 0 ? (
+                      <span
+                        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-orange-500/10 text-orange-700 dark:text-orange-300 text-xs font-medium tabular-nums"
+                        title="Calories brûlées par le sport"
+                      >
+                        <Flame className="h-3 w-3" />
+                        {progress.sport.calories}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  {/* Mobile compact stats */}
+                  <div className="sm:hidden flex flex-col items-end gap-1 shrink-0">
                     {c.client?.goalCalories && (
-                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-warm-primary/10" title="Objectif kcal du jour">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-warm-primary leading-none">Objectif</span>
+                      <span className="text-xs tabular-nums">
                         {pLoading ? (
-                          <Loader2 className="h-3 w-3 animate-spin mt-1" />
+                          <Loader2 className="h-3 w-3 animate-spin" />
                         ) : progress && progress.food.calories > 0 ? (
-                          <span className="text-xs mt-0.5 whitespace-nowrap">
-                            <span className={`font-bold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
-                            <span className="text-muted-foreground"> / {c.client.goalCalories} kcal</span>
-                          </span>
+                          <>
+                            <span className={`font-semibold ${statColor(progress.food.calories, progress.goals.goalCalories)}`}>{progress.food.calories}</span>
+                            <span className="text-muted-foreground/70"> / {c.client.goalCalories}</span>
+                          </>
                         ) : (
-                          <span className="text-xs font-bold text-foreground mt-0.5 whitespace-nowrap">{c.client.goalCalories} kcal</span>
+                          <span className="font-semibold">{c.client.goalCalories}</span>
                         )}
-                      </div>
+                      </span>
                     )}
                     {progress && progress.sport.calories > 0 && (
-                      <div className="flex flex-col items-end justify-center px-2.5 py-1 rounded-md bg-orange-100/60 dark:bg-orange-950/30" title="Calories brûlées par le sport">
-                        <span className="text-[9px] font-semibold uppercase tracking-wider text-orange-600 dark:text-orange-300 leading-none">Sport</span>
-                        <span className="text-xs font-bold text-orange-700 dark:text-orange-200 mt-0.5 whitespace-nowrap inline-flex items-center gap-1">
-                          <Flame className="h-3 w-3" />{progress.sport.calories} kcal
-                        </span>
-                      </div>
+                      <span className="inline-flex items-center gap-1 text-[11px] text-orange-600 tabular-nums">
+                        <Flame className="h-2.5 w-2.5" />
+                        {progress.sport.calories}
+                      </span>
                     )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-0.5 shrink-0">
+                  <div className="flex items-center shrink-0">
+                    <ChevronRight className={`h-4 w-4 text-muted-foreground/60 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                     {clientId && (
-                      <>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); router.push(`/admin/clients/${clientId}/stats`); }} className="h-8 w-8 p-0" title="Statistiques">
-                          <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); openEditPanel(clientId); }} className="h-8 w-8 p-0">
-                          <Settings2 className="h-4 w-4 text-muted-foreground" />
-                        </Button>
-                        <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); setDeleteClientId(clientId); }} className="h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label="Actions"
+                          className="ml-0.5 inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:bg-muted"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => router.push(`/admin/clients/${clientId}/stats`)}>
+                            <BarChart3 className="h-4 w-4 mr-2" />
+                            Statistiques
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openEditPanel(clientId)}>
+                            <Settings2 className="h-4 w-4 mr-2" />
+                            Réglages
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => setDeleteClientId(clientId)}
+                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
-                    <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-90" : ""}`} />
                   </div>
                 </div>
 
