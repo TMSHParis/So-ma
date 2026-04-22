@@ -4,15 +4,19 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Copy, Link2, FileText, Loader2, Eye, Calculator, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Copy, Link2, FileText, Loader2, Eye, Calculator, Trash2, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -151,13 +155,13 @@ export default function FormulairesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Formulaires de bilan
+            Formulaires
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Générez des liens uniques pour vos formulaires de bilan.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {tokens.length} lien{tokens.length > 1 ? "s" : ""} de bilan
           </p>
         </div>
         <Dialog
@@ -243,127 +247,125 @@ export default function FormulairesPage() {
         </Dialog>
       </div>
 
-      {/* Tokens list */}
-      <Card className="border-warm-border">
-        <CardHeader>
-          <CardTitle className="text-base">Liens générés</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {tokens.length > 0 && (
-            <div className="flex items-center gap-3 mb-4 pb-3 border-b border-black/[0.04]">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected.size === tokens.length && tokens.length > 0}
-                  onChange={toggleAll}
-                  className="rounded border-gray-300 accent-primary h-4 w-4"
-                />
-                Tout sélectionner
-              </label>
-              {selected.size > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={handleBulkDelete}
-                  disabled={deleting}
+      <div className="rounded-xl border border-warm-border bg-white overflow-hidden">
+        {tokens.length > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-warm-border">
+            <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={selected.size === tokens.length && tokens.length > 0}
+                onChange={toggleAll}
+                className="rounded border-gray-300 accent-primary h-4 w-4"
+              />
+              Tout sélectionner
+            </label>
+            {selected.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleBulkDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Trash2 className="h-3 w-3 mr-1" />
+                )}
+                Supprimer ({selected.size})
+              </Button>
+            )}
+          </div>
+        )}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : tokens.length === 0 ? (
+          <div className="text-center py-12">
+            <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">Aucun lien généré pour le moment.</p>
+          </div>
+        ) : (
+          <div className="divide-y divide-warm-border">
+            {tokens.map((token) => {
+              const expired = new Date(token.expiresAt) < new Date();
+              const status = token.used
+                ? { label: "Rempli", dot: "bg-emerald-500" }
+                : expired
+                ? { label: "Expiré", dot: "bg-foreground/40" }
+                : { label: "En attente", dot: "bg-amber-500" };
+              return (
+                <div
+                  key={token.id}
+                  className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors"
                 >
-                  {deleting ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <Trash2 className="h-3 w-3 mr-1" />
-                  )}
-                  Supprimer ({selected.size})
-                </Button>
-              )}
-            </div>
-          )}
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : tokens.length === 0 ? (
-            <div className="text-center py-8">
-              <FileText className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">
-                Aucun lien généré pour le moment.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {tokens.map((token) => {
-                const expired = new Date(token.expiresAt) < new Date();
-                return (
-                  <div
-                    key={token.id}
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selected.has(token.id)}
-                      onChange={() => toggleSelect(token.id)}
-                      className="rounded border-gray-300 accent-primary h-4 w-4 mr-3 flex-shrink-0 cursor-pointer"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium truncate">
-                        {token.name || "Sans nom"}
+                  <input
+                    type="checkbox"
+                    checked={selected.has(token.id)}
+                    onChange={() => toggleSelect(token.id)}
+                    className="rounded border-gray-300 accent-primary h-4 w-4 flex-shrink-0 cursor-pointer"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2.5">
+                      <p className="font-medium text-sm truncate text-foreground">
+                        {token.name || <span className="text-muted-foreground font-normal">Sans nom</span>}
                       </p>
-                      <p className="text-xs text-muted-foreground">
-                        {token.email || "Pas d'email"} &middot;{" "}
-                        {new Date(token.createdAt).toLocaleDateString("fr-FR")}
-                      </p>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                        <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
+                        {status.label}
+                      </span>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      {token.used ? (
-                        <Badge className="bg-green-100 text-green-700">
-                          Rempli
-                        </Badge>
-                      ) : expired ? (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Expiré
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary">En attente</Badge>
-                      )}
-                      {token.response && (
-                        <>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setDetailDialog(token)}
-                            title="Voir les réponses"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            size="sm"
-                            className="bg-primary hover:bg-primary/90 text-white h-8 text-xs"
-                            onClick={() => router.push(`/admin/formulaires/${token.id}`)}
-                            title="Calculer & valider"
-                          >
-                            <Calculator className="h-3.5 w-3.5 mr-1" />
-                            Calculer
-                          </Button>
-                        </>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-red-600"
-                        onClick={() => handleDelete(token.id)}
-                        title="Supprimer"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+                    <p className="text-xs text-muted-foreground/80 truncate mt-0.5 tabular-nums">
+                      {token.email || "Pas d'email"} · {new Date(token.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {token.response && (
+                      <>
+                        <button
+                          type="button"
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                          onClick={() => setDetailDialog(token)}
+                          title="Voir les réponses"
+                          aria-label="Voir les réponses"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-white h-8 text-xs"
+                          onClick={() => router.push(`/admin/formulaires/${token.id}`)}
+                        >
+                          <Calculator className="h-3.5 w-3.5 mr-1" />
+                          Calculer
+                        </Button>
+                      </>
+                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        aria-label="Actions"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:bg-muted"
+                      >
+                        <MoreVertical className="h-4 w-4" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleDelete(token.id)}
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Supprimer
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Detail dialog for viewing bilan responses */}
       <Dialog

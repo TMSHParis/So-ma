@@ -12,7 +12,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Plus,
   Trash2,
@@ -24,6 +30,7 @@ import {
   FileText,
   X,
   ExternalLink,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
@@ -239,13 +246,13 @@ export default function AdminArticlesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Articles du blog
+            Articles
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Créez, modifiez et publiez vos articles.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {articles.length} article{articles.length > 1 ? "s" : ""}
           </p>
         </div>
         <Button
@@ -269,90 +276,96 @@ export default function AdminArticlesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border bg-white">
           {articles.map((article) => (
-            <Card
+            <div
               key={article.id}
-              className="border-warm-border hover:shadow-md transition-shadow"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors"
             >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start gap-4">
-                  {article.imageUrl && (
-                    <div className="hidden sm:block w-20 h-14 rounded-lg overflow-hidden bg-[#f5f5f7] flex-shrink-0">
-                      <img
-                        src={article.imageUrl}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">{article.title}</p>
-                      <Badge
-                        variant="secondary"
-                        className="text-xs flex-shrink-0"
-                      >
-                        {article.category}
-                      </Badge>
-                      {!article.published && (
-                        <Badge
-                          variant="outline"
-                          className="text-xs flex-shrink-0 text-muted-foreground"
-                        >
-                          Brouillon
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
-                      {article.excerpt}
-                    </p>
-                    <p className="text-xs text-muted-foreground/60 mt-1">
-                      {article.date} &middot; /blog/{article.slug}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => togglePublished(article)}
-                      title={article.published ? "Masquer" : "Publier"}
-                    >
-                      {article.published ? (
-                        <Eye className="h-4 w-4" />
-                      ) : (
-                        <EyeOff className="h-4 w-4" />
-                      )}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={() => openEdit(article)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <a
-                      href={`/blog/${article.slug}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center h-8 w-8 text-muted-foreground hover:text-foreground"
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </a>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteArticle(article.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+              {article.imageUrl ? (
+                <div className="hidden sm:block w-16 h-12 rounded-md overflow-hidden bg-muted flex-shrink-0">
+                  <img
+                    src={article.imageUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              ) : (
+                <div className="hidden sm:flex w-16 h-12 rounded-md bg-muted items-center justify-center flex-shrink-0">
+                  <FileText className="h-4 w-4 text-muted-foreground/40" />
+                </div>
+              )}
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2.5">
+                  <p className="font-medium text-sm truncate text-foreground">{article.title}</p>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
+                    {article.category}
+                  </span>
+                  {!article.published && (
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      Brouillon
+                    </span>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground/80 truncate mt-0.5">
+                  {article.excerpt}
+                </p>
+                <p className="text-[11px] text-muted-foreground/60 truncate mt-0.5">
+                  {article.date} · /blog/{article.slug}
+                </p>
+              </div>
+
+              <div className="flex items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={() => togglePublished(article)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  title={article.published ? "Masquer" : "Publier"}
+                  aria-label={article.published ? "Masquer" : "Publier"}
+                >
+                  {article.published ? (
+                    <Eye className="h-4 w-4" />
+                  ) : (
+                    <EyeOff className="h-4 w-4" />
+                  )}
+                </button>
+                <a
+                  href={`/blog/${article.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  title="Voir sur le blog"
+                  aria-label="Voir sur le blog"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    aria-label="Actions"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:bg-muted"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => openEdit(article)}>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Modifier
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => deleteArticle(article.id)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           ))}
         </div>
       )}

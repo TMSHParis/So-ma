@@ -14,8 +14,14 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink, Users, Send } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Plus, Trash2, Utensils, Dumbbell, Loader2, Upload, FileText, X, ExternalLink, Users, Send, MoreVertical } from "lucide-react";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
 
@@ -370,83 +376,82 @@ export default function ProgrammesPage() {
     const anyActive = group.plans.some((p) => p.active);
 
     return (
-      <Card key={group.key} className="border-warm-border">
-        <CardContent className="pt-4 pb-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <button
-                type="button"
-                onClick={() => openResend(group, type)}
-                className="font-medium text-left hover:text-warm-primary hover:underline decoration-dotted underline-offset-4 transition-colors"
-                title="Renvoyer à d'autres clientes"
-              >
-                {plan.title}
-              </button>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                {new Date(plan.createdAt).toLocaleDateString("fr-FR")} &middot;{" "}
-                {clients.length} cliente{clients.length > 1 ? "s" : ""}
-              </p>
-              {plan.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {plan.description}
-                </p>
-              )}
-              {plan.fileUrl && (
-                <a
-                  href={plan.fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 mt-2 text-sm text-warm-primary hover:underline"
-                >
-                  <FileText className="h-4 w-4" />
-                  {plan.fileName || "Fichier joint"}
-                  <ExternalLink className="h-3 w-3" />
-                </a>
-              )}
-              {clients.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 mt-2.5">
-                  {clients.map((c, i) => (
-                    <Badge
-                      key={`${group.key}-${c.id}-${i}`}
-                      variant="outline"
-                      className="font-normal"
-                    >
-                      {c.user.firstName} {c.user.lastName}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant={anyActive ? "default" : "secondary"}>
+      <div key={group.key} className="px-5 py-4 hover:bg-muted/30 transition-colors">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <p className="font-medium text-sm text-foreground truncate">{plan.title}</p>
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                <span className={`h-1.5 w-1.5 rounded-full ${anyActive ? "bg-emerald-500" : "bg-foreground/30"}`} />
                 {anyActive ? "Actif" : "Inactif"}
-              </Badge>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-warm-primary"
-                onClick={() => openResend(group, type)}
-                title="Renvoyer à d'autres clientes"
-              >
-                <Send className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                onClick={() => deleteGroup(type, group)}
-                title={
-                  group.plans.length > 1
-                    ? "Supprimer pour toutes les clientes"
-                    : "Supprimer"
-                }
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              </span>
             </div>
+            <p className="text-[11px] text-muted-foreground/80 tabular-nums mt-0.5">
+              {new Date(plan.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })} · {clients.length} cliente{clients.length > 1 ? "s" : ""}
+            </p>
+            {plan.description && (
+              <p className="text-xs text-muted-foreground mt-1.5">{plan.description}</p>
+            )}
+            {plan.fileUrl && (
+              <a
+                href={plan.fileUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 mt-2 text-xs text-warm-primary hover:underline"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                {plan.fileName || "Fichier joint"}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+            {clients.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2.5">
+                {clients.map((c, i) => (
+                  <span
+                    key={`${group.key}-${c.id}-${i}`}
+                    className="inline-flex items-center px-2 py-0.5 rounded-md bg-muted text-[11px] text-muted-foreground"
+                  >
+                    {c.user.firstName} {c.user.lastName}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
-        </CardContent>
-      </Card>
+          <div className="flex items-center shrink-0">
+            <button
+              type="button"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-warm-primary transition-colors"
+              onClick={() => openResend(group, type)}
+              title="Renvoyer à d'autres clientes"
+              aria-label="Renvoyer"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Actions"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:bg-muted"
+              >
+                <MoreVertical className="h-4 w-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openResend(group, type)}>
+                  <Send className="h-4 w-4 mr-2" />
+                  Renvoyer
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => deleteGroup(type, group)}
+                  className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  {group.plans.length > 1 ? "Supprimer pour toutes" : "Supprimer"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -463,28 +468,32 @@ export default function ProgrammesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Gestion des programmes
+            Programmes
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Créez et gérez les programmes alimentaires et sportifs de vos clientes.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {mealGroups.length} alimentaire{mealGroups.length > 1 ? "s" : ""}
+            <span className="text-muted-foreground/40 mx-2">·</span>
+            {workoutGroups.length} sportif{workoutGroups.length > 1 ? "s" : ""}
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="meal">
-        <TabsList className="mb-6">
-          <TabsTrigger value="meal" className="gap-2">
-            <Utensils className="h-4 w-4" />
-            Alimentaires
-          </TabsTrigger>
-          <TabsTrigger value="workout" className="gap-2">
-            <Dumbbell className="h-4 w-4" />
-            Sportifs
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+          <TabsList>
+            <TabsTrigger value="meal" className="gap-2">
+              <Utensils className="h-4 w-4" />
+              Alimentaires
+            </TabsTrigger>
+            <TabsTrigger value="workout" className="gap-2">
+              <Dumbbell className="h-4 w-4" />
+              Sportifs
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="meal">
           <div className="flex justify-end mb-4">
@@ -504,7 +513,7 @@ export default function ProgrammesPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border bg-white">
               {mealGroups.map((group) => renderPlanGroup(group, "meal"))}
             </div>
           )}
@@ -528,7 +537,7 @@ export default function ProgrammesPage() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-3">
+            <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border bg-white">
               {workoutGroups.map((group) => renderPlanGroup(group, "workout"))}
             </div>
           )}

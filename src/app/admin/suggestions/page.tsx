@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -85,73 +84,63 @@ export default function SuggestionsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
-            Suggestions d'aliments
+            Suggestions
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Suggestions envoyées par les clientes depuis le suivi alimentaire.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {suggestions.length} suggestion{suggestions.length !== 1 ? "s" : ""} d&apos;aliments
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm">
-          {suggestions.length} suggestion{suggestions.length !== 1 ? "s" : ""}
-        </Badge>
       </div>
 
       {suggestions.length === 0 ? (
         <Card className="border-warm-border">
           <CardContent className="py-12 text-center">
             <MessageSquare className="h-12 w-12 text-muted-foreground/30 mx-auto mb-3" />
-            <p className="text-muted-foreground">
-              Aucune suggestion pour l'instant
-            </p>
+            <p className="text-muted-foreground">Aucune suggestion pour l&apos;instant</p>
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border bg-white">
           {suggestions.map((s) => (
-            <Card
+            <div
               key={s.id}
-              className="border-warm-border cursor-pointer hover:shadow-md transition-shadow"
+              className="flex items-start gap-4 px-5 py-4 hover:bg-muted/30 transition-colors cursor-pointer"
               onClick={() => setSelected(s)}
             >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-foreground">
-                      {s.text}
-                    </p>
-                    <div className="flex items-center gap-2 mt-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {s.client.user.firstName} {s.client.user.lastName}
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">
-                        {new Date(s.createdAt).toLocaleDateString("fr-FR", {
-                          day: "numeric",
-                          month: "long",
-                          year: "numeric",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelected(s);
-                    }}
-                    title="Voir le détail"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Button>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium text-foreground">{s.text}</p>
+                <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
+                    {s.client.user.firstName} {s.client.user.lastName}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground/70 tabular-nums">
+                    {new Date(s.createdAt).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <button
+                type="button"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelected(s);
+                }}
+                title="Voir le détail"
+                aria-label="Voir le détail"
+              >
+                <Eye className="h-4 w-4" />
+              </button>
+            </div>
           ))}
         </div>
       )}

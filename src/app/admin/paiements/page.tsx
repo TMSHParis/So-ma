@@ -1,8 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, TrendingUp, Plus, Loader2, Send, Trash2 } from "lucide-react";
+import { CreditCard, Plus, Loader2, Send, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 type Payment = {
@@ -146,13 +144,19 @@ export default function PaiementsPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Paiements
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Historique des paiements Stripe.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {payments.length} paiement{payments.length > 1 ? "s" : ""}
+            {completedPayments.length > 0 && (
+              <>
+                <span className="text-muted-foreground/40 mx-2">·</span>
+                {totalRevenue.toFixed(2)} € reçus
+              </>
+            )}
           </p>
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -181,82 +185,82 @@ export default function PaiementsPage() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 mb-8">
-        <Card className="border-warm-border">
-          <CardContent className="pt-5 pb-5 text-center">
-            <CreditCard className="h-6 w-6 text-primary mx-auto mb-2" />
-            <p className="text-2xl font-bold">{completedPayments.length}</p>
-            <p className="text-xs text-muted-foreground">Paiements reçus</p>
-          </CardContent>
-        </Card>
-        <Card className="border-warm-border">
-          <CardContent className="pt-5 pb-5 text-center">
-            <TrendingUp className="h-6 w-6 text-green-600 mx-auto mb-2" />
-            <p className="text-2xl font-bold">{totalRevenue.toFixed(2)} €</p>
-            <p className="text-xs text-muted-foreground">Revenus totaux</p>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="rounded-xl border border-warm-border bg-white px-5 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Paiements reçus</p>
+          <p className="text-2xl font-semibold tabular-nums mt-1.5 leading-none">{completedPayments.length}</p>
+        </div>
+        <div className="rounded-xl border border-warm-border bg-white px-5 py-4">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Revenus totaux</p>
+          <p className="text-2xl font-semibold tabular-nums mt-1.5 leading-none">
+            {totalRevenue.toFixed(2)}
+            <span className="text-base text-muted-foreground font-normal ml-1">€</span>
+          </p>
+        </div>
       </div>
 
-      <Card className="border-warm-border">
-        <CardHeader>
-          <CardTitle className="text-base">Historique</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {payments.length > 0 && (
-            <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-black/[0.04]">
-              <label className="flex items-center gap-2 text-sm cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={selected.size === payments.length && payments.length > 0}
-                  onChange={toggleAll}
-                  className="rounded border-gray-300 accent-primary h-4 w-4"
-                />
-                Tout sélectionner
-              </label>
-              {selected.size > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="h-7 text-xs"
-                  onClick={handleBulkDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? (
-                    <Loader2 className="h-3 w-3 animate-spin mr-1" />
-                  ) : (
-                    <Trash2 className="h-3 w-3 mr-1" />
-                  )}
-                  Supprimer ({selected.size})
-                </Button>
-              )}
-            </div>
-          )}
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : payments.length === 0 ? (
-            <div className="text-center py-12">
-              <CreditCard className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="text-muted-foreground">Aucun paiement enregistré.</p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10"></TableHead>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Montant</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="w-10"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {payments.map((p) => (
-                  <TableRow key={p.id}>
+      <div className="rounded-xl border border-warm-border bg-white overflow-hidden">
+        {payments.length > 0 && (
+          <div className="flex items-center gap-3 px-4 py-3 border-b border-warm-border">
+            <label className="flex items-center gap-2 text-sm cursor-pointer text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={selected.size === payments.length && payments.length > 0}
+                onChange={toggleAll}
+                className="rounded border-gray-300 accent-primary h-4 w-4"
+              />
+              Tout sélectionner
+            </label>
+            {selected.size > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={handleBulkDelete}
+                disabled={deleting}
+              >
+                {deleting ? (
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                ) : (
+                  <Trash2 className="h-3 w-3 mr-1" />
+                )}
+                Supprimer ({selected.size})
+              </Button>
+            )}
+          </div>
+        )}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : payments.length === 0 ? (
+          <div className="text-center py-12">
+            <CreditCard className="h-10 w-10 text-muted-foreground/30 mx-auto mb-3" />
+            <p className="text-muted-foreground">Aucun paiement enregistré.</p>
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="border-warm-border hover:bg-transparent">
+                <TableHead className="w-10"></TableHead>
+                <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Nom</TableHead>
+                <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Email</TableHead>
+                <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Montant</TableHead>
+                <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Statut</TableHead>
+                <TableHead className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Date</TableHead>
+                <TableHead className="w-10"></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payments.map((p) => {
+                const statusConfig =
+                  p.status === "COMPLETED" ? { label: "Payé", dot: "bg-emerald-500" } :
+                  p.status === "PENDING" ? { label: "En attente", dot: "bg-amber-500" } :
+                  p.status === "FAILED" ? { label: "Échec", dot: "bg-red-500" } :
+                  p.status === "REFUNDED" ? { label: "Remboursé", dot: "bg-foreground/40" } :
+                  { label: p.status, dot: "bg-foreground/40" };
+                return (
+                  <TableRow key={p.id} className="border-warm-border">
                     <TableCell>
                       <input
                         type="checkbox"
@@ -265,40 +269,40 @@ export default function PaiementsPage() {
                         className="rounded border-gray-300 accent-primary h-4 w-4 cursor-pointer"
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{p.name || "—"}</TableCell>
-                    <TableCell>{p.email}</TableCell>
-                    <TableCell>{p.amount.toFixed(2)} {p.currency}</TableCell>
-                    <TableCell>
-                      <Badge className={
-                        p.status === "COMPLETED" ? "bg-green-100 text-green-700 border-0" :
-                        p.status === "PENDING" ? "bg-yellow-100 text-yellow-700 border-0" :
-                        p.status === "FAILED" ? "bg-red-100 text-red-700 border-0" :
-                        "bg-gray-100 text-gray-700 border-0"
-                      }>
-                        {p.status === "COMPLETED" ? "Payé" : p.status === "PENDING" ? "En attente" : p.status === "REFUNDED" ? "Remboursé" : p.status}
-                      </Badge>
+                    <TableCell className="font-medium text-sm">
+                      {p.name || <span className="text-muted-foreground/60">—</span>}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    <TableCell className="text-sm text-muted-foreground">{p.email}</TableCell>
+                    <TableCell className="text-right tabular-nums text-sm font-medium">
+                      {p.amount.toFixed(2)} {p.currency}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        <span className={`h-1.5 w-1.5 rounded-full ${statusConfig.dot}`} />
+                        {statusConfig.label}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm tabular-nums">
                       {new Date(p.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-red-600"
+                      <button
+                        type="button"
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
                         onClick={() => handleDelete(p.id)}
                         title="Supprimer"
+                        aria-label="Supprimer"
                       >
                         <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </button>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </div>
     </div>
   );
 }

@@ -22,6 +22,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Plus,
   Trash2,
   Lightbulb,
@@ -32,6 +39,7 @@ import {
   Users,
   Eye,
   Pencil,
+  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { upload } from "@vercel/blob/client";
@@ -334,13 +342,13 @@ export default function AdminRessourcesPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
+      <div className="flex items-start justify-between gap-4 mb-8">
+        <div className="min-w-0">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-foreground">
             Ressources
           </h1>
-          <p className="text-muted-foreground mt-1">
-            Gérez les articles, guides et fichiers accessibles aux clientes.
+          <p className="mt-1.5 text-sm text-muted-foreground tabular-nums">
+            {resources.length} ressource{resources.length > 1 ? "s" : ""}
           </p>
         </div>
         <Button
@@ -360,65 +368,69 @@ export default function AdminRessourcesPage() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
+        <div className="rounded-xl border border-warm-border overflow-hidden divide-y divide-warm-border bg-white">
           {resources.map((r) => (
-            <Card
+            <div
               key={r.id}
-              className="border-warm-border hover:shadow-md transition-shadow cursor-pointer"
+              className="flex items-center gap-4 px-5 py-3.5 hover:bg-muted/30 transition-colors cursor-pointer"
               onClick={() => setViewResource(r)}
             >
-              <CardContent className="pt-4 pb-4">
-                <div className="flex items-center justify-between">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-medium truncate">{r.title}</p>
-                      <Badge
-                        variant="secondary"
-                        className="text-xs flex-shrink-0"
-                      >
-                        {r.category}
-                      </Badge>
-                    </div>
-                    {r.content && (
-                      <p className="text-sm text-muted-foreground line-clamp-2">
-                        {r.content}
-                      </p>
-                    )}
-                    {r.fileUrl && (
-                      <span className="inline-flex items-center gap-1.5 mt-2 text-sm text-warm-primary">
-                        <FileText className="h-4 w-4" />
-                        {r.fileName || "Fichier joint"}
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        openAssign(r);
-                      }}
-                      title="Assigner aux clientes"
-                    >
-                      <Users className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteResource(r.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2.5">
+                  <p className="font-medium text-sm truncate text-foreground">{r.title}</p>
+                  <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground shrink-0">
+                    <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
+                    {r.category}
+                  </span>
+                  {r.fileUrl && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground shrink-0">
+                      <FileText className="h-3 w-3" />
+                      Fichier
+                    </span>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
+                {r.content && (
+                  <p className="text-xs text-muted-foreground/80 truncate mt-0.5">{r.content}</p>
+                )}
+              </div>
+              <div className="flex items-center shrink-0">
+                <button
+                  type="button"
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openAssign(r);
+                  }}
+                  title="Assigner aux clientes"
+                  aria-label="Assigner aux clientes"
+                >
+                  <Users className="h-4 w-4" />
+                </button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label="Actions"
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50 data-[popup-open]:bg-muted"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuItem onClick={() => setViewResource(r)}>
+                      <Eye className="h-4 w-4 mr-2" />
+                      Voir
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => deleteResource(r.id)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Supprimer
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
           ))}
         </div>
       )}
