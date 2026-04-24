@@ -39,6 +39,7 @@ import {
   ChefHat,
   Droplets,
   Minus,
+  PencilLine,
 } from "lucide-react";
 import { BarcodeScanner } from "@/components/barcode-scanner";
 import { BilanSemaine } from "@/components/bilan-semaine";
@@ -131,7 +132,18 @@ export default function NutritionPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQty, setEditQty] = useState("");
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [dialogTab, setDialogTab] = useState<"search" | "recipes" | "create-recipe">("search");
+  const [dialogTab, setDialogTab] = useState<"search" | "recipes" | "create-recipe" | "manual">("search");
+  const [manualForm, setManualForm] = useState({
+    name: "",
+    quantity: "100",
+    unit: "g",
+    calories: "",
+    protein: "",
+    carbs: "",
+    fat: "",
+    fiber: "",
+  });
+  const [savingManual, setSavingManual] = useState(false);
   const [saveRecipeOpen, setSaveRecipeOpen] = useState<string | null>(null);
   const [recipeName, setRecipeName] = useState("");
   const [draftRecipeName, setDraftRecipeName] = useState("");
@@ -304,6 +316,75 @@ export default function NutritionPage() {
       toast.success(`${item.name} ajouté`);
     } catch {
       toast.error("Enregistrement impossible");
+    }
+  }
+
+  async function addManualFood() {
+    const name = manualForm.name.trim();
+    const calories = parseFloat(manualForm.calories);
+    if (!name) {
+      toast.error("Nom de l'aliment requis");
+      return;
+    }
+    if (!Number.isFinite(calories) || calories < 0) {
+      toast.error("Calories invalides");
+      return;
+    }
+
+    const item = {
+      name,
+      quantity: parseFloat(manualForm.quantity) || 0,
+      unit: manualForm.unit.trim() || "g",
+      calories: Math.round(calories),
+      protein: Math.round((parseFloat(manualForm.protein) || 0) * 10) / 10,
+      carbs: Math.round((parseFloat(manualForm.carbs) || 0) * 10) / 10,
+      fat: Math.round((parseFloat(manualForm.fat) || 0) * 10) / 10,
+      fiber: Math.round((parseFloat(manualForm.fiber) || 0) * 10) / 10,
+    };
+
+    setSavingManual(true);
+    try {
+      const res = await fetch("/api/client/food-entries", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: selectedDate,
+          mealType: selectedMealType,
+          foodName: item.name,
+          quantity: item.quantity,
+          unit: item.unit,
+          calories: item.calories,
+          protein: item.protein,
+          carbs: item.carbs,
+          fat: item.fat,
+          fiber: item.fiber,
+        }),
+      });
+      if (!res.ok) throw new Error();
+      const row = await res.json();
+      setMeals((prev) => ({
+        ...prev,
+        [selectedMealType]: [
+          ...prev[selectedMealType],
+          { ...item, id: row.id },
+        ],
+      }));
+      setDialogOpen(false);
+      setManualForm({
+        name: "",
+        quantity: "100",
+        unit: "g",
+        calories: "",
+        protein: "",
+        carbs: "",
+        fat: "",
+        fiber: "",
+      });
+      toast.success(`${item.name} ajouté`);
+    } catch {
+      toast.error("Enregistrement impossible");
+    } finally {
+      setSavingManual(false);
     }
   }
 
@@ -680,6 +761,13 @@ export default function NutritionPage() {
                     </Badge>
                   )}
                 </button>
+                <button
+                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "manual" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  onClick={() => setDialogTab("manual")}
+                >
+                  <PencilLine className="h-3.5 w-3.5" />
+                  Manuel
+                </button>
               </div>
 
               {/* Create-recipe header */}
@@ -939,6 +1027,158 @@ export default function NutritionPage() {
                       );
                     })
                   )}
+                </div>
+              )}
+
+              {/* Manual tab */}
+              {dialogTab === "manual" && (
+                <div className="space-y-3">
+                  <p className="text-xs text-muted-foreground">
+                    Saisissez directement les valeurs — utile au restaurant,
+                    depuis un emballage ou une estimation rapide.
+                  </p>
+
+                  <div className="space-y-2">
+                    <Label>Nom de l&apos;aliment</Label>
+                    <Input
+                      value={manualForm.name}
+                      onChange={(e) =>
+                        setManualForm((f) => ({ ...f, name: e.target.value }))
+                      }
+                      placeholder="Ex : Salade César restaurant"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Quantité</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={manualForm.quantity}
+                        onChange={(e) =>
+                          setManualForm((f) => ({
+                            ...f,
+                            quantity: e.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Unité</Label>
+                      <Select
+                        value={manualForm.unit}
+                        onValueChange={(v) =>
+                          v && setManualForm((f) => ({ ...f, unit: v }))
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="g">g</SelectItem>
+                          <SelectItem value="ml">ml</SelectItem>
+                          <SelectItem value="portion">portion</SelectItem>
+                          <SelectItem value="unité">unité</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Calories (kcal)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={manualForm.calories}
+                      onChange={(e) =>
+                        setManualForm((f) => ({
+                          ...f,
+                          calories: e.target.value,
+                        }))
+                      }
+                      placeholder="Ex : 450"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>Protéines (g)</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={manualForm.protein}
+                        onChange={(e) =>
+                          setManualForm((f) => ({
+                            ...f,
+                            protein: e.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Glucides (g)</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={manualForm.carbs}
+                        onChange={(e) =>
+                          setManualForm((f) => ({
+                            ...f,
+                            carbs: e.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Lipides (g)</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={manualForm.fat}
+                        onChange={(e) =>
+                          setManualForm((f) => ({ ...f, fat: e.target.value }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Fibres (g)</Label>
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        value={manualForm.fiber}
+                        onChange={(e) =>
+                          setManualForm((f) => ({
+                            ...f,
+                            fiber: e.target.value,
+                          }))
+                        }
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={addManualFood}
+                    disabled={
+                      savingManual ||
+                      !manualForm.name.trim() ||
+                      !manualForm.calories
+                    }
+                    className="w-full bg-primary hover:bg-primary/90 text-white"
+                  >
+                    {savingManual ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enregistrement...
+                      </>
+                    ) : (
+                      "Ajouter l'aliment"
+                    )}
+                  </Button>
                 </div>
               )}
             </div>
