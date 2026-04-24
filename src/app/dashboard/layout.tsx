@@ -19,6 +19,7 @@ import {
   Lightbulb,
   Target,
   Share2,
+  Shield,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { ShareGuidelinesModal } from "@/components/share-guidelines-modal";
@@ -52,9 +53,11 @@ const baseLinks: SidebarLink[] = [
 function SidebarContent({
   pathname,
   sidebarLinks,
+  isAdmin,
 }: {
   pathname: string;
   sidebarLinks: SidebarLink[];
+  isAdmin: boolean;
 }) {
   return (
     <div className="flex flex-col h-full">
@@ -91,7 +94,16 @@ function SidebarContent({
         </nav>
       </ScrollArea>
 
-      <div className="p-3 border-t border-warm-border">
+      <div className="p-3 border-t border-warm-border space-y-1">
+        {isAdmin && (
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          >
+            <Shield className="h-4 w-4" />
+            Espace admin
+          </Link>
+        )}
         <Button
           variant="ghost"
           className="w-full justify-start text-muted-foreground hover:text-destructive"
@@ -113,12 +125,19 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [hideCycle, setHideCycle] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
     fetch("/api/client/profile")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.sex === "M") setHideCycle(true);
+      })
+      .catch(() => {});
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data?.user?.role === "ADMIN") setIsAdmin(true);
       })
       .catch(() => {});
   }, []);
@@ -131,7 +150,7 @@ export default function DashboardLayout({
     <div className="flex h-screen bg-cream">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-warm-border">
-        <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} />
+        <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile header + sidebar */}
@@ -145,7 +164,7 @@ export default function DashboardLayout({
                 <Menu className="h-5 w-5" />
             </SheetTrigger>
             <SheetContent side="left" className="w-64 p-0 bg-white">
-              <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} />
+              <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} isAdmin={isAdmin} />
             </SheetContent>
           </Sheet>
         </header>

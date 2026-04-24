@@ -25,8 +25,6 @@ import {
 export default async function DashboardPage() {
   const session = await auth();
   if (!session?.user?.id) redirect("/connexion");
-  const role = (session.user as { role: string }).role;
-  if (role !== "CLIENT") redirect("/admin");
 
   const client = await prisma.client.findUnique({
     where: { userId: session.user.id },

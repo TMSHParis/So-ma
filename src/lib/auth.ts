@@ -1,7 +1,10 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "./db";
+import { isSuperAdminEmail } from "./super-admin";
 
 /** Erreur technique côté serveur / BDD — code lu par la page de connexion. */
 class AuthServiceError extends CredentialsSignin {
@@ -52,15 +55,38 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    Google,
   ],
   pages: {
     signIn: "/connexion",
   },
   callbacks: {
+    async signIn({ user, account }) {
+      if (account?.provider !== "google") return true;
+
+      const email = normalizeEmail(user.email);
+      if (!email || !isSuperAdminEmail(email)) return false;
+
+      const randomHash = crypto.randomBytes(32).toString("hex");
+      const dbUser = await prisma.user.upsert({
+        where: { email },
+        create: {
+          email,
+          passwordHash: randomHash,
+          firstName: user.name?.split(" ")[0] ?? "Super",
+          lastName: user.name?.split(" ").slice(1).join(" ") || "Admin",
+          role: "ADMIN",
+        },
+        update: { role: "ADMIN" },
+      });
+      (user as { id?: string; role?: string }).id = dbUser.id;
+      (user as { id?: string; role?: string }).role = dbUser.role;
+      return true;
+    },
     async jwt({ token, user }) {
       if (user) {
         token.role = (user as { role: string }).role;
-        token.id = user.id;
+        token.id = (user as { id: string }).id;
       }
       return token;
     },
