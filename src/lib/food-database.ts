@@ -9,6 +9,7 @@ import ciqualRaw from "@/data/ciqual.json";
 import { WORLD_FOODS } from "@/data/foods-world";
 import { SUPPLEMENT_FOODS } from "@/data/foods-supplements";
 import { SPORTS_FOODS } from "@/data/foods-sports";
+import { BRAND_FOODS } from "@/data/foods-brands";
 
 export type GenericFood = {
   name: string;         // nom court affiché
@@ -129,11 +130,23 @@ const sportsEntries: CiqualEntry[] = SPORTS_FOODS.map((s) => ({
   fi: s.fi,
 }));
 
-/** Ciqual + plats du monde + compléments + sportive (doublons filtrés par nom normalisé). */
+/** Marques distributeurs et marques nationales — valeurs étiquette officielles. */
+const brandEntries: CiqualEntry[] = BRAND_FOODS.map((b) => ({
+  name: b.name,
+  grp: "Marques",
+  ssgrp: b.brand,
+  kcal: b.kcal,
+  p: b.p,
+  c: b.c,
+  f: b.f,
+  fi: b.fi,
+}));
+
+/** Ciqual + plats du monde + compléments + sportive + marques (doublons filtrés par nom normalisé). */
 const allEntries: CiqualEntry[] = (() => {
   const seen = new Set(ciqual.map((e) => normalize(shortDisplay(e.name))));
   const out = [...ciqual];
-  for (const w of [...worldEntries, ...supplementEntries, ...sportsEntries]) {
+  for (const w of [...worldEntries, ...supplementEntries, ...sportsEntries, ...brandEntries]) {
     const key = normalize(shortDisplay(w.name));
     if (seen.has(key)) continue;
     seen.add(key);
