@@ -101,17 +101,17 @@ export function TestimonialsCarousel() {
             </div>
           </div>
 
-          {/* Navigation arrows */}
+          {/* Navigation arrows — visibles seulement sur tablette+ pour ne pas chevaucher le texte sur mobile */}
           <button
             onClick={prev}
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-10 h-10 rounded-full bg-white border border-black/[0.06] shadow-sm flex items-center justify-center hover:shadow-md transition-shadow"
+            className="hidden sm:flex absolute left-0 top-1/2 -translate-y-1/2 sm:-translate-x-4 w-10 h-10 rounded-full bg-white border border-black/[0.06] shadow-sm items-center justify-center hover:shadow-md transition-shadow"
             aria-label="Avis précédent"
           >
             <ChevronLeft className="h-4 w-4 text-foreground" />
           </button>
           <button
             onClick={next}
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-10 h-10 rounded-full bg-white border border-black/[0.06] shadow-sm flex items-center justify-center hover:shadow-md transition-shadow"
+            className="hidden sm:flex absolute right-0 top-1/2 -translate-y-1/2 sm:translate-x-4 w-10 h-10 rounded-full bg-white border border-black/[0.06] shadow-sm items-center justify-center hover:shadow-md transition-shadow"
             aria-label="Avis suivant"
           >
             <ChevronRight className="h-4 w-4 text-foreground" />

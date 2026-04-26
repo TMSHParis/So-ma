@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import { Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   title: "So-ma | Nutrition & Bien-être pour femmes neuroatypiques",
   description:
     "Accompagnement personnalisé en nutrition et sport pour femmes neuroatypiques. Programmes adaptés TDAH, TSA, HPI/HPE, DYS.",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#26474E",
 };
 
 export default function RootLayout({

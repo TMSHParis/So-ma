@@ -46,13 +46,21 @@ const SUPERADMIN_LINK: NavLink = {
   icon: UtensilsCrossed,
 };
 
-function SidebarContent({ pathname, isSuperAdmin }: { pathname: string; isSuperAdmin: boolean }) {
+function SidebarContent({
+  pathname,
+  isSuperAdmin,
+  onNavigate,
+}: {
+  pathname: string;
+  isSuperAdmin: boolean;
+  onNavigate?: () => void;
+}) {
   const links = isSuperAdmin ? [...BASE_LINKS, SUPERADMIN_LINK] : BASE_LINKS;
 
   return (
     <div className="flex flex-col h-full">
       <div className="px-5 pt-5 pb-4 border-b border-warm-border">
-        <Link href="/admin" className="inline-flex">
+        <Link href="/admin" className="inline-flex" onClick={onNavigate}>
           <img src="/logo-soma.png" alt="So-ma" className="h-7 w-auto mix-blend-multiply" />
         </Link>
         <p className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mt-2.5 font-medium">
@@ -70,6 +78,7 @@ function SidebarContent({ pathname, isSuperAdmin }: { pathname: string; isSuperA
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={onNavigate}
                 className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm transition-colors ${
                   isActive
                     ? "bg-primary/10 text-primary font-medium"
@@ -87,6 +96,7 @@ function SidebarContent({ pathname, isSuperAdmin }: { pathname: string; isSuperA
       <div className="px-2.5 py-3 border-t border-warm-border space-y-0.5">
         <Link
           href="/dashboard"
+          onClick={onNavigate}
           className="flex items-center gap-2.5 px-2.5 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-foreground/[0.04] transition-colors"
         >
           <LayoutDashboard className="h-[15px] w-[15px]" />
@@ -119,17 +129,24 @@ export function AdminMobileHeader({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
+    <header className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-white/90 backdrop-blur-xl border-b border-warm-border safe-top">
       <Link href="/admin" className="flex items-center gap-2">
         <Shield className="h-4 w-4 text-primary" />
         <span className="text-sm font-semibold tracking-tight">Administration</span>
       </Link>
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger className="inline-flex items-center justify-center rounded-md h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+        <SheetTrigger
+          aria-label="Ouvrir le menu admin"
+          className="inline-flex items-center justify-center rounded-md h-11 w-11 -mr-2 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        >
           <Menu className="h-5 w-5" />
         </SheetTrigger>
-        <SheetContent side="left" className="w-64 p-0 bg-white">
-          <SidebarContent pathname={pathname} isSuperAdmin={isSuperAdmin} />
+        <SheetContent side="left" className="p-0 bg-white">
+          <SidebarContent
+            pathname={pathname}
+            isSuperAdmin={isSuperAdmin}
+            onNavigate={() => setOpen(false)}
+          />
         </SheetContent>
       </Sheet>
     </header>

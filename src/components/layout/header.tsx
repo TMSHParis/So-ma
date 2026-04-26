@@ -19,8 +19,8 @@ export function Header() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04]">
-      <nav className="max-w-[980px] mx-auto flex items-center justify-between h-11 px-4 lg:px-0">
+    <header className="sticky top-0 z-50 w-full bg-white/70 backdrop-blur-xl backdrop-saturate-150 border-b border-black/[0.04] safe-top">
+      <nav className="max-w-[980px] mx-auto flex items-center justify-between h-12 px-4 lg:px-0">
         <Link href="/" className="flex items-center">
           <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto mix-blend-multiply" />
         </Link>
@@ -46,8 +46,11 @@ export function Header() {
 
         {/* Mobile */}
         <Sheet open={open} onOpenChange={setOpen}>
-          <SheetTrigger className="md:hidden inline-flex items-center justify-center h-8 w-8">
-            <Menu className="h-4 w-4" />
+          <SheetTrigger
+            aria-label="Ouvrir le menu"
+            className="md:hidden inline-flex items-center justify-center h-11 w-11 -mr-2 rounded-lg hover:bg-black/[0.04]"
+          >
+            <Menu className="h-5 w-5" />
           </SheetTrigger>
           <SheetContent side="right" className="bg-white/95 backdrop-blur-xl w-72 border-l-0">
             <nav className="flex flex-col gap-1 mt-8">

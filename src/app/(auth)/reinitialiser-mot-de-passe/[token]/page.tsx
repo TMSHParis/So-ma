@@ -53,7 +53,7 @@ export default function ReinitialiserPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FBFAF8] px-4">
+    <div className="min-h-[100dvh] flex items-center justify-center bg-[#FBFAF8] px-4 py-8 safe-top safe-bottom">
       <div className="w-full max-w-[340px]">
         <div className="text-center mb-10">
           <Link href="/">

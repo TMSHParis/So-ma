@@ -492,7 +492,7 @@ export default function SportPage() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label>Type de sport</Label>
-                <div className="grid grid-cols-4 gap-1.5">
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5">
                   {sportTypes.map((s) => {
                     const Icon = s.icon;
                     return (
@@ -588,7 +588,7 @@ export default function SportPage() {
               {/* Treadmill fields */}
               {sportType === "MARCHE" && walkMode === "treadmill" && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     <div className="space-y-2">
                       <Label>Vitesse (km/h)</Label>
                       <Input

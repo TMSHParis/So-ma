@@ -121,18 +121,42 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-  }
-  html {
-    @apply font-sans;
-    scroll-behavior: smooth;
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
   }
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.025em;
     font-weight: 600;
   }
+  /* iOS: éviter le zoom auto sur focus d'un input < 16px */
+  input, textarea, select {
+    font-size: 16px;
+  }
+  @media (min-width: 768px) {
+    input, textarea, select {
+      font-size: inherit;
+    }
+  }
+}
+
+@utility safe-top {
+  padding-top: env(safe-area-inset-top);
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility safe-x {
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
 }

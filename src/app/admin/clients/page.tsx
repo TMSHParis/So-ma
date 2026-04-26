@@ -869,19 +869,34 @@ export default function ClientsPage() {
 
       {/* Edit panel - slide in */}
       {editClientId && (
-        <div className="fixed inset-0 z-50 bg-black/40" onClick={() => setEditClientId(null)}>
+        <div
+          className="fixed inset-0 z-50 bg-black/40 overflow-hidden"
+          onClick={() => setEditClientId(null)}
+          role="dialog"
+          aria-modal="true"
+        >
           <div
             className="absolute right-0 top-0 bottom-0 w-full max-w-xl bg-background shadow-xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
+            style={{
+              paddingTop: "env(safe-area-inset-top)",
+              paddingBottom: "env(safe-area-inset-bottom)",
+            }}
           >
-            <div className="shrink-0 border-b border-warm-border px-6 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Objectifs cliente</h2>
-              <Button variant="ghost" size="icon" onClick={() => setEditClientId(null)}>
-                <X className="h-4 w-4" />
+            <div className="shrink-0 border-b border-warm-border px-4 sm:px-6 py-3 flex items-center justify-between">
+              <h2 className="text-base sm:text-lg font-semibold">Objectifs cliente</h2>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10"
+                aria-label="Fermer"
+                onClick={() => setEditClientId(null)}
+              >
+                <X className="h-5 w-5" />
               </Button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-6">
               {editLoading ? (
                 <div className="flex items-center justify-center py-12"><Loader2 className="h-6 w-6 animate-spin" /></div>
               ) : (

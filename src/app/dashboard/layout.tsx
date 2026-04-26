@@ -54,15 +54,17 @@ function SidebarContent({
   pathname,
   sidebarLinks,
   isAdmin,
+  onNavigate,
 }: {
   pathname: string;
   sidebarLinks: SidebarLink[];
   isAdmin: boolean;
+  onNavigate?: () => void;
 }) {
   return (
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-warm-border">
-        <Link href="/dashboard">
+        <Link href="/dashboard" onClick={onNavigate}>
           <img src="/logo-soma.png" alt="So-ma" className="h-8 w-auto mix-blend-multiply" />
           <p className="text-xs text-muted-foreground mt-1">
             Mon espace bien-être
@@ -80,6 +82,7 @@ function SidebarContent({
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={onNavigate}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "bg-primary/10 text-primary"
@@ -98,6 +101,7 @@ function SidebarContent({
         {isAdmin && (
           <Link
             href="/admin"
+            onClick={onNavigate}
             className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
             <Shield className="h-4 w-4" />
@@ -142,36 +146,45 @@ export default function DashboardLayout({
       .catch(() => {});
   }, []);
 
+
   const sidebarLinks = hideCycle
     ? baseLinks.filter((l) => l.href !== "/dashboard/cycle")
     : baseLinks;
 
   return (
-    <div className="flex h-screen bg-cream">
+    <div className="flex h-[100dvh] bg-cream">
       {/* Desktop sidebar */}
       <aside className="hidden md:flex w-64 flex-col bg-white border-r border-warm-border">
         <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} isAdmin={isAdmin} />
       </aside>
 
       {/* Mobile header + sidebar */}
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <header className="md:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-warm-border">
-          <Link href="/dashboard">
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
+        <header className="md:hidden sticky top-0 z-30 flex items-center justify-between h-14 px-4 bg-white/90 backdrop-blur-xl border-b border-warm-border safe-top">
+          <Link href="/dashboard" className="flex items-center">
             <img src="/logo-soma.png" alt="So-ma" className="h-7 w-auto mix-blend-multiply" />
           </Link>
           <Sheet open={open} onOpenChange={setOpen}>
-            <SheetTrigger className="inline-flex items-center justify-center rounded-lg h-8 w-8 hover:bg-muted transition-colors">
+            <SheetTrigger
+              aria-label="Ouvrir le menu"
+              className="inline-flex items-center justify-center rounded-lg h-11 w-11 -mr-2 hover:bg-muted transition-colors"
+            >
                 <Menu className="h-5 w-5" />
             </SheetTrigger>
-            <SheetContent side="left" className="w-64 p-0 bg-white">
-              <SidebarContent pathname={pathname} sidebarLinks={sidebarLinks} isAdmin={isAdmin} />
+            <SheetContent side="left" className="p-0 bg-white">
+              <SidebarContent
+                pathname={pathname}
+                sidebarLinks={sidebarLinks}
+                isAdmin={isAdmin}
+                onNavigate={() => setOpen(false)}
+              />
             </SheetContent>
           </Sheet>
         </header>
 
         {/* Main content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto p-4 md:p-8">{children}</div>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="max-w-5xl mx-auto p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
         </main>
       </div>
 

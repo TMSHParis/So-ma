@@ -121,7 +121,7 @@ export default function BilanPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-cream px-4">
+      <div className="min-h-[100dvh] flex items-center justify-center bg-cream px-4 safe-top safe-bottom">
         <Card className="max-w-md w-full border-warm-border text-center">
           <CardContent className="pt-8 pb-8">
             <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -149,7 +149,7 @@ export default function BilanPage() {
   const progress = ((currentStep + 1) / steps.length) * 100;
 
   return (
-    <div className="min-h-screen bg-cream py-8 px-4">
+    <div className="min-h-[100dvh] bg-cream py-8 px-4 safe-top safe-bottom">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">

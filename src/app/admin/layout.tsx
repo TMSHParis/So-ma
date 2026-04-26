@@ -11,13 +11,13 @@ export default async function AdminLayout({
   const isSuperAdmin = isSuperAdminEmail(session?.user?.email);
 
   return (
-    <div className="flex h-screen bg-cream">
+    <div className="flex h-[100dvh] bg-cream">
       <AdminSidebar isSuperAdmin={isSuperAdmin} />
 
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 overflow-hidden min-w-0">
         <AdminMobileHeader isSuperAdmin={isSuperAdmin} />
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto p-4 md:p-8">{children}</div>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+          <div className="max-w-6xl mx-auto p-4 md:p-8 pb-[max(1rem,env(safe-area-inset-bottom))]">{children}</div>
         </main>
       </div>
     </div>
