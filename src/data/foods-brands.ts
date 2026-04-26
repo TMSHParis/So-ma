@@ -30,7 +30,7 @@ export type BrandFood = {
 export const BRAND_FOODS: BrandFood[] = [
   // ─── Carrefour Discount ─────────────────────────────────
   {
-    name: "Filets de maquereaux à la moutarde — Carrefour Discount",
+    name: "Filets de maquereaux espagnols à la moutarde — Carrefour Discount",
     brand: "Carrefour Discount",
     quantityG: 169,
     kcal: 200,
