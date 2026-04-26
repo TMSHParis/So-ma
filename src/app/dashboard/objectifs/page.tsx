@@ -278,14 +278,14 @@ export default function ObjectifsPage() {
           <Card className="border-warm-border">
             <CardContent className="pt-4 pb-4 text-center">
               <Flame className="h-5 w-5 text-primary mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">{profile.goalCalories ?? "—"}</p>
+              <p className="text-2xl font-bold text-foreground tabular-nums">{profile.goalCalories ?? "—"}</p>
               <p className="text-xs text-muted-foreground">kcal / jour</p>
             </CardContent>
           </Card>
           <Card className="border-warm-border">
             <CardContent className="pt-4 pb-4 text-center">
               <Droplets className="h-5 w-5 text-blue-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold text-foreground tabular-nums">
                 {profile.goalWaterL ? `${profile.goalWaterL}L` : "—"}
               </p>
               <p className="text-xs text-muted-foreground">
@@ -296,7 +296,7 @@ export default function ObjectifsPage() {
           <Card className="border-warm-border">
             <CardContent className="pt-4 pb-4 text-center">
               <Footprints className="h-5 w-5 text-green-600 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold text-foreground tabular-nums truncate">
                 {profile.goalSteps ? profile.goalSteps.toLocaleString("fr-FR") : "—"}
               </p>
               <p className="text-xs text-muted-foreground">pas / jour</p>
@@ -305,7 +305,7 @@ export default function ObjectifsPage() {
           <Card className="border-warm-border">
             <CardContent className="pt-4 pb-4 text-center">
               <Dumbbell className="h-5 w-5 text-purple-500 mx-auto mb-1" />
-              <p className="text-2xl font-bold text-foreground">
+              <p className="text-2xl font-bold text-foreground tabular-nums">
                 {profile.sessionsPerWeek ?? "—"}
               </p>
               <p className="text-xs text-muted-foreground">séances / sem.</p>
@@ -341,7 +341,7 @@ export default function ObjectifsPage() {
                 { label: "Fibres", value: profile.goalFiber, color: "text-green-600" },
               ].map((m) => (
                 <div key={m.label} className="text-center py-3 rounded-xl bg-muted/40">
-                  <p className="text-2xl font-bold text-foreground">{m.value ?? "—"}<span className="text-sm font-normal text-muted-foreground">g</span></p>
+                  <p className="text-2xl font-bold text-foreground tabular-nums">{m.value ?? "—"}<span className="text-sm font-normal text-muted-foreground">g</span></p>
                   <p className={`text-xs font-medium ${m.color}`}>{m.label}</p>
                 </div>
               ))}

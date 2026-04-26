@@ -1191,7 +1191,7 @@ export default function NutritionPage() {
       </div>
 
       {/* Daily totals */}
-      <div className="grid grid-cols-5 gap-2 mb-8">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-8">
         {[
           {
             label: "Kcal",
@@ -1241,7 +1241,7 @@ export default function NutritionPage() {
         ].map((m) => (
           <div
             key={m.label}
-            className={`rounded-xl p-2.5 ${m.bg} flex flex-col`}
+            className={`rounded-xl p-2 sm:p-2.5 ${m.bg} flex flex-col min-w-0`}
           >
             <span
               className={`text-[10px] font-bold uppercase tracking-wider ${m.text}`}
@@ -1249,10 +1249,10 @@ export default function NutritionPage() {
               {m.label}
             </span>
             <div className="mt-1 flex items-baseline gap-0.5 min-w-0">
-              <span className="text-base font-bold text-foreground leading-none truncate">
+              <span className="text-sm sm:text-base font-bold text-foreground leading-none tabular-nums truncate">
                 {m.value}
               </span>
-              <span className="text-[10px] text-muted-foreground truncate">
+              <span className="text-[10px] text-muted-foreground tabular-nums truncate">
                 /{m.goal}
                 {m.unit}
               </span>
@@ -1268,11 +1268,11 @@ export default function NutritionPage() {
       {/* Water tracker */}
       <Card className="border-warm-border mb-8">
         <CardContent className="py-4">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-center gap-2 flex-1 min-w-0">
               <Droplets className="h-5 w-5 text-blue-500 flex-shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="flex items-baseline gap-1.5">
+                <div className="flex items-baseline gap-1.5 tabular-nums">
                   <span className="text-lg font-bold text-foreground">
                     {(waterMl / 1000).toFixed(1)}L
                   </span>
@@ -1286,36 +1286,39 @@ export default function NutritionPage() {
                 />
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="grid grid-cols-3 gap-1.5 sm:flex sm:items-center">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
+                aria-label="Retirer 25cl d'eau"
+                className="h-9 px-2 sm:px-3 text-red-500 hover:text-red-600 hover:bg-red-50"
                 onClick={() => addWater(-250)}
                 disabled={waterLoading || waterMl <= 0}
               >
                 <Minus className="h-3.5 w-3.5 mr-1" />
-                25cl
+                <span className="tabular-nums">25cl</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                aria-label="Ajouter 25cl d'eau"
+                className="h-9 px-2 sm:px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                 onClick={() => addWater(250)}
                 disabled={waterLoading}
               >
                 <Plus className="h-3.5 w-3.5 mr-1" />
-                25cl
+                <span className="tabular-nums">25cl</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-9 px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                aria-label="Ajouter 50cl d'eau"
+                className="h-9 px-2 sm:px-3 text-blue-500 hover:text-blue-600 hover:bg-blue-50"
                 onClick={() => addWater(500)}
                 disabled={waterLoading}
               >
                 <Plus className="h-3.5 w-3.5 mr-1" />
-                50cl
+                <span className="tabular-nums">50cl</span>
               </Button>
             </div>
           </div>
@@ -1388,8 +1391,8 @@ export default function NutritionPage() {
                       className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{food.name}</p>
-                        <div className="flex gap-3 mt-0.5 text-xs text-muted-foreground items-center">
+                        <p className="text-sm font-medium truncate">{food.name}</p>
+                        <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-0.5 text-xs text-muted-foreground items-center">
                           {editingId === food.id ? (
                             <form
                               className="flex items-center gap-1.5"
@@ -1402,7 +1405,7 @@ export default function NutritionPage() {
                                 type="number"
                                 value={editQty}
                                 onChange={(e) => setEditQty(e.target.value)}
-                                className="h-6 w-16 text-xs px-1.5"
+                                className="h-7 w-16 text-xs px-1.5 tabular-nums"
                                 autoFocus
                                 min={1}
                               />
@@ -1411,24 +1414,24 @@ export default function NutritionPage() {
                                 type="submit"
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-green-600"
+                                className="h-7 w-7 text-green-600"
                               >
-                                <Check className="h-3 w-3" />
+                                <Check className="h-3.5 w-3.5" />
                               </Button>
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="icon"
-                                className="h-6 w-6 text-muted-foreground"
+                                className="h-7 w-7 text-muted-foreground"
                                 onClick={() => setEditingId(null)}
                               >
-                                <X className="h-3 w-3" />
+                                <X className="h-3.5 w-3.5" />
                               </Button>
                             </form>
                           ) : (
                             <>
                               <button
-                                className="underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors"
+                                className="underline decoration-dotted underline-offset-2 hover:text-foreground transition-colors tabular-nums"
                                 onClick={() => {
                                   setEditingId(food.id);
                                   setEditQty(String(food.quantity));
@@ -1436,10 +1439,10 @@ export default function NutritionPage() {
                               >
                                 {food.quantity}{food.unit || "g"}
                               </button>
-                              <span>{food.calories} kcal</span>
-                              <span>P: {food.protein}g</span>
-                              <span>G: {food.carbs}g</span>
-                              <span>L: {food.fat}g</span>
+                              <span className="tabular-nums">{food.calories} kcal</span>
+                              <span className="tabular-nums">P: {food.protein}g</span>
+                              <span className="tabular-nums">G: {food.carbs}g</span>
+                              <span className="tabular-nums">L: {food.fat}g</span>
                             </>
                           )}
                         </div>

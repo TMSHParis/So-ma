@@ -98,16 +98,16 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <div className="mb-8 flex items-start justify-between gap-4">
-        <div>
+      <div className="mb-8 flex flex-col-reverse gap-3 md:flex-row md:items-start md:justify-between md:gap-4">
+        <div className="min-w-0">
           <h1 className="font-[family-name:var(--font-playfair)] text-2xl md:text-3xl font-bold text-foreground">
             Bonjour !
           </h1>
-          <p className="text-muted-foreground mt-1">
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">
             Voici le résumé de votre journée ({iso}).
           </p>
         </div>
-        <p className="text-2xl md:text-3xl font-bold text-foreground text-right" dir="rtl">
+        <p className="text-xl md:text-3xl font-bold text-foreground text-right md:shrink-0" dir="rtl">
           السلام عليكم ورحمة الله
         </p>
       </div>
@@ -158,9 +158,9 @@ export default async function DashboardPage() {
                   {macro.label}
                 </span>
               </div>
-              <p className="text-lg font-bold text-foreground">
+              <p className="text-lg font-bold text-foreground tabular-nums">
                 {macro.current}
-                <span className="text-xs font-normal text-muted-foreground ml-1">
+                <span className="text-xs font-normal text-muted-foreground ml-1 tabular-nums">
                   / {macro.goal} {macro.unit}
                 </span>
               </p>
@@ -180,7 +180,7 @@ export default async function DashboardPage() {
               <Footprints className="h-4 w-4 text-primary" />
               <span className="text-xs text-muted-foreground">Pas (sport)</span>
             </div>
-            <p className="text-lg font-bold">{stepsToday.toLocaleString("fr-FR")}</p>
+            <p className="text-lg font-bold tabular-nums">{stepsToday.toLocaleString("fr-FR")}</p>
           </CardContent>
         </Card>
         <Card className="border-warm-border">
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
                 Durée séances
               </span>
             </div>
-            <p className="text-lg font-bold">{sportDuration} min</p>
+            <p className="text-lg font-bold tabular-nums">{sportDuration} min</p>
           </CardContent>
         </Card>
         <Card className="border-warm-border md:col-span-2">
@@ -202,7 +202,7 @@ export default async function DashboardPage() {
                 Dépense estimée (saisie)
               </span>
             </div>
-            <p className="text-lg font-bold">{Math.round(sportKcal)} kcal</p>
+            <p className="text-lg font-bold tabular-nums">{Math.round(sportKcal)} kcal</p>
           </CardContent>
         </Card>
       </div>

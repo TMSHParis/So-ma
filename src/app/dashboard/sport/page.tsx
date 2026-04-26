@@ -791,20 +791,20 @@ export default function SportPage() {
       </div>
 
       {/* Stats overview */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
-        <div className="rounded-xl bg-gradient-to-br from-warm-primary/10 to-warm-primary/5 border border-warm-primary/20 p-4 text-center">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
+        <div className="rounded-xl bg-gradient-to-br from-warm-primary/10 to-warm-primary/5 border border-warm-primary/20 p-3 sm:p-4 text-center min-w-0">
           <Timer className="h-5 w-5 text-warm-primary mx-auto mb-1.5" />
-          <p className="text-2xl font-bold text-warm-primary">{totalDuration}</p>
+          <p className="text-xl sm:text-2xl font-bold text-warm-primary tabular-nums truncate">{totalDuration}</p>
           <p className="text-[11px] text-muted-foreground">minutes</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 p-4 text-center">
+        <div className="rounded-xl bg-gradient-to-br from-orange-100 to-orange-50 border border-orange-200 p-3 sm:p-4 text-center min-w-0">
           <Flame className="h-5 w-5 text-orange-500 mx-auto mb-1.5" />
-          <p className="text-2xl font-bold text-orange-600">{totalCalories}</p>
+          <p className="text-xl sm:text-2xl font-bold text-orange-600 tabular-nums truncate">{totalCalories}</p>
           <p className="text-[11px] text-muted-foreground">kcal brûlées</p>
         </div>
-        <div className="rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-200 p-4 text-center">
+        <div className="rounded-xl bg-gradient-to-br from-emerald-100 to-emerald-50 border border-emerald-200 p-3 sm:p-4 text-center min-w-0">
           <Footprints className="h-5 w-5 text-emerald-600 mx-auto mb-1.5" />
-          <p className="text-2xl font-bold text-emerald-600">{totalSteps.toLocaleString()}</p>
+          <p className="text-xl sm:text-2xl font-bold text-emerald-600 tabular-nums truncate">{totalSteps.toLocaleString("fr-FR")}</p>
           <p className="text-[11px] text-muted-foreground">pas</p>
         </div>
       </div>
@@ -873,7 +873,7 @@ export default function SportPage() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm">{session.typeLabel}</span>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground tabular-nums">
                           {session.duration > 0 && (
                             <span className="flex items-center gap-0.5">
                               <Timer className="h-3 w-3" />{session.duration} min
@@ -888,14 +888,14 @@ export default function SportPage() {
                       </div>
 
                       {session.steps ? (
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {session.steps.toLocaleString()} pas
+                        <p className="text-xs text-muted-foreground mt-1 tabular-nums">
+                          {session.steps.toLocaleString("fr-FR")} pas
                           {session.distance ? ` · ${session.distance} km` : ""}
                         </p>
                       ) : null}
 
                       {session.treadmill && (
-                        <p className="text-xs text-muted-foreground mt-1">
+                        <p className="text-xs text-muted-foreground mt-1 tabular-nums">
                           Tapis {session.treadmill.speed} km/h
                           {session.treadmill.incline > 0 && ` · pente ${session.treadmill.incline}%`}
                         </p>

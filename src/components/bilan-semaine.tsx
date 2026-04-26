@@ -137,7 +137,7 @@ export function BilanSemaine({
             <CalendarDays className="h-4 w-4 text-primary" />
             Bilan semaine
           </CardTitle>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground tabular-nums">
             <span>
               <strong className="text-foreground">{loggedDays}</strong>/7 jours
             </span>
@@ -192,12 +192,12 @@ export function BilanSemaine({
                         {formatDayLabel(day.date, endDate)}
                       </span>
                     </button>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className={`font-semibold ${color}`}>
+                    <div className="flex items-center gap-2 sm:gap-3 text-xs flex-shrink-0">
+                      <span className={`font-semibold tabular-nums ${color}`}>
                         {day.totals.calories} kcal
                       </span>
                       {goalCalories && day.totals.calories > 0 && (
-                        <span className="text-muted-foreground">
+                        <span className="text-muted-foreground tabular-nums">
                           ({pct}%)
                         </span>
                       )}
@@ -283,7 +283,7 @@ export function BilanSemaine({
                                 className="flex items-center justify-between gap-2 py-0.5"
                               >
                                 <span className="truncate">{e.foodName}</span>
-                                <span className="text-muted-foreground flex-shrink-0">
+                                <span className="text-muted-foreground flex-shrink-0 tabular-nums">
                                   {e.quantity}{e.unit || "g"} · {e.calories} kcal
                                 </span>
                               </div>
@@ -291,11 +291,11 @@ export function BilanSemaine({
                           </div>
                         );
                       })}
-                      <div className="flex items-center justify-between pt-1.5 border-t text-[11px]">
-                        <span className="text-muted-foreground">Total</span>
-                        <span className="font-semibold flex items-center gap-1">
-                          <Flame className="h-3 w-3 text-orange-500" />
-                          {day.totals.calories} kcal · P{day.totals.protein}g · G{day.totals.carbs}g · L{day.totals.fat}g
+                      <div className="flex items-center justify-between gap-2 pt-1.5 border-t text-[11px]">
+                        <span className="text-muted-foreground flex-shrink-0">Total</span>
+                        <span className="font-semibold flex items-center gap-1 tabular-nums text-right min-w-0 break-words">
+                          <Flame className="h-3 w-3 text-orange-500 flex-shrink-0" />
+                          <span>{day.totals.calories} kcal · P{day.totals.protein}g · G{day.totals.carbs}g · L{day.totals.fat}g</span>
                         </span>
                       </div>
                     </div>
