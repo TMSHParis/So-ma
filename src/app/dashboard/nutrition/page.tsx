@@ -729,44 +729,44 @@ export default function NutritionPage() {
               )}
 
               {/* Tab toggle */}
-              <div className="flex gap-1 p-1 bg-muted rounded-lg">
+              <div className="grid grid-cols-2 gap-1 p-1 bg-muted rounded-lg sm:flex sm:gap-1">
                 <button
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "search" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex items-center justify-center gap-1.5 text-sm py-2 sm:py-1.5 rounded-md transition-colors sm:flex-1 ${dialogTab === "search" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   onClick={() => setDialogTab("search")}
                 >
-                  <Search className="h-3.5 w-3.5" />
-                  Rechercher
+                  <Search className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">Rechercher</span>
                 </button>
                 <button
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "recipes" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex items-center justify-center gap-1.5 text-sm py-2 sm:py-1.5 rounded-md transition-colors sm:flex-1 ${dialogTab === "recipes" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   onClick={() => setDialogTab("recipes")}
                 >
-                  <ChefHat className="h-3.5 w-3.5" />
-                  Mes recettes
+                  <ChefHat className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">Mes recettes</span>
                   {recipes.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1 tabular-nums flex-shrink-0">
                       {recipes.length}
                     </Badge>
                   )}
                 </button>
                 <button
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "create-recipe" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex items-center justify-center gap-1.5 text-sm py-2 sm:py-1.5 rounded-md transition-colors sm:flex-1 ${dialogTab === "create-recipe" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   onClick={() => setDialogTab("create-recipe")}
                 >
-                  <Plus className="h-3.5 w-3.5" />
-                  Nouvelle
+                  <Plus className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">Nouvelle</span>
                   {draftRecipeItems.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] h-4 px-1">
+                    <Badge variant="secondary" className="text-[10px] h-4 px-1 tabular-nums flex-shrink-0">
                       {draftRecipeItems.length}
                     </Badge>
                   )}
                 </button>
                 <button
-                  className={`flex-1 flex items-center justify-center gap-1.5 text-sm py-1.5 rounded-md transition-colors ${dialogTab === "manual" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  className={`flex items-center justify-center gap-1.5 text-sm py-2 sm:py-1.5 rounded-md transition-colors sm:flex-1 ${dialogTab === "manual" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
                   onClick={() => setDialogTab("manual")}
                 >
-                  <PencilLine className="h-3.5 w-3.5" />
-                  Manuel
+                  <PencilLine className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="truncate">Manuel</span>
                 </button>
               </div>
 
@@ -884,7 +884,7 @@ export default function NutritionPage() {
                     <div className="flex gap-2 items-center">
                       <Input
                         type="number"
-                        className="flex-1"
+                        className="flex-1 tabular-nums"
                         value={quantity}
                         onChange={(e) => setQuantity(e.target.value)}
                       />
@@ -894,7 +894,7 @@ export default function NutritionPage() {
                             key={u}
                             type="button"
                             onClick={() => setQuantityUnit(u)}
-                            className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                            className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
                               quantityUnit === u
                                 ? "bg-background shadow-sm text-foreground"
                                 : "text-muted-foreground hover:text-foreground"
@@ -905,7 +905,7 @@ export default function NutritionPage() {
                         ))}
                       </div>
                     </div>
-                    <p className="text-[10px] text-muted-foreground">
+                    <p className="text-[11px] text-muted-foreground leading-snug">
                       ml / cl uniquement pour les liquides (densité ≈ 1 : 1 ml = 1 g, 1 cl = 10 g).
                     </p>
                   </div>
