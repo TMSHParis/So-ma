@@ -89,7 +89,7 @@ type Recipe = {
 };
 
 const mealTypes = [
-  { value: "PETIT_DEJEUNER", label: "Petit-déjeuner" },
+  { value: "PETIT_DEJEUNER", label: "Petit Déjeuner" },
   { value: "DEJEUNER", label: "Déjeuner" },
   { value: "DINER", label: "Dîner" },
   { value: "COLLATION", label: "Collation" },
@@ -715,7 +715,9 @@ export default function NutritionPage() {
                     onValueChange={(v) => v !== null && setSelectedMealType(v)}
                   >
                     <SelectTrigger>
-                      <SelectValue />
+                      <SelectValue>
+                        {mealTypes.find((m) => m.value === selectedMealType)?.label}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {mealTypes.map((m) => (
