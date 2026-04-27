@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { DEMO_EMAIL } from "@/lib/demo-seed/seed";
+import { sendClientCredentials } from "@/lib/email";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 
@@ -52,14 +53,24 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // TODO: Send email with credentials via Resend
-    // For now, log the password (remove in production!)
-    console.log(`Client created: ${email} / ${password}`);
+    let credentialsSent = false;
+    try {
+      await sendClientCredentials({
+        to: email,
+        firstName,
+        email,
+        password,
+      });
+      credentialsSent = true;
+    } catch (err) {
+      console.error("Failed to send credentials email:", err);
+    }
 
     return NextResponse.json({
       success: true,
       userId: user.id,
-      temporaryPassword: password, // Remove in production - send via email instead
+      temporaryPassword: password,
+      credentialsSent,
     });
   } catch (error) {
     console.error("Error creating client:", error);

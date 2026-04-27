@@ -235,7 +235,11 @@ export default function ClientsPage() {
       });
       if (res.ok) {
         const result = await res.json();
-        toast.success(`Compte créé ! Mot de passe : ${result.temporaryPassword}`, { duration: 15000 });
+        if (result.credentialsSent) {
+          toast.success(`Compte créé ! Les accès ont été envoyés par email à ${formData.get("email")}.`, { duration: 10000 });
+        } else {
+          toast.success(`Compte créé ! ⚠️ Email non envoyé — mot de passe : ${result.temporaryPassword}`, { duration: 20000 });
+        }
         setDialogOpen(false);
         fetchClients();
       } else {

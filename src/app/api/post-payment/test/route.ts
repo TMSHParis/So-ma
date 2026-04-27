@@ -8,6 +8,10 @@ import { prisma } from "@/lib/db";
  * vers le formulaire bilan. À supprimer en production.
  */
 export async function GET(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const baseUrl = process.env.NEXTAUTH_URL || req.nextUrl.origin;
   const email = req.nextUrl.searchParams.get("email") || "test@test.com";
   const name = req.nextUrl.searchParams.get("name") || "Test Cliente";
